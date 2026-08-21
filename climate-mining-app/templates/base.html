@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block titulo %}Bitacora - Cambio Climatico y Eventos Externos{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header class="topbar">
+        <div class="contenedor topbar-inner">
+            <a class="marca" href="{{ url_for('index') }}">Cambio Climatico &amp; Eventos Externos</a>
+            <nav class="nav">
+                <a href="{{ url_for('index') }}">R1 · Inicio</a>
+                <a href="{{ url_for('problema') }}">Problema</a>
+                <a href="{{ url_for('recoleccion') }}">Recoleccion</a>
+                <a href="{{ url_for('dataset') }}">Dataset</a>
+                <a href="{{ url_for('calidad') }}">Calidad</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="contenedor contenido">
+        {% block contenido %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <div class="contenedor">
+            <p>Bitacora tecnica del proyecto &middot; Mineria de datos &middot; Cambio climatico y eventos externos (Global / Regional / Nacional - Colombia)</p>
+        </div>
+    </footer>
+</body>
+</html>

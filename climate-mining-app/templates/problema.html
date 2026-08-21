@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block titulo %}Problema - Bitacora{% endblock %}
+
+{% block contenido %}
+<h1>Problema</h1>
+
+<section class="bloque">
+    <h2>Contexto</h2>
+    <p>{{ proyecto.problema_contexto }}</p>
+</section>
+
+<section class="bloque">
+    <h2>De un problema real a un problema de datos</h2>
+    <p>
+        El problema real describe una situacion: el cambio climatico avanza
+        y ocurren eventos externos (climaticos, politicos, socioeconomicos)
+        que pueden estar relacionados con el. El problema de datos define
+        que evidencia necesitamos para analizar esa relacion: series de
+        tiempo de indicadores climaticos y un registro estructurado de
+        eventos, en tres escalas geograficas comparables.
+    </p>
+</section>
+
+<section class="bloque">
+    <h2>Pregunta principal</h2>
+    <p class="destacado">{{ proyecto.pregunta_principal }}</p>
+</section>
+
+<section class="bloque">
+    <h2>Preguntas secundarias</h2>
+    <ol class="lista-preguntas">
+        {% for pregunta in proyecto.preguntas_secundarias %}
+        <li>{{ pregunta }}</li>
+        {% endfor %}
+    </ol>
+</section>
+{% endblock %}

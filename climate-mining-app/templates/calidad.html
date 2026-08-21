@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block titulo %}Calidad - Bitacora{% endblock %}
+
+{% block contenido %}
+<h1>Calidad inicial de los datos</h1>
+
+<section class="bloque">
+    <p>
+        Metricas calculadas automaticamente a partir de los archivos en
+        <code>data/raw</code>: completitud (porcentaje de celdas sin valores
+        nulos), unicidad (porcentaje de filas no duplicadas) y consistencia
+        basica (tipos de columnas detectados).
+    </p>
+</section>
+
+{% for clave, m in metricas.items() %}
+<section class="bloque">
+    <h2>{{ m.info.nombre }} <span class="tag">{{ m.info.nivel }}</span></h2>
+    {% if m.calidad %}
+    <div class="grid-metricas">
+        <div class="metrica">
+            <span class="valor">{{ m.calidad.filas }}</span>
+            <span class="etiqueta-metrica">Filas</span>
+        </div>
+        <div class="metrica">
+            <span class="valor">{{ m.calidad.columnas }}</span>
+            <span class="etiqueta-metrica">Columnas</span>
+        </div>
+        <div class="metrica">
+            <span class="valor">{{ m.calidad.completitud }}%</span>
+            <span class="etiqueta-metrica">Completitud</span>
+        </div>
+        <div class="metrica">
+            <span class="valor">{{ m.calidad.unicidad }}%</span>
+            <span class="etiqueta-metrica">Unicidad</span>
+        </div>
+        <div class="metrica">
+            <span class="valor">{{ m.calidad.duplicados }}</span>
+            <span class="etiqueta-metrica">Filas duplicadas</span>
+        </div>
+        <div class="metrica">
+            <span class="valor">{{ m.calidad.columnas_numericas }}</span>
+            <span class="etiqueta-metrica">Columnas numericas</span>
+        </div>
+    </div>
+    {% if m.calidad.nulos_por_columna %}
+    <p class="nota">Columnas con valores nulos (top):</p>
+    <ul class="lista-nulos">
+        {% for col, n in m.calidad.nulos_por_columna.items() %}
+        <li><code>{{ col }}</code>: {{ n }} valores nulos</li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="nota">No se detectaron valores nulos en las columnas seleccionadas.</p>
+    {% endif %}
+    {% else %}
+    <p class="nota">Archivo no encontrado todavia. Ejecuta <code>scripts/preparar_datos.py</code>.</p>
+    {% endif %}
+</section>
+{% endfor %}
+
+<section class="bloque">
+    <h2>Validez y proximos pasos</h2>
+    <p>
+        Pendiente para siguientes entregas: validar rangos plausibles por
+        variable (por ejemplo, que las emisiones no sean negativas salvo
+        casos justificados), estandarizar el dataset de eventos externos
+        con fuentes primarias (EM-DAT, UNGRD) y documentar las reglas de
+        limpieza aplicadas.
+    </p>
+</section>
+{% endblock %}

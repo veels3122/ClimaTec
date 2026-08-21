@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block titulo %}Recoleccion - Bitacora{% endblock %}
+
+{% block contenido %}
+<h1>Recoleccion</h1>
+
+<section class="bloque">
+    <h2>Necesidades de informacion</h2>
+    <p>Cada pregunta se tradujo en necesidades concretas de informacion: entidades, atributos y cobertura.</p>
+    <div class="tabla-scroll">
+    <table class="tabla">
+        <thead>
+            <tr>
+                <th>Pregunta relacionada</th>
+                <th>Entidades</th>
+                <th>Atributos / variables</th>
+                <th>Cobertura</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for n in proyecto.necesidades_informacion %}
+            <tr>
+                <td>{{ n.pregunta }}</td>
+                <td>{{ n.entidades }}</td>
+                <td>{{ n.atributos }}</td>
+                <td>{{ n.cobertura }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</section>
+
+<section class="bloque">
+    <h2>Fuentes identificadas y evaluadas</h2>
+    <p>Evaluacion segun pertinencia, confiabilidad, actualidad y cobertura.</p>
+    <div class="tabla-scroll">
+    <table class="tabla">
+        <thead>
+            <tr>
+                <th>Fuente</th>
+                <th>Nivel</th>
+                <th>Tipo de recoleccion</th>
+                <th>Pertinencia</th>
+                <th>Confiabilidad</th>
+                <th>Actualidad</th>
+                <th>Cobertura</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for f in proyecto.fuentes %}
+            <tr>
+                <td><a href="{{ f.url }}" target="_blank" rel="noopener">{{ f.nombre }}</a></td>
+                <td>{{ f.nivel }}</td>
+                <td>{{ f.tipo_recoleccion }}</td>
+                <td>{{ f.pertinencia }}</td>
+                <td>{{ f.confiabilidad }}</td>
+                <td>{{ f.actualidad }}</td>
+                <td>{{ f.cobertura }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</section>
+
+<section class="bloque">
+    <h2>Unidad de analisis, registro y variable</h2>
+    <ul>
+        <li><strong>Unidad de analisis:</strong> {{ proyecto.unidad_analisis.unidad_de_analisis }}</li>
+        <li><strong>Unidad de registro:</strong> {{ proyecto.unidad_analisis.unidad_de_registro }}</li>
+        <li><strong>Variables:</strong> {{ proyecto.unidad_analisis.variables }}</li>
+    </ul>
+</section>
+
+<section class="bloque">
+    <h2>Trazabilidad y reproducibilidad</h2>
+    <ul>
+        {% for item in proyecto.trazabilidad %}
+        <li>{{ item }}</li>
+        {% endfor %}
+    </ul>
+</section>
+{% endblock %}

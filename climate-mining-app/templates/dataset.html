@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block titulo %}Dataset - Bitacora{% endblock %}
+
+{% block contenido %}
+<h1>Dataset</h1>
+
+<section class="bloque">
+    <h2>Datasets por nivel</h2>
+    {% for clave, r in resumenes.items() %}
+    <div class="subbloque">
+        <h3>{{ r.info.nombre }} <span class="tag">{{ r.info.nivel }}</span></h3>
+        <p>Archivo: <code>data/raw/{{ r.info.archivo }}</code> &middot; Filas: {{ r.filas }} &middot; Columnas: {{ r.columnas|length }}</p>
+        {% if r.muestra %}
+        <div class="tabla-scroll">
+        <table class="tabla tabla-pequena">
+            <thead>
+                <tr>
+                    {% for col in r.columnas %}<th>{{ col }}</th>{% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for fila in r.muestra %}
+                <tr>
+                    {% for col in r.columnas %}<td>{{ fila[col] }}</td>{% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        <p class="nota">Se muestran las primeras 5 filas como vista previa.</p>
+        {% else %}
+        <p class="nota">Archivo no encontrado todavia. Ejecuta <code>scripts/preparar_datos.py</code>.</p>
+        {% endif %}
+    </div>
+    {% endfor %}
+</section>
+
+<section class="bloque">
+    <h2>Diccionario de datos</h2>
+    <div class="tabla-scroll">
+    <table class="tabla">
+        <thead>
+            <tr>
+                <th>Variable</th>
+                <th>Tipo</th>
+                <th>Descripcion</th>
+                <th>Unidad</th>
+                <th>Fuente</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for d in diccionario %}
+            <tr>
+                <td><code>{{ d.variable }}</code></td>
+                <td>{{ d.tipo }}</td>
+                <td>{{ d.descripcion }}</td>
+                <td>{{ d.unidad }}</td>
+                <td>{{ d.fuente }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</section>
+{% endblock %}

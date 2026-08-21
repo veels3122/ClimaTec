@@ -1,0 +1,215 @@
+:root {
+    --verde: #1f7a4d;
+    --verde-oscuro: #14532d;
+    --fondo: #f6f8f7;
+    --texto: #1f2a24;
+    --gris: #6b7770;
+    --borde: #dde5e0;
+    --blanco: #ffffff;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--fondo);
+    color: var(--texto);
+    line-height: 1.55;
+}
+
+.contenedor {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.topbar {
+    background: var(--verde-oscuro);
+    color: var(--blanco);
+}
+
+.topbar-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    gap: 10px;
+}
+
+.marca {
+    color: var(--blanco);
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 1.05rem;
+}
+
+.nav a {
+    color: #d6ecdf;
+    text-decoration: none;
+    margin-left: 18px;
+    font-size: 0.95rem;
+}
+
+.nav a:hover { color: var(--blanco); }
+
+.contenido { padding: 32px 20px 60px; }
+
+.hero {
+    padding: 28px 0 8px;
+}
+
+.etiqueta {
+    display: inline-block;
+    background: #e4f2e9;
+    color: var(--verde-oscuro);
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+h1 {
+    color: var(--verde-oscuro);
+    margin-top: 10px;
+}
+
+.lead { color: var(--gris); font-size: 1.05rem; }
+
+.grid-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin: 24px 0 32px;
+}
+
+.card {
+    background: var(--blanco);
+    border: 1px solid var(--borde);
+    border-radius: 10px;
+    padding: 18px;
+    text-decoration: none;
+    color: var(--texto);
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 14px rgba(20, 83, 45, 0.12);
+    transform: translateY(-1px);
+}
+
+.card h2 { margin: 0 0 6px; color: var(--verde); font-size: 1.1rem; }
+.card p { margin: 0; color: var(--gris); font-size: 0.92rem; }
+
+.bloque {
+    background: var(--blanco);
+    border: 1px solid var(--borde);
+    border-radius: 10px;
+    padding: 22px 24px;
+    margin-bottom: 20px;
+}
+
+.subbloque {
+    padding: 14px 0;
+    border-top: 1px solid var(--borde);
+}
+.subbloque:first-of-type { border-top: none; }
+
+h2 { color: var(--verde-oscuro); font-size: 1.25rem; margin-top: 0; }
+h3 { color: var(--verde); font-size: 1.05rem; }
+
+.destacado {
+    font-size: 1.1rem;
+    font-weight: 600;
+    background: #eef7f1;
+    border-left: 4px solid var(--verde);
+    padding: 12px 16px;
+    border-radius: 6px;
+}
+
+.lista-preguntas li { margin-bottom: 10px; }
+
+.tag {
+    display: inline-block;
+    background: #eef7f1;
+    color: var(--verde-oscuro);
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 6px;
+    vertical-align: middle;
+    margin-left: 6px;
+}
+
+.tabla-scroll { overflow-x: auto; }
+
+.tabla {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.9rem;
+}
+
+.tabla th, .tabla td {
+    border: 1px solid var(--borde);
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+}
+
+.tabla th {
+    background: #eef7f1;
+    color: var(--verde-oscuro);
+}
+
+.tabla-pequena { font-size: 0.78rem; }
+
+.nota { color: var(--gris); font-size: 0.85rem; }
+
+.grid-metricas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+}
+
+.metrica {
+    background: #eef7f1;
+    border-radius: 8px;
+    padding: 14px 10px;
+    text-align: center;
+}
+
+.metrica .valor {
+    display: block;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--verde-oscuro);
+}
+
+.metrica .etiqueta-metrica {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--gris);
+    margin-top: 2px;
+}
+
+.lista-nulos { font-size: 0.9rem; }
+
+.footer {
+    background: var(--verde-oscuro);
+    color: #cfe6d8;
+    padding: 16px 0;
+    font-size: 0.82rem;
+    text-align: center;
+}
+
+code {
+    background: #eef2ef;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 0.85em;
+}
+
+a { color: var(--verde); }

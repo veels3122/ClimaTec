@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block titulo %}R1 · Inicio - Bitacora{% endblock %}
+
+{% block contenido %}
+<section class="hero">
+    <span class="etiqueta">R1 &middot; Version base</span>
+    <h1>{{ proyecto.titulo }}</h1>
+    <p class="lead">
+        Esta aplicacion es la bitacora tecnica del proyecto. Documenta el
+        problema asignado, el proceso de recoleccion, la descripcion del
+        dataset y la evaluacion inicial de calidad, siguiendo el enfoque de
+        pasar de un <strong>problema real</strong> a un
+        <strong>problema de datos</strong>.
+    </p>
+</section>
+
+<section class="grid-cards">
+    <a class="card" href="{{ url_for('problema') }}">
+        <h2>Problema</h2>
+        <p>Contexto, pregunta principal y preguntas secundarias del proyecto.</p>
+    </a>
+    <a class="card" href="{{ url_for('recoleccion') }}">
+        <h2>Recoleccion</h2>
+        <p>Necesidades de informacion, fuentes evaluadas y tipo de recoleccion.</p>
+    </a>
+    <a class="card" href="{{ url_for('dataset') }}">
+        <h2>Dataset</h2>
+        <p>Datasets global, regional y nacional, con diccionario de datos.</p>
+    </a>
+    <a class="card" href="{{ url_for('calidad') }}">
+        <h2>Calidad</h2>
+        <p>Completitud, unicidad y consistencia inicial de los datos.</p>
+    </a>
+</section>
+
+<section class="bloque">
+    <h2>Resumen rapido</h2>
+    <p><strong>Pregunta principal:</strong> {{ proyecto.pregunta_principal }}</p>
+    <p><strong>Niveles de analisis:</strong> Global, Regional (Sudamerica) y Nacional (Colombia).</p>
+</section>
+{% endblock %}
