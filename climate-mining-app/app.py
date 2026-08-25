@@ -295,7 +295,43 @@ def calidad():
     return render_template("calidad.html", proyecto=PROYECTO, metricas=metricas)
 
 
+# Rutas de la Etapa 1
+@app.route('/etapa-1/problema-contexto')
+def problema_contexto():
+    return render_template('etapa1/problema_contexto.html')
+
+@app.route('/etapa-1/preguntas')
+def preguntas():
+    return render_template('etapa1/preguntas.html')
+
+@app.route('/etapa-1/necesidades-informacion')
+def necesidades_informacion():
+    return render_template('etapa1/necesidades_informacion.html')
+
+@app.route('/etapa-1/fuentes-datos')
+def fuentes_datos():
+    return render_template('etapa1/fuentes_datos.html')
+
+@app.route('/etapa-1/dataset')
+def dataset():
+    return render_template('etapa1/dataset.html')
+
+@app.route('/etapa-1/diccionario-datos')
+def diccionario_datos():
+    return render_template('etapa1/diccionario_datos.html')
+
+@app.route('/etapa-1/calidad-inicial')
+def calidad_inicial():
+    return render_template('etapa1/calidad_inicial.html')
+
+@app.route('/etapa-1/limitaciones')
+def limitaciones():
+    return render_template('etapa1/limitaciones.html')
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     debug = os.environ.get("FLASK_DEBUG", "1") == "1"
     app.run(host="0.0.0.0", port=port, debug=debug)
+
+
+

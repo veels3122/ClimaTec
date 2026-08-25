@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2>7. Diagnóstico Inicial de Calidad de Datos</h2>
+    <hr>
+    <ul>
+        <li><strong>Valores Faltantes (Missing Values):</strong> Presencia de vacíos en años previos a 1980 en estaciones locales de monitoreo de IDEAM.</li>
+        <li><strong>Registros Duplicados:</strong> Verificación efectuada mediante combinación de llaves (<code>pais</code> + <code>anio</code>) no arrojó duplicidades críticas.</li>
+        <li><strong>Inconsistencias y Outliers:</strong> Se hallaron picos atípicos en precipitaciones correspondientes a eventos extremos del fenómeno de El Niño/La Niña.</li>
+        <li><strong>Diferencias de Formato:</strong> Estandarización aplicada para la codificación de caracteres en UTF-8 y manejo de punto como decimal.</li>
+    </ul>
+</div>
+{% endblock %}

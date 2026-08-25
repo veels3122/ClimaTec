@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2>3. Necesidades de Información</h2>
+    <hr>
+    <table class="table table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <th>Criterio / Necesidad</th>
+                <th>Detalle y Especificación</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Entidades Involucradas</strong></td>
+                <td>Países, Departamentos de Colombia, Estaciones Meteorológicas de Monitoreo.</td>
+            </tr>
+            <tr>
+                <td><strong>Variables Relevantes</strong></td>
+                <td>Temperatura media (°C), Precipitación anual/mensual (mm), Emisiones de CO2 (kt), Anomalía térmica.</td>
+            </tr>
+            <tr>
+                <td><strong>Periodo de Análisis</strong></td>
+                <td>1960 – 2024 (Series de tiempo históricas).</td>
+            </tr>
+            <tr>
+                <td><strong>Cobertura Geográfica</strong></td>
+                <td>Escala Global, Regional (Sudamérica) y Nacional (Colombia).</td>
+            </tr>
+            <tr>
+                <td><strong>Unidad de Análisis</strong></td>
+                <td>Registros anuales/mensuales por entidad territorial o estación meteorológica.</td>
+            </tr>
+            <tr>
+                <td><strong>Granularidad Requerida</strong></td>
+                <td>Puntos georreferenciados por estación y registros temporales agregados por año/mes.</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}

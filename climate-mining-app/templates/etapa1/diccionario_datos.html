@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2>6. Diccionario de Datos</h2>
+    <hr>
+    <p>Estructura detallada de las variables presentes en el dataset consolidado:</p>
+    <table class="table table-hover table-striped border">
+        <thead class="table-dark">
+            <tr>
+                <th>Nombre del campo</th>
+                <th>Descripción y significado</th>
+                <th>Tipo de dato</th>
+                <th>Unidad / Dominio</th>
+                <th>Fuente</th>
+                <th>Ejemplo</th>
+                <th>Observaciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>anio</code></td>
+                <td>Año del registro histórico de la medición</td>
+                <td>Integer</td>
+                <td>1960 - 2024</td>
+                <td>Consolidado</td>
+                <td>2021</td>
+                <td>Clave temporal sin nulos</td>
+            </tr>
+            <tr>
+                <td><code>pais</code></td>
+                <td>Nombre del país o entidad territorio</td>
+                <td>Text</td>
+                <td>Nombres oficiales ISO</td>
+                <td>Banco Mundial / OWID</td>
+                <td>Colombia</td>
+                <td>Estandarizado en español/inglés</td>
+            </tr>
+            <tr>
+                <td><code>nivel_geografico</code></td>
+                <td>Escala del análisis territorial</td>
+                <td>Text</td>
+                <td>Global, Regional, Nacional</td>
+                <td>Consolidado</td>
+                <td>Nacional</td>
+                <td>Variable de filtrado principal</td>
+            </tr>
+            <tr>
+                <td><code>temperatura_media</code></td>
+                <td>Promedio de la temperatura ambiente</td>
+                <td>Float</td>
+                <td>Grados Celsius (°C)</td>
+                <td>IDEAM / OWID</td>
+                <td>24.5</td>
+                <td>Valores válidos entre -10°C y 50°C</td>
+            </tr>
+            <tr>
+                <td><code>emisiones_co2</code></td>
+                <td>Total de emisiones de CO2 al año</td>
+                <td>Float</td>
+                <td>Kilotones (kt)</td>
+                <td>Banco Mundial</td>
+                <td>85420.5</td>
+                <td>Valores en 0 representan faltantes</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}

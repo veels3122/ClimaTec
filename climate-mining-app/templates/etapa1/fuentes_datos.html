@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2>4. Fuentes de Datos y Tipo de Recolección</h2>
+    <hr>
+    <h3>Clasificación de Fuentes por Nivel</h3>
+    
+    <div class="card my-3">
+        <div class="card-header bg-primary text-white">Fuentes Secundarias (Nacional / Colombia)</div>
+        <div class="card-body">
+            <ul>
+                <li><strong>IDEAM / Datos Abiertos Colombia:</strong> Registros históricos de estaciones meteorológicas sobre precipitaciones y temperaturas en Colombia. <a href="https://www.datos.gov.co" target="_blank">datos.gov.co</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="card my-3">
+        <div class="card-header bg-success text-white">Fuentes Secundarias (Global y Regional)</div>
+        <div class="card-body">
+            <ul>
+                <li><strong>Our World in Data (OWID) / Banco Mundial:</strong> Series de tiempo globales y regionales de temperatura, dióxido de carbono e indicadores climáticos por país. <a href="https://ourworldindata.org/co2-and-greenhouse-gas-emissions" target="_blank">ourworldindata.org</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="card my-3">
+        <div class="card-header bg-info text-white">Fuentes Terciarias (Consolidados)</div>
+        <div class="card-body">
+            <ul>
+                <li><strong>Repositorios Kaggle / Portales Agregadores:</strong> Datasets procesados e integrados para análisis exploratorio de minería de datos sobre cambio climático.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
