@@ -1,21 +1,27 @@
 {% extends 'base.html' %}
-{% block content %}
-<div class="container mt-4">
-    <h2>2. Pregunta Principal y Preguntas Secundarias</h2>
-    <hr>
-    <h3>Pregunta Principal de Investigación</h3>
-    <blockquote class="blockquote bg-light p-3 border-left border-primary">
-        <p>¿De qué manera los patrones globales de variabilidad climática y emisiones antropogénicas se correlacionan con las anomalías de temperatura y precipitación observadas en Colombia y Sudamérica durante los últimos 30 años?</p>
-    </blockquote>
+{% block titulo %}2. Preguntas de investigacion · ClimaTec{% endblock %}
+{% block contenido %}
 
-    <h3>Preguntas Secundarias</h3>
-    <ol>
-        <li>¿Existe una aceleración estadísticamente significativa en el aumento de la temperatura promedio en Colombia comparada con la tasa de crecimiento promedio global?</li>
-        <li>¿Qué zonas o subregiones de Sudamérica presentan mayor volatilidad en sus niveles de precipitación acumulada frente a la ocurrencia de eventos climáticos globales?</li>
-        <li>¿Cuál es la relación de precedencia o correlación entre el incremento de emisiones globales de CO2 y las anomalías de temperatura registradas en el territorio colombiano?</li>
-    </ol>
+<p class="eyebrow"><span class="paso">02</span> Definicion del problema</p>
+<h1>Pregunta principal y preguntas secundarias</h1>
 
-    <h3>Conocimiento Esperado</h3>
-    <p>A través de la minería de datos se espera caracterizar las brechas entre tendencias globales y fenómenos locales, aportando evidencia empírica para la formulación de modelos de predicción y análisis de vulnerabilidad regional.</p>
+<h2>Pregunta principal</h2>
+<blockquote>{{ preguntas.principal }}</blockquote>
+
+<h2>Preguntas secundarias</h2>
+<ol class="preguntas">
+    {% for p in preguntas.secundarias %}
+    <li>{{ p }}</li>
+    {% endfor %}
+</ol>
+
+<h2>Conocimiento esperado a partir de los datos</h2>
+<p>{{ conocimiento }}</p>
+
+<div class="nota">
+    <strong>Trazabilidad de las preguntas:</strong> todas pueden responderse con las variables
+    del dataset consolidado (emisiones de CO2, GEI, temperatura, poblacion, energia) cruzando
+    <span class="mono">nivel_geografico</span> y <span class="mono">year</span>.
 </div>
+
 {% endblock %}

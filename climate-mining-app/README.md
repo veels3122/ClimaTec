@@ -1,95 +1,90 @@
-# Cambio climatico y eventos externos: analisis global, regional y nacional
+# ClimaTec — Bitacora tecnica (Mineria de Datos)
 
-Bitacora tecnica del proyecto, construida en Flask. Documenta el proceso de
-mineria de datos desde la definicion del problema hasta la evaluacion
-inicial de calidad de los datos, en tres escalas: **global**, **regional
-(Sudamerica)** y **nacional (Colombia)**.
+Aplicacion web en **Flask** que funciona como bitacora tecnica y plataforma de
+documentacion del proyecto de mineria de datos.
 
-Esta es la **version base (R1)** del proyecto: prioriza tener el contenido
-completo y correcto sobre el diseno visual. Se ira mejorando en entregas
-posteriores (limpieza avanzada, transformacion, analisis y
-visualizaciones).
+- **Tema:** Cambio climatico y eventos externos
+- **Niveles de analisis:** Global / Regional (Sudamerica) / Nacional (Colombia)
+- **Periodo:** 1950–2024
+- **App publicada:** https://climatec-ctrm.onrender.com
+- **Repositorio:** https://github.com/veels3122/ClimaTec
+
+## Integrantes
+- Ana Cortes
+- Mateo Melgarejo
+- Andres Pineda
 
 ## Estructura de la aplicacion
 
-- **R1 / Inicio** (`/`): resumen del proyecto.
-- **Problema** (`/problema`): contexto, pregunta principal y preguntas secundarias.
-- **Recoleccion** (`/recoleccion`): necesidades de informacion, fuentes evaluadas (pertinencia, confiabilidad, actualidad, cobertura), unidad de analisis/registro/variable y trazabilidad.
-- **Dataset** (`/dataset`): vista previa de los datasets (global, regional, nacional, eventos externos) y diccionario de datos.
-- **Calidad** (`/calidad`): metricas iniciales de completitud, unicidad y consistencia, calculadas automaticamente con pandas.
+Menu principal **Etapa 1** con los 8 apartados del entregable:
 
-## Datos utilizados
+1. Problema y contexto
+2. Pregunta principal y preguntas secundarias
+3. Necesidades de informacion
+4. Fuentes de datos
+5. Dataset
+6. Diccionario de datos
+7. Calidad inicial de los datos
+8. Limitaciones y consideraciones
 
-| Dataset | Nivel | Fuente | Periodo |
-|---|---|---|---|
-| `global_climate_owid_1995_2024.csv` | Global | Our World in Data (Global Carbon Project) | 1995-2024 |
-| `regional_sudamerica_owid_1995_2024.csv` | Regional (Sudamerica) | Our World in Data | 1995-2024 |
-| `nacional_colombia_owid_1960_2024.csv` | Nacional (Colombia) | Our World in Data | 1960-2024 |
-| `eventos_externos_muestra.csv` | Global/Regional/Nacional | Elaboracion propia con base en UNFCCC, NOAA, UNGRD, IDEAM | 2010-2023 (muestra inicial) |
+Las paginas 5 (Dataset) y 7 (Calidad inicial) calculan sus metricas **en vivo**
+a partir del archivo real `data/raw/clima_consolidado.csv`, de modo que la
+documentacion nunca se aleja del contenido del dataset.
 
-Los tres primeros archivos son un recorte real, reproducible y sin
-modificar del dataset publico de Our World in Data
-(https://github.com/owid/co2-data), generado con `scripts/preparar_datos.py`.
-El archivo de eventos es una muestra inicial documentada manualmente,
-pensada para ampliarse con fuentes primarias (por ejemplo EM-DAT) en la
-siguiente entrega.
+## Dataset
 
-**Trazabilidad:** el archivo original `owid-co2-data.csv` no se modifica ni
-se sube al repositorio (pesa ~14 MB); se descarga aparte y se procesa con el
-script `scripts/preparar_datos.py`, que documenta exactamente que filtros y
-columnas se aplicaron.
+- **Fuente principal:** Our World in Data — CO2 and Greenhouse Gas Emissions
+  (https://github.com/owid/co2-data), fuente terciaria, licencia CC-BY.
+- **Consolidado:** `data/raw/clima_consolidado.csv` — **16.875 registros**, 15 variables
+  (11 numericas, 3 categoricas, 1 temporal, 3 geograficas).
+  - Global: 75 filas (World) · Regional: 450 filas (6 continentes) · Nacional: 16.350 filas (218 paises).
+- **Eventos externos:** `data/raw/eventos_externos_muestra.csv` (muestra documentada, se amplia en Etapa 2).
 
-## Como correr el proyecto en local
+Cumple los minimos de la guia: >= 10.000 registros, >= 10 variables, >= 3 numericas,
+>= 3 categoricas, >= 1 temporal y >= 1 geografica.
+
+## Trazabilidad y reproducibilidad
+
+1. Se descarga el archivo fuente original (owid-co2-data.csv) y se coloca en
+   `data/processed/` (no se versiona por su tamano, ~14 MB — ver `.gitignore`).
+   Descarga directa:
+   `https://raw.githubusercontent.com/owid/co2-data/master/owid-co2-data.csv`
+2. Se ejecuta el script reproducible:
+   ```bash
+   python scripts/preparar_datos.py
+   ```
+   que aplica las transformaciones documentadas (filtro `year >= 1950`, seleccion de
+   14 columnas, y mapeo de `nivel_geografico`) y genera `data/raw/clima_consolidado.csv`.
+3. El archivo fuente nunca se edita a mano.
+- **Fecha de consulta de la fuente:** 2026-08-25.
+
+## Ejecutar en local
 
 ```bash
-python -m venv venv
-source venv/bin/activate        # En Windows: venv\Scripts\activate
 pip install -r requirements.txt
 python app.py
+# http://127.0.0.1:5000
 ```
 
-Luego abre http://localhost:5000 en el navegador.
+## Despliegue
 
-### (Opcional) Regenerar los datasets desde la fuente original
+- `Procfile`: `web: gunicorn app:app`
+- `render.yaml`: servicio web Python en Render (plan free).
 
-```bash
-# 1. Descargar el CSV original de Our World in Data y guardarlo en:
-#    data/processed/owid-co2-data.csv
-# 2. Ejecutar:
-python scripts/preparar_datos.py
-```
-
-## Despliegue en Render
-
-Este repo incluye `render.yaml` y `Procfile`, listos para desplegar en
-[Render](https://render.com):
-
-1. Crear una cuenta en Render y conectar este repositorio de GitHub.
-2. Crear un nuevo **Web Service** apuntando a este repo (Render detecta
-   `render.yaml` automaticamente).
-3. Render instalara `requirements.txt` y ejecutara `gunicorn app:app`.
-4. Al finalizar el build, Render entrega una URL publica (ej.
-   `https://cambio-climatico-eventos-externos.onrender.com`).
-
-## Estructura de carpetas
+## Estructura del proyecto
 
 ```
 climate-mining-app/
-├── app.py                     # Aplicacion Flask (rutas + logica de la bitacora)
+├── app.py                     # Rutas + logica + contenido documental
 ├── requirements.txt
-├── Procfile
-├── render.yaml
+├── Procfile / render.yaml
 ├── data/
-│   └── raw/                   # Datasets usados por la app (csv)
-├── scripts/
-│   └── preparar_datos.py      # Script reproducible de preparacion de datos
-├── templates/                 # Vistas Jinja2 (R1, Problema, Recoleccion, Dataset, Calidad)
-└── static/css/style.css
+│   ├── raw/                   # datasets versionados (incl. clima_consolidado.csv)
+│   └── processed/             # fuente original owid-co2-data.csv (ignorada)
+├── scripts/preparar_datos.py  # generacion reproducible del dataset
+├── static/css/style.css
+└── templates/
+    ├── base.html              # layout + menu "Etapa 1"
+    ├── index.html
+    └── etapa1/                # las 8 paginas del entregable
 ```
-
-## Proximos pasos (siguientes entregas)
-
-- Ampliar el dataset de eventos externos con fuentes primarias (EM-DAT, UNGRD).
-- Incorporar limpieza y transformacion de datos (normalizacion, manejo de outliers).
-- Agregar visualizaciones (series de tiempo, comparacion entre escalas).
-- Automatizar la actualizacion periodica de los datasets fuente.

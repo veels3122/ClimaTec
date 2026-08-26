@@ -1,18 +1,29 @@
 """
-Script reproducible de preparacion de datos.
+Script reproducible de preparacion de datos - Proyecto ClimaTec.
 
-Este script documenta exactamente como se generaron los archivos que
-estan en data/raw/, a partir de la fuente original (Our World in Data -
-CO2 and Greenhouse Gas Emissions), sin modificar el archivo fuente.
+Genera el ecosistema de datos de la Etapa 1 a partir de la fuente original
+(Our World in Data - CO2 and Greenhouse Gas Emissions), SIN modificar el
+archivo fuente. Deja trazabilidad completa de todas las transformaciones.
+
+Fuente original:
+    https://github.com/owid/co2-data  ->  owid-co2-data.csv
+    (descarga directa: https://raw.githubusercontent.com/owid/co2-data/master/owid-co2-data.csv)
 
 Uso:
-    1. Descargar el dataset original (no incluido en el repo por su tamano):
-       https://github.com/owid/co2-data -> owid-co2-data.csv
-    2. Guardarlo, por ejemplo, en data/processed/owid-co2-data.csv
-    3. Ejecutar: python scripts/preparar_datos.py
+    1. Colocar owid-co2-data.csv en data/processed/  (no se versiona por tamano)
+    2. Ejecutar:  python scripts/preparar_datos.py
 
-Fecha de referencia de la descarga original usada para esta version base:
-2026-08-21 (ver README.md para el detalle de trazabilidad).
+Transformaciones aplicadas (documentadas para trazabilidad):
+    - Seleccion de 14 columnas relevantes (de las 79 originales).
+    - Filtro temporal: year >= 1950  (mejor completitud que el historico completo).
+    - Mapeo de nivel_geografico:
+        * Global   = "World"
+        * Regional = 6 agregados continentales (Africa, Asia, Europe,
+                     North America, Oceania, South America)
+        * Nacional = 218 paises con codigo ISO3 (incluye Colombia)
+    - Salida principal: data/raw/clima_consolidado.csv  (>10.000 registros)
+    - Se conservan ademas 3 vistas de apoyo (World / South America / Colombia)
+      y el dataset manual de eventos externos.
 """
 
 import os
@@ -21,6 +32,9 @@ import pandas as pd
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FUENTE_ORIGINAL = os.path.join(BASE_DIR, "data", "processed", "owid-co2-data.csv")
 DESTINO = os.path.join(BASE_DIR, "data", "raw")
+
+ANIO_MIN = 1950
+CONTINENTES = ["Africa", "Asia", "Europe", "North America", "Oceania", "South America"]
 
 COLUMNAS = [
     "country", "year", "iso_code", "population",
@@ -37,34 +51,43 @@ def preparar():
             "No se encontro el archivo fuente en:\n  "
             f"{FUENTE_ORIGINAL}\n"
             "Descargalo desde https://github.com/owid/co2-data "
-            "(owid-co2-data.csv) y colocalo en esa ruta antes de "
-            "ejecutar este script."
+            "(owid-co2-data.csv) y colocalo en esa ruta."
         )
         return
 
     df = pd.read_csv(FUENTE_ORIGINAL)
-    columnas = [c for c in COLUMNAS if c in df.columns]
-
+    cols = [c for c in COLUMNAS if c in df.columns]
     os.makedirs(DESTINO, exist_ok=True)
 
-    world = df[(df.country == "World") & (df.year >= 1995)][columnas].sort_values("year")
+    # --- Dataset consolidado (el que usa la app para la Etapa 1) ---
+    g = df[(df.country == "World") & (df.year >= ANIO_MIN)].copy()
+    g["nivel_geografico"] = "Global"
+    r = df[(df.country.isin(CONTINENTES)) & (df.year >= ANIO_MIN)].copy()
+    r["nivel_geografico"] = "Regional"
+    n = df[(df.iso_code.notna()) & (df.iso_code.str.len() == 3) & (df.year >= ANIO_MIN)].copy()
+    n["nivel_geografico"] = "Nacional"
+
+    consolidado = pd.concat([g, r, n], ignore_index=True)[cols + ["nivel_geografico"]]
+    consolidado = consolidado.sort_values(["nivel_geografico", "country", "year"])
+    consolidado.to_csv(os.path.join(DESTINO, "clima_consolidado.csv"), index=False)
+
+    # --- Vistas de apoyo (trazabilidad / narrativa por nivel) ---
+    world = df[(df.country == "World") & (df.year >= 1995)][cols].sort_values("year")
     world.to_csv(os.path.join(DESTINO, "global_climate_owid_1995_2024.csv"), index=False)
-
-    regional = df[(df.country == "South America") & (df.year >= 1995)][columnas].sort_values("year")
-    regional.to_csv(os.path.join(DESTINO, "regional_sudamerica_owid_1995_2024.csv"), index=False)
-
-    colombia = df[(df.country == "Colombia") & (df.year >= 1960)][columnas].sort_values("year")
-    colombia.to_csv(os.path.join(DESTINO, "nacional_colombia_owid_1960_2024.csv"), index=False)
+    sudam = df[(df.country == "South America") & (df.year >= 1995)][cols].sort_values("year")
+    sudam.to_csv(os.path.join(DESTINO, "regional_sudamerica_owid_1995_2024.csv"), index=False)
+    col = df[(df.country == "Colombia") & (df.year >= 1960)][cols].sort_values("year")
+    col.to_csv(os.path.join(DESTINO, "nacional_colombia_owid_1960_2024.csv"), index=False)
 
     print("Archivos generados en data/raw/:")
+    print(f"  - clima_consolidado.csv ({len(consolidado)} filas)  <- dataset principal Etapa 1")
+    print(f"      Global:   {(consolidado.nivel_geografico=='Global').sum()} filas")
+    print(f"      Regional: {(consolidado.nivel_geografico=='Regional').sum()} filas")
+    print(f"      Nacional: {(consolidado.nivel_geografico=='Nacional').sum()} filas")
     print(f"  - global_climate_owid_1995_2024.csv ({len(world)} filas)")
-    print(f"  - regional_sudamerica_owid_1995_2024.csv ({len(regional)} filas)")
-    print(f"  - nacional_colombia_owid_1960_2024.csv ({len(colombia)} filas)")
-    print(
-        "\nNota: el dataset de eventos externos "
-        "(eventos_externos_muestra.csv) se mantiene y edita manualmente, "
-        "no se genera con este script."
-    )
+    print(f"  - regional_sudamerica_owid_1995_2024.csv ({len(sudam)} filas)")
+    print(f"  - nacional_colombia_owid_1960_2024.csv ({len(col)} filas)")
+    print("  - eventos_externos_muestra.csv (se mantiene manual)")
 
 
 if __name__ == "__main__":

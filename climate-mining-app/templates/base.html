@@ -3,21 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block titulo %}Bitacora - Cambio Climatico y Eventos Externos{% endblock %}</title>
+    <title>{% block titulo %}ClimaTec · Bitacora tecnica{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
     <header class="topbar">
         <div class="contenedor topbar-inner">
-            <a class="marca" href="{{ url_for('index') }}">Cambio Climatico &amp; Eventos Externos</a>
-            <nav class="nav">
-                <a href="{{ url_for('index') }}">R1 · Inicio</a>
-                <a href="{{ url_for('problema') }}">Problema</a>
-                <a href="{{ url_for('recoleccion') }}">Recoleccion</a>
-                <a href="{{ url_for('dataset') }}">Dataset</a>
-                <a href="{{ url_for('calidad') }}">Calidad</a>
+            <a class="marca" href="{{ url_for('index') }}">
+                <span class="marca-nombre">ClimaTec</span>
+                <span class="marca-sub">Bitacora de mineria de datos</span>
+            </a>
+
+            <button class="menu-toggle" aria-label="Abrir menu" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+
+            <nav class="nav" id="nav">
+                <a href="{{ url_for('index') }}"
+                   class="{{ 'activo' if request.endpoint == 'index' }}">Inicio</a>
+
+                <div class="nav-grupo">
+                    <button class="nav-grupo-btn" aria-expanded="false">
+                        Etapa 1 <span class="caret">&#9662;</span>
+                    </button>
+                    <ul class="submenu">
+                        <li><a href="{{ url_for('problema_contexto') }}"><span class="num">1</span> Problema y contexto</a></li>
+                        <li><a href="{{ url_for('preguntas') }}"><span class="num">2</span> Pregunta principal y preguntas secundarias</a></li>
+                        <li><a href="{{ url_for('necesidades_informacion') }}"><span class="num">3</span> Necesidades de informacion</a></li>
+                        <li><a href="{{ url_for('fuentes_datos') }}"><span class="num">4</span> Fuentes de datos</a></li>
+                        <li><a href="{{ url_for('dataset_etapa1') }}"><span class="num">5</span> Dataset</a></li>
+                        <li><a href="{{ url_for('diccionario_datos') }}"><span class="num">6</span> Diccionario de datos</a></li>
+                        <li><a href="{{ url_for('calidad_inicial') }}"><span class="num">7</span> Calidad inicial de los datos</a></li>
+                        <li><a href="{{ url_for('limitaciones') }}"><span class="num">8</span> Limitaciones y consideraciones</a></li>
+                    </ul>
+                </div>
             </nav>
         </div>
+        <div class="stripes" aria-hidden="true"></div>
     </header>
 
     <main class="contenedor contenido">
@@ -26,24 +51,28 @@
 
     <footer class="footer">
         <div class="contenedor">
-            <p>Bitacora tecnica del proyecto &middot; Mineria de datos &middot; Cambio climatico y eventos externos (Global / Regional / Nacional - Colombia)</p>
+            <p><strong>ClimaTec</strong> &middot; Bitacora tecnica del proyecto de mineria de datos</p>
+            <p class="footer-sub">Cambio climatico y eventos externos &middot; Global / Regional (Sudamerica) / Nacional (Colombia) &middot; 1950-2024</p>
         </div>
     </footer>
+
+    <script>
+        // Menu movil
+        const toggle = document.querySelector('.menu-toggle');
+        const nav = document.getElementById('nav');
+        toggle.addEventListener('click', () => {
+            const abierto = nav.classList.toggle('abierto');
+            toggle.setAttribute('aria-expanded', abierto);
+        });
+        // Desplegable "Etapa 1" (click, funciona en escritorio y movil)
+        const grupoBtn = document.querySelector('.nav-grupo-btn');
+        const grupo = document.querySelector('.nav-grupo');
+        grupoBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            grupo.classList.toggle('abierto');
+            grupoBtn.setAttribute('aria-expanded', grupo.classList.contains('abierto'));
+        });
+        document.addEventListener('click', () => grupo.classList.remove('abierto'));
+    </script>
 </body>
 </html>
-
-<li class="nav-item dropdown">
-  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-    Etapa 1
-  </a>
-  <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-    <li><a class="dropdown-item" href="/etapa-1/problema-contexto">1. Problema y contexto</a></li>
-    <li><a class="dropdown-item" href="/etapa-1/preguntas">2. Preguntas principal y secundarias</a></li>
-    <li><a class="dropdown-item" href="/etapa-1/necesidades-informacion">3. Necesidades de información</a></li>
-    <li><a class="dropdown-item" href="/etapa-1/fuentes-datos">4. Fuentes de datos</a></li>
-    <li><a class="dropdown-item" href="/etapa-1/dataset">5. Dataset</a></li>
-    <li><a class="dropdown-item" href="/etapa-1/diccionario-datos">6. Diccionario de datos</a></li>
-    <li><a class="dropdown-item" href="/etapa-1/calidad-inicial">7. Calidad inicial de los datos</a></li>
-    <li><a class="dropdown-item" href="/etapa-1/limitaciones">8. Limitaciones y consideraciones</a></li>
-  </ul>
-</li>

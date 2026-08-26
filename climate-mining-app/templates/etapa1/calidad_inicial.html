@@ -1,13 +1,58 @@
 {% extends 'base.html' %}
-{% block content %}
-<div class="container mt-4">
-    <h2>7. Diagnóstico Inicial de Calidad de Datos</h2>
-    <hr>
-    <ul>
-        <li><strong>Valores Faltantes (Missing Values):</strong> Presencia de vacíos en años previos a 1980 en estaciones locales de monitoreo de IDEAM.</li>
-        <li><strong>Registros Duplicados:</strong> Verificación efectuada mediante combinación de llaves (<code>pais</code> + <code>anio</code>) no arrojó duplicidades críticas.</li>
-        <li><strong>Inconsistencias y Outliers:</strong> Se hallaron picos atípicos en precipitaciones correspondientes a eventos extremos del fenómeno de El Niño/La Niña.</li>
-        <li><strong>Diferencias de Formato:</strong> Estandarización aplicada para la codificación de caracteres en UTF-8 y manejo de punto como decimal.</li>
-    </ul>
+{% block titulo %}7. Calidad inicial · ClimaTec{% endblock %}
+{% block contenido %}
+
+<p class="eyebrow"><span class="paso">07</span> Diagnostico inicial de calidad</p>
+<h1>Calidad inicial de los datos</h1>
+<p class="lede">Diagnostico del estado del dataset (sin limpieza todavia). Todas las metricas se
+calculan en vivo sobre <span class="mono">clima_consolidado.csv</span>.</p>
+
+{% if calidad %}
+<div class="grid grid-3" style="margin:1.4rem 0;">
+    <div class="panel stat cold"><div class="valor">{{ calidad.completitud }}%</div><div class="etiqueta">completitud global</div></div>
+    <div class="panel stat"><div class="valor">{{ "{:,}".format(calidad.celdas_nulas).replace(',', '.') }}</div><div class="etiqueta">celdas faltantes</div></div>
+    <div class="panel stat warm"><div class="valor">{{ calidad.duplicados_clave }}</div><div class="etiqueta">duplicados por clave (nivel+pais+anio)</div></div>
 </div>
+
+<h2>Valores faltantes por variable</h2>
+<div class="tabla-wrap">
+    <table>
+        <thead><tr><th>Variable</th><th>Faltantes</th><th>% del total</th></tr></thead>
+        <tbody>
+            {% for n in calidad.nulos_por_columna %}
+            <tr><td><code>{{ n.columna }}</code></td><td class="mono">{{ "{:,}".format(n.faltantes).replace(',', '.') }}</td><td class="mono">{{ n.porcentaje }}%</td></tr>
+            {% else %}
+            <tr><td colspan="3">No hay valores faltantes.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<h2>Registros duplicados</h2>
+<ul class="lista-limpia">
+    <li>Filas totalmente duplicadas: <span class="mono">{{ calidad.duplicados_totales }}</span></li>
+    <li>Duplicados segun la clave logica <span class="mono">nivel_geografico + country + year</span>: <span class="mono">{{ calidad.duplicados_clave }}</span></li>
+</ul>
+
+<h2>Valores fuera de dominio</h2>
+<ul class="lista-limpia">
+    {% for v in calidad.fuera_dominio %}<li>{{ v }}</li>{% endfor %}
+</ul>
+
+<h2>Diferencias de formato e integracion</h2>
+<ul class="lista-limpia">
+    <li>Codificacion unificada en UTF-8; separador decimal punto; <span class="mono">year</span> como entero.</li>
+    <li><span class="mono">iso_code</span> vacio por diseno en agregados regionales y en 'World' (no es un error).</li>
+    <li>Integracion entre fuentes por variables geograficas y temporales comunes.</li>
+</ul>
+
+<div class="nota">
+    <strong>Nota:</strong> en esta etapa solo se diagnostica; la limpieza (imputacion,
+    tratamiento de outliers, normalizacion) se realizara en la Etapa 2, conservando la
+    trazabilidad de los datos originales.
+</div>
+{% else %}
+<div class="nota">No se pudo calcular el diagnostico de calidad.</div>
+{% endif %}
+
 {% endblock %}
