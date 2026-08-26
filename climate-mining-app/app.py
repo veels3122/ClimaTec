@@ -313,7 +313,7 @@ def fuentes_datos():
     return render_template('etapa1/fuentes_datos.html')
 
 @app.route('/etapa-1/dataset')
-def dataset():
+def dataset_etapa1():
     return render_template('etapa1/dataset.html')
 
 @app.route('/etapa-1/diccionario-datos')
