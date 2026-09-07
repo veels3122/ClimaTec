@@ -1,42 +1,70 @@
-{% extends 'base.html' %}
-{% block titulo %}4. Fuentes de datos · ClimaTec{% endblock %}
-{% block contenido %}
+{% extends "base.html" %}
+{% block content %}
+<div class="container my-4">
+    <h2 class="mb-4">4. Fuentes de Datos y Clasificación</h2>
+    <p class="lead">Inventario completo de fuentes primarias, secundarias y terciarias a nivel Global, Regional y Nacional (Colombia).</p>
 
-<p class="eyebrow"><span class="paso">04</span> Recoleccion y seleccion de fuentes</p>
-<h1>Fuentes de datos</h1>
-<p class="lede">Fuentes primarias, secundarias y terciarias que cubren los niveles global,
-regional y nacional. Cada ficha documenta los campos exigidos por la guia.</p>
+    <!-- NIVEL GLOBAL -->
+    <div class="card mb-4 border-primary">
+        <div class="card-header bg-primary text-white"><strong>Nivel Global</strong></div>
+        <div class="card-body">
+            <h5>1. Our World in Data — CO2 and Greenhouse Gas Emissions (Terciaria)</h5>
+            <ul>
+                <li><strong>Institución responsable:</strong> Our World in Data / Universidad de Oxford</li>
+                <li><strong>URL:</strong> <a href="https://github.com/owid/co2-data" target="_blank">https://github.com/owid/co2-data</a></li>
+                <li><strong>Formato / Registros:</strong> CSV (~50.000 filas) | <strong>Licencia:</strong> CC-BY</li>
+                <li><strong>Pertinencia:</strong> Aporta la serie histórica global (1950-2024) de CO2 y gases de efecto invernadero.</li>
+            </ul>
+            <h5>2. NOAA Earth System Research Laboratories (Primaria / Secundaria)</h5>
+            <ul>
+                <li><strong>Institución responsable:</strong> National Oceanic and Atmospheric Administration (EE. UU.)</li>
+                <li><strong>URL:</strong> <a href="https://gml.noaa.gov/ccgg/trends/" target="_blank">https://gml.noaa.gov/ccgg/trends/</a></li>
+                <li><strong>Formato / Método:</strong> TXT/CSV | Mediciones directas en estaciones de monitoreo continuo (Ej. Mauna Loa).</li>
+                <li><strong>Pertinencia:</strong> Fuente primaria observacional de concentraciones globales de $CO_2$ en atmósfera.</li>
+            </ul>
+        </div>
+    </div>
 
-{% for f in fuentes %}
-<div class="panel" style="margin-bottom:1rem;">
-    <span class="kicker">{{ f.tipo }}</span>
-    <h3>{{ f.nombre }}</h3>
-    <div class="tabla-wrap">
-        <table>
-            <tbody>
-                <tr><td style="width:32%"><strong>Institucion responsable</strong></td><td>{{ f.institucion }}</td></tr>
-                <tr><td><strong>URL</strong></td><td><a href="{{ f.url }}" target="_blank" rel="noopener">{{ f.url }}</a></td></tr>
-                <tr><td><strong>Tipo de fuente</strong></td><td>{{ f.tipo }}</td></tr>
-                <tr><td><strong>Nivel</strong></td><td>{{ f.nivel }}</td></tr>
-                <tr><td><strong>Cobertura geografica</strong></td><td>{{ f.cobertura }}</td></tr>
-                <tr><td><strong>Periodo disponible</strong></td><td>{{ f.periodo }}</td></tr>
-                <tr><td><strong>Formato</strong></td><td>{{ f.formato }}</td></tr>
-                <tr><td><strong>Metodo de adquisicion</strong></td><td>{{ f.adquisicion }}</td></tr>
-                <tr><td><strong>N.º aprox. de registros</strong></td><td>{{ f.registros }}</td></tr>
-                <tr><td><strong>Variables disponibles</strong></td><td>{{ f.variables }}</td></tr>
-                <tr><td><strong>Fecha de consulta</strong></td><td>{{ f.fecha_consulta }}</td></tr>
-                <tr><td><strong>Restricciones de uso</strong></td><td>{{ f.restricciones }}</td></tr>
-            </tbody>
-        </table>
+    <!-- NIVEL REGIONAL (Sudamérica) -->
+    <div class="card mb-4 border-success">
+        <div class="card-header bg-success text-white"><strong>Nivel Regional (Sudamérica)</strong></div>
+        <div class="card-body">
+            <h5>1. CEPALSTAT — Indicadores Ambientales CEPAL (Secundaria)</h5>
+            <ul>
+                <li><strong>Institución responsable:</strong> Comisión Económica para América Latina y el Caribe (CEPAL)</li>
+                <li><strong>URL:</strong> <a href="https://statistics.cepal.org/portal/cepalstat/" target="_blank">https://statistics.cepal.org/portal/cepalstat/</a></li>
+                <li><strong>Formato / Registros:</strong> JSON/CSV (~12.000 filas)</li>
+                <li><strong>Pertinencia:</strong> Proporciona métricas consolidadas sobre impacto climático, eventos extremos y vulnerabilidad en América Latina.</li>
+            </ul>
+            <h5>2. INPE — Banco de Datos de Quemadas / Satelital (Primaria / Secundaria)</h5>
+            <ul>
+                <li><strong>Institución responsable:</strong> Instituto Nacional de Pesquisas Espaciais (Brasil)</li>
+                <li><strong>URL:</strong> <a href="https://terrabrasilis.dpi.inpe.br/" target="_blank">https://terrabrasilis.dpi.inpe.br/</a></li>
+                <li><strong>Formato / Método:</strong> GeoJSON/CSV | Detección remota e imágenes de satélite (sensores MODIS/VIIRS).</li>
+                <li><strong>Pertinencia:</strong> Fuente primaria de monitoreo satelital para incendios forestales y pérdida de cobertura vegetal en la región amazónica.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- NIVEL NACIONAL (Colombia) -->
+    <div class="card mb-4 border-warning text-dark">
+        <div class="card-header bg-warning text-dark"><strong>Nivel Nacional (Colombia)</strong></div>
+        <div class="card-body">
+            <h5>1. IDEAM — Red de Estaciones Meteorológicas Automáticas (Primaria)</h5>
+            <ul>
+                <li><strong>Institución responsable:</strong> Instituto de Hidrología, Meteorología y Estudios Ambientales (IDEAM)</li>
+                <li><strong>URL:</strong> <a href="http://dhime.ideam.gov.co/" target="_blank">http://dhime.ideam.gov.co/ (Sistema DHIME)</a></li>
+                <li><strong>Formato / Método:</strong> CSV/XML | Registros in-situ de sensores automáticos y estaciones pluviométricas.</li>
+                <li><strong>Pertinencia:</strong> Datos primarios de temperatura, precipitación y humedad a nivel de municipio/estación en Colombia.</li>
+            </ul>
+            <h5>2. Portal Datos Abiertos Colombia — Eventos Climáticos e Incendios (Secundaria)</h5>
+            <ul>
+                <li><strong>Institución responsable:</strong> Ministerio de Tecnologías de la Información y las Comunicaciones (MinTIC) / UNGRD</li>
+                <li><strong>URL:</strong> <a href="https://www.datos.gov.co/" target="_blank">https://www.datos.gov.co/</a></li>
+                <li><strong>Formato / Registros:</strong> CSV / API Socrata (~25.000 registros)</li>
+                <li><strong>Pertinencia:</strong> Registro de emergencias, inundaciones y sequías reportadas por municipios colombianos.</li>
+            </ul>
+        </div>
     </div>
 </div>
-{% endfor %}
-
-<div class="nota">
-    <strong>Nota de pertinencia:</strong> la fuente terciaria OWID es la base cuantitativa
-    del dataset consolidado por su confiabilidad, actualidad y cobertura de los tres niveles.
-    Las fuentes primarias (IDEAM, NOAA) y secundarias (UNGRD, UNFCCC) sustentan el dataset de
-    eventos externos y se integraran de forma cuantitativa en la Etapa 2.
-</div>
-
 {% endblock %}
