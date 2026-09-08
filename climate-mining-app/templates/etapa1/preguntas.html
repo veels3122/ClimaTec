@@ -2,23 +2,32 @@
 {% block titulo %}2. Preguntas de investigacion · ClimaTec{% endblock %}
 {% block contenido %}
 
-<p class="eyebrow"><span class="paso">02</span> Definicion del problema</p>
-<h1>Pregunta principal y preguntas secundarias</h1>
+<div class="page-hero acento-warm animate-fade-down">
+    <div class="icono-hero">🎯</div>
+    <p class="eyebrow"><span class="paso">02</span> Definicion del problema</p>
+    <h1>Pregunta principal y preguntas secundarias</h1>
+</div>
 
+<div class="animate-fade-up" style="animation-delay:100ms;">
 <h2>Pregunta principal</h2>
 <blockquote>{{ preguntas.principal }}</blockquote>
+</div>
 
+<div class="animate-fade-up" style="animation-delay:200ms;">
 <h2>Preguntas secundarias</h2>
 <ol class="preguntas">
     {% for p in preguntas.secundarias %}
     <li>{{ p }}</li>
     {% endfor %}
 </ol>
+</div>
 
+<div class="animate-fade-up" style="animation-delay:300ms;">
 <h2>Conocimiento esperado a partir de los datos</h2>
 <p>{{ conocimiento }}</p>
+</div>
 
-<div class="nota">
+<div class="nota animate-fade-up" style="animation-delay:400ms;">
     <strong>Trazabilidad de las preguntas:</strong> todas pueden responderse con las variables
     del dataset consolidado (emisiones de CO2, GEI, temperatura, poblacion, energia) cruzando
     <span class="mono">nivel_geografico</span> y <span class="mono">year</span>.
