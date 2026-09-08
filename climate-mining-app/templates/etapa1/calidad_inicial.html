@@ -2,13 +2,16 @@
 {% block titulo %}7. Calidad inicial · ClimaTec{% endblock %}
 {% block contenido %}
 
-<p class="eyebrow"><span class="paso">07</span> Diagnostico inicial de calidad</p>
-<h1>Calidad inicial de los datos</h1>
-<p class="lede">Diagnostico del estado del dataset (sin limpieza todavia). Todas las metricas se
-calculan en vivo sobre <span class="mono">clima_consolidado.csv</span>.</p>
+<div class="page-hero acento-amber animate-fade-down">
+    <div class="icono-hero">🔍</div>
+    <p class="eyebrow"><span class="paso">07</span> Diagnostico inicial de calidad</p>
+    <h1>Calidad inicial de los datos</h1>
+    <p class="lede">Diagnostico del estado del dataset (sin limpieza todavia). Todas las metricas se
+    calculan en vivo sobre <span class="mono">clima_consolidado.csv</span>.</p>
+</div>
 
 {% if calidad %}
-<div class="grid grid-3" style="margin:1.4rem 0;">
+<div class="grid grid-3 animate-fade-up" style="margin:1.4rem 0; animation-delay:150ms;">
     <div class="panel stat cold"><div class="valor">{{ calidad.completitud }}%</div><div class="etiqueta">completitud global</div></div>
     <div class="panel stat"><div class="valor">{{ "{:,}".format(calidad.celdas_nulas).replace(',', '.') }}</div><div class="etiqueta">celdas faltantes</div></div>
     <div class="panel stat warm"><div class="valor">{{ calidad.duplicados_clave }}</div><div class="etiqueta">duplicados por clave (nivel+pais+anio)</div></div>
