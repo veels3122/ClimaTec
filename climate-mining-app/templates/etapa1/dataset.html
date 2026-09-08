@@ -2,13 +2,16 @@
 {% block titulo %}5. Dataset · ClimaTec{% endblock %}
 {% block contenido %}
 
-<p class="eyebrow"><span class="paso">05</span> Construccion del dataset inicial</p>
-<h1>Dataset</h1>
-<p class="lede">Ecosistema de datos consolidado a partir de la fuente OWID. Las cifras de
-esta pagina se calculan directamente del archivo <span class="mono">clima_consolidado.csv</span>.</p>
+<div class="page-hero acento-cold animate-fade-down">
+    <div class="icono-hero">🗂️</div>
+    <p class="eyebrow"><span class="paso">05</span> Construccion del dataset inicial</p>
+    <h1>Dataset</h1>
+    <p class="lede">Ecosistema de datos consolidado a partir de la fuente OWID. Las cifras de
+    esta pagina se calculan directamente del archivo <span class="mono">clima_consolidado.csv</span>.</p>
+</div>
 
 {% if resumen %}
-<div class="grid grid-3" style="margin:1.4rem 0;">
+<div class="grid grid-3 animate-fade-up" style="margin:1.4rem 0; animation-delay:150ms;">
     <div class="panel stat cold"><div class="valor">{{ "{:,}".format(resumen.total_consolidado).replace(',', '.') }}</div><div class="etiqueta">registros consolidados</div></div>
     <div class="panel stat"><div class="valor">{{ resumen.n_variables }}</div><div class="etiqueta">variables totales</div></div>
     <div class="panel stat warm"><div class="valor">{{ resumen.total_eventos }}</div><div class="etiqueta">eventos externos (muestra)</div></div>
