@@ -1,11 +1,3 @@
-/* ==========================================================================
-   ClimaTec — identidad visual "Apogee" adaptada a datos climaticos.
-   Tema oscuro, superficies de vidrio (glassmorphism), acentos frio->calido
-   (la misma metafora cientifica de "warming stripes" del diseno anterior,
-   ahora sobre fondo oscuro tipo panel de mision espacial/observatorio).
-   Mantiene TODOS los nombres de clase del CSS anterior para no romper
-   ningun template: solo cambia como se ven.
-   ========================================================================== */
 
 :root {
     /* Fondo y superficies */
@@ -57,11 +49,7 @@ body {
 
 .contenedor { width: min(1120px, 92vw); margin: 0 auto; }
 
-/* ==========================================================================
-   Atmosfera de fondo — sustituto climatico del video de Apogee.
-   Blobs de gradiente (frio + calido) a la deriva, fijos detras de todo.
-   Puro CSS: sin video, sin dependencias externas, carga instantanea.
-   ========================================================================== */
+
 .atmosfera {
     position: fixed;
     inset: 0;
@@ -111,9 +99,7 @@ body {
 }
 
 /* ==========================================================================
-   Animaciones de entrada — replica exacta de la especificacion "Apogee":
-   mismas curvas de easing, mismos nombres de efecto, revelado por CSS puro
-   (nunca por JS/IntersectionObserver), fill-mode forwards.
+   Animaciones de entrada 
    ========================================================================== */
 @keyframes fade-up    { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes fade-down  { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: translateY(0); } }
