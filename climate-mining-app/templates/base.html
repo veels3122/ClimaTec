@@ -10,11 +10,22 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+    <div class="atmosfera" aria-hidden="true"><div class="grano"></div></div>
+
     <header class="topbar">
         <div class="contenedor topbar-inner">
             <a class="marca" href="{{ url_for('index') }}">
+                <svg class="marca-icono" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M24 4C24 4 14 16 14 26C14 33.7 18.5 40 24 40C29.5 40 34 33.7 34 26C34 16 24 4 24 4Z"
+                          fill="url(#grad-marca)" />
+                    <defs>
+                        <linearGradient id="grad-marca" x1="14" y1="4" x2="34" y2="40" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#49c7e0"/>
+                            <stop offset="1" stop-color="#ff6a4d"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
                 <span class="marca-nombre">ClimaTec</span>
-                <span class="marca-sub">Bitacora de mineria de datos</span>
             </a>
 
             <button class="menu-toggle" aria-label="Abrir menu" aria-expanded="false">
@@ -30,16 +41,18 @@
                         Etapa 1 <span class="caret">&#9662;</span>
                     </button>
                     <ul class="submenu">
-                        <li><a href="{{ url_for('problema_contexto') }}"><span class="num">1</span> Problema y contexto</a></li>
-                        <li><a href="{{ url_for('preguntas') }}"><span class="num">2</span> Pregunta principal y preguntas secundarias</a></li>
-                        <li><a href="{{ url_for('necesidades_informacion') }}"><span class="num">3</span> Necesidades de informacion</a></li>
-                        <li><a href="{{ url_for('fuentes_datos') }}"><span class="num">4</span> Fuentes de datos</a></li>
-                        <li><a href="{{ url_for('dataset_etapa1') }}"><span class="num">5</span> Dataset</a></li>
-                        <li><a href="{{ url_for('diccionario_datos') }}"><span class="num">6</span> Diccionario de datos</a></li>
-                        <li><a href="{{ url_for('calidad_inicial') }}"><span class="num">7</span> Calidad inicial de los datos</a></li>
-                        <li><a href="{{ url_for('limitaciones') }}"><span class="num">8</span> Limitaciones y consideraciones</a></li>
+                        <li><a href="{{ url_for('problema_contexto') }}" class="{{ 'activo' if request.endpoint == 'problema_contexto' }}"><span class="num">1</span> Problema y contexto</a></li>
+                        <li><a href="{{ url_for('preguntas') }}" class="{{ 'activo' if request.endpoint == 'preguntas' }}"><span class="num">2</span> Pregunta principal y secundarias</a></li>
+                        <li><a href="{{ url_for('necesidades_informacion') }}" class="{{ 'activo' if request.endpoint == 'necesidades_informacion' }}"><span class="num">3</span> Necesidades de informacion</a></li>
+                        <li><a href="{{ url_for('fuentes_datos') }}" class="{{ 'activo' if request.endpoint == 'fuentes_datos' }}"><span class="num">4</span> Fuentes de datos</a></li>
+                        <li><a href="{{ url_for('dataset_etapa1') }}" class="{{ 'activo' if request.endpoint == 'dataset_etapa1' }}"><span class="num">5</span> Dataset</a></li>
+                        <li><a href="{{ url_for('diccionario_datos') }}" class="{{ 'activo' if request.endpoint == 'diccionario_datos' }}"><span class="num">6</span> Diccionario de datos</a></li>
+                        <li><a href="{{ url_for('calidad_inicial') }}" class="{{ 'activo' if request.endpoint == 'calidad_inicial' }}"><span class="num">7</span> Calidad inicial de los datos</a></li>
+                        <li><a href="{{ url_for('limitaciones') }}" class="{{ 'activo' if request.endpoint == 'limitaciones' }}"><span class="num">8</span> Limitaciones y consideraciones</a></li>
                     </ul>
                 </div>
+
+                {% block nav_etapa2 %}{% endblock %}
             </nav>
         </div>
         <div class="stripes" aria-hidden="true"></div>
@@ -56,23 +69,6 @@
         </div>
     </footer>
 
-    <script>
-        // Menu movil
-        const toggle = document.querySelector('.menu-toggle');
-        const nav = document.getElementById('nav');
-        toggle.addEventListener('click', () => {
-            const abierto = nav.classList.toggle('abierto');
-            toggle.setAttribute('aria-expanded', abierto);
-        });
-        // Desplegable "Etapa 1" (click, funciona en escritorio y movil)
-        const grupoBtn = document.querySelector('.nav-grupo-btn');
-        const grupo = document.querySelector('.nav-grupo');
-        grupoBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            grupo.classList.toggle('abierto');
-            grupoBtn.setAttribute('aria-expanded', grupo.classList.contains('abierto'));
-        });
-        document.addEventListener('click', () => grupo.classList.remove('abierto'));
-    </script>
+    <script src="{{ url_for('static', filename='js/site.js') }}"></script>
 </body>
 </html>

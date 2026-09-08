@@ -2,19 +2,24 @@
 {% block titulo %}1. Problema y contexto · ClimaTec{% endblock %}
 {% block contenido %}
 
-<p class="eyebrow"><span class="paso">01</span> Definicion del problema</p>
-<h1>Problema y contexto</h1>
+<div class="page-hero acento-cold animate-fade-down">
+    <div class="icono-hero">🌍</div>
+    <p class="eyebrow"><span class="paso">01</span> Definicion del problema</p>
+    <h1>Problema y contexto</h1>
+</div>
 
+<div class="animate-fade-up" style="animation-delay:100ms;">
 <h2>Contexto general</h2>
 <p>{{ contexto.general }}</p>
 
 <h2>Delimitacion del problema</h2>
 <p>{{ contexto.problema }}</p>
+</div>
 
-<h2>Analisis por niveles</h2>
+<h2 class="animate-fade-up" style="animation-delay:150ms;">Analisis por niveles</h2>
 <div class="grid grid-3">
     {% for n in contexto.niveles %}
-    <div class="panel">
+    <div class="panel animate-fade-up" style="animation-delay:{{ 200 + loop.index0 * 100 }}ms;">
         <span class="kicker">Nivel</span>
         <h3>{{ n.nivel }}</h3>
         <p>{{ n.detalle }}</p>
@@ -22,7 +27,9 @@
     {% endfor %}
 </div>
 
+<div class="animate-fade-up" style="animation-delay:500ms;">
 <h2>Conocimiento esperado</h2>
 <p>{{ contexto.conocimiento_esperado }}</p>
+</div>
 
 {% endblock %}

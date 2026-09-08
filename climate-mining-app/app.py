@@ -149,6 +149,31 @@ def diagnostico_calidad():
     }
 
 
+def serie_co2_global():
+    """Serie real de CO2 mundial (fila 'World'), anio a anio, para el
+    grafico de barras del hero de inicio. Nunca son numeros inventados:
+    salen directo del dataset consolidado."""
+    if DF is None:
+        return None
+    mundo = DF[DF["country"] == "World"].sort_values("year")
+    if mundo.empty:
+        return None
+
+    valores = mundo["co2"].round(1).tolist()
+    anios = mundo["year"].tolist()
+    primero, ultimo = valores[0], valores[-1]
+    variacion = round((ultimo - primero) / primero * 100, 1) if primero else 0
+
+    return {
+        "valores": valores,
+        "anio_inicio": int(anios[0]),
+        "anio_fin": int(anios[-1]),
+        "valor_actual": ultimo,
+        "variacion_pct": variacion,
+        "proyectadas": 0,
+    }
+
+
 # ---------------------------------------------------------------------------
 # Contenido documental de la Etapa 1 (texto, coherente con el dataset real).
 # ---------------------------------------------------------------------------
@@ -372,7 +397,8 @@ LIMITACIONES = {
 # ---------------------------------------------------------------------------
 @app.route("/")
 def index():
-    return render_template("index.html", proyecto=PROYECTO, resumen=resumen_dataset())
+    return render_template("index.html", proyecto=PROYECTO, resumen=resumen_dataset(),
+                           serie=serie_co2_global())
 
 
 @app.route("/etapa-1/problema-contexto")
