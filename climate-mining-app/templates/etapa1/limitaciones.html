@@ -2,22 +2,31 @@
 {% block titulo %}8. Limitaciones · ClimaTec{% endblock %}
 {% block contenido %}
 
-<p class="eyebrow"><span class="paso">08</span> Limitaciones y consideraciones</p>
-<h1>Limitaciones y consideraciones</h1>
+<div class="page-hero acento-ok animate-fade-down">
+    <div class="icono-hero">⚠️</div>
+    <p class="eyebrow"><span class="paso">08</span> Limitaciones y consideraciones</p>
+    <h1>Limitaciones y consideraciones</h1>
+</div>
 
+<div class="animate-fade-up" style="animation-delay:100ms;">
 <h2>Limitaciones del dataset</h2>
 <ul class="lista-limpia">
     {% for l in info.limitaciones %}<li>{{ l }}</li>{% endfor %}
 </ul>
+</div>
 
+<div class="animate-fade-up" style="animation-delay:200ms;">
 <h2>Posibles sesgos</h2>
 <ul class="lista-limpia">
     {% for s in info.sesgos %}<li>{{ s }}</li>{% endfor %}
 </ul>
+</div>
 
+<div class="animate-fade-up" style="animation-delay:300ms;">
 <h2>Trazabilidad</h2>
 <ul class="lista-limpia">
     {% for t in info.trazabilidad %}<li>{{ t }}</li>{% endfor %}
 </ul>
+</div>
 
 {% endblock %}
