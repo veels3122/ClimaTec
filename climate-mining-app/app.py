@@ -1,19 +1,21 @@
+# -*- coding: utf-8 -*-
 """
 Aplicacion Flask - ClimaTec
 Bitacora tecnica y plataforma de documentacion del proyecto de Mineria de Datos.
 
 Tema: Cambio climatico y eventos externos.
-Niveles de analisis: Global / Regional (continentes, incl. Sudamerica) / Nacional
-(paises, con foco en Colombia).
+Niveles de analisis: Global / Regional (Sudamerica) / Nacional (Colombia).
+Ventana temporal: 2020-2026.
 
-Toda la seccion "Etapa 1" se documenta a partir del dataset REAL
-(data/raw/clima_consolidado.csv). Las metricas de tamano, tipos de variable y
-calidad inicial se calculan en tiempo de ejecucion, de modo que la bitacora
-nunca describe algo distinto de lo que contiene el conjunto de datos.
+El dataset consolidado (data/raw/clima_consolidado.csv) es MULTI-FUENTE y esta en
+formato de tabla de hechos (largo/tidy): una fila = una observacion (un indicador
+medido para una entidad, en una fecha, proveniente de una fuente identificada).
+Todas las metricas de tamano, tipos de variable y calidad se calculan en tiempo de
+ejecucion, de modo que la bitacora nunca describe algo distinto de lo que contiene
+el conjunto de datos.
 """
 
 import os
-from datetime import date
 
 import pandas as pd
 from flask import Flask, render_template, redirect, url_for
@@ -25,19 +27,31 @@ DATA_DIR = os.path.join(BASE_DIR, "data", "raw")
 
 DATASET_PRINCIPAL = "clima_consolidado.csv"
 DATASET_EVENTOS = "eventos_externos_muestra.csv"
+DATASET_MANIFIESTO = "fuentes_manifest.csv"
+
+ANIO_MIN, ANIO_MAX = 2020, 2026
 
 # ---------------------------------------------------------------------------
-# Clasificacion de variables del dataset consolidado.
+# Clasificacion de las columnas del esquema (tabla de hechos).
 # ---------------------------------------------------------------------------
-VARIABLES_NUMERICAS = [
-    "population", "co2", "co2_per_capita", "co2_growth_prct", "cumulative_co2",
-    "ghg_excluding_lucf_per_capita", "temperature_change_from_ghg",
-    "temperature_change_from_co2", "methane", "nitrous_oxide",
-    "primary_energy_consumption",
-]
-VARIABLES_CATEGORICAS = ["country", "iso_code", "nivel_geografico"]
-VARIABLES_TEMPORALES = ["year"]
-VARIABLES_GEOGRAFICAS = ["country", "iso_code", "nivel_geografico"]
+COL_NUMERICAS = ["valor", "anio", "mes"]
+COL_CATEGORICAS = ["fuente", "fuente_tipo", "nivel_geografico", "entidad",
+                   "iso_code", "periodicidad", "indicador", "unidad"]
+COL_TEMPORALES = ["fecha", "anio", "mes"]
+COL_GEOGRAFICAS = ["entidad", "iso_code", "nivel_geografico"]
+
+# Indicadores que por definicion no pueden ser negativos (para el chequeo de
+# dominio). Se excluyen anomalias y variaciones, que si pueden serlo.
+IND_NO_NEGATIVOS = {
+    "Emisiones de CO2 (total)", "Emisiones de CO2 per capita", "CO2 acumulado historico",
+    "CO2 por carbon", "CO2 por petroleo", "CO2 por gas", "CO2 por cemento",
+    "Emisiones de metano", "Emisiones de oxido nitroso",
+    "Gases de efecto invernadero (total)", "GEI per capita (sin uso del suelo)",
+    "Poblacion", "Consumo de energia primaria", "Consumo de energia per capita",
+    "Generacion de electricidad", "Participacion de renovables en energia",
+    "Participacion de fosiles en energia", "Participacion baja en carbono",
+    "Concentracion de CO2 atmosferico",
+}
 
 
 def _cargar(nombre):
@@ -48,9 +62,9 @@ def _cargar(nombre):
         return None
 
 
-# Se cargan una sola vez al arrancar (rendimiento en Render free tier).
 DF = _cargar(DATASET_PRINCIPAL)
 DF_EVENTOS = _cargar(DATASET_EVENTOS)
+DF_MANIFIESTO = _cargar(DATASET_MANIFIESTO)
 
 
 # ---------------------------------------------------------------------------
@@ -59,38 +73,63 @@ DF_EVENTOS = _cargar(DATASET_EVENTOS)
 def resumen_dataset():
     if DF is None:
         return None
-    total_consolidado = len(DF)
+    total = len(DF)
     total_eventos = 0 if DF_EVENTOS is None else len(DF_EVENTOS)
     por_nivel = DF["nivel_geografico"].value_counts().to_dict()
-    paises = int(DF[DF["nivel_geografico"] == "Nacional"]["country"].nunique())
-    regiones = int(DF[DF["nivel_geografico"] == "Regional"]["country"].nunique())
+    por_periodicidad = DF["periodicidad"].value_counts().to_dict()
+    n_indicadores = int(DF["indicador"].nunique())
+    n_fuentes = int(DF["fuente"].nunique())
+
+    # Fuentes por tipo (para narrar la diversidad).
+    tipos = (DF.drop_duplicates("fuente")["fuente_tipo"].value_counts().to_dict())
+
+    # Desglose por fuente (con tipo y nivel), ordenado por aporte.
+    por_fuente = []
+    for fuente, sub in DF.groupby("fuente"):
+        por_fuente.append({
+            "fuente": fuente,
+            "tipo": sub["fuente_tipo"].iloc[0],
+            "registros": int(len(sub)),
+            "periodicidad": "/".join(sorted(sub["periodicidad"].unique())),
+        })
+    por_fuente.sort(key=lambda x: x["registros"], reverse=True)
+
+    nac = DF[DF["nivel_geografico"] == "Nacional"]
+    n_paises = int(nac["iso_code"].nunique())
+    n_regiones = int(DF[DF["nivel_geografico"] == "Regional"]["entidad"].nunique())
+
+    muestra = (DF.sort_values(["nivel_geografico", "fuente", "entidad", "anio"])
+               .head(8).to_dict(orient="records"))
 
     return {
-        "total_consolidado": total_consolidado,
+        "total_consolidado": total,
         "total_eventos": total_eventos,
-        "total_general": total_consolidado + total_eventos,
-        "n_variables": DF.shape[1],
-        "n_numericas": len(VARIABLES_NUMERICAS),
-        "n_categoricas": len(VARIABLES_CATEGORICAS),
-        "n_temporales": len(VARIABLES_TEMPORALES),
-        "n_geograficas": len(VARIABLES_GEOGRAFICAS),
+        "total_general": total + total_eventos,
+        "n_columnas": DF.shape[1],
+        "n_indicadores": n_indicadores,
+        "n_fuentes": n_fuentes,
+        "tipos_fuente": tipos,
+        "por_fuente": por_fuente,
+        "n_numericas": len(COL_NUMERICAS),
+        "n_categoricas": len(COL_CATEGORICAS),
+        "n_temporales": len(COL_TEMPORALES),
+        "n_geograficas": len(COL_GEOGRAFICAS),
         "por_nivel": por_nivel,
-        "n_paises": paises,
-        "n_regiones": regiones,
-        "anio_min": int(DF["year"].min()),
-        "anio_max": int(DF["year"].max()),
-        "muestra": DF.sort_values(["nivel_geografico", "country", "year"])
-        .head(8)
-        .to_dict(orient="records"),
+        "por_periodicidad": por_periodicidad,
+        "n_paises": n_paises,
+        "n_regiones": n_regiones,
+        "anio_min": int(DF["anio"].min()),
+        "anio_max": int(DF["anio"].max()),
+        "muestra": muestra,
         "columnas": list(DF.columns),
         # Chequeo automatico de requisitos minimos de la guia.
         "cumple": {
-            "registros_10k": total_consolidado >= 10000,
-            "variables_10": DF.shape[1] >= 10,
-            "numericas_3": len(VARIABLES_NUMERICAS) >= 3,
-            "categoricas_3": len(VARIABLES_CATEGORICAS) >= 3,
-            "temporal_1": len(VARIABLES_TEMPORALES) >= 1,
-            "geografica_1": len(VARIABLES_GEOGRAFICAS) >= 1,
+            "registros_10k": total >= 10000,
+            "indicadores_10": n_indicadores >= 10,
+            "numericas_3": len(COL_NUMERICAS) >= 3,
+            "categoricas_3": len(COL_CATEGORICAS) >= 3,
+            "temporal_1": len(COL_TEMPORALES) >= 1,
+            "geografica_1": len(COL_GEOGRAFICAS) >= 1,
         },
     }
 
@@ -105,37 +144,39 @@ def diagnostico_calidad():
 
     nulos = DF.isna().sum()
     nulos = nulos[nulos > 0].sort_values(ascending=False)
+    # iso_code y mes son nulos por diseno (agregados globales / series anuales).
+    por_diseno = {"iso_code", "mes"}
     nulos_por_columna = [
         {
             "columna": c,
             "faltantes": int(nulos[c]),
             "porcentaje": round(100 * nulos[c] / len(DF), 2),
+            "por_diseno": c in por_diseno,
         }
         for c in nulos.index
     ]
 
     duplicados_totales = int(len(DF) - len(DF.drop_duplicates()))
-    # Clave logica del dataset: nivel + pais + anio.
-    clave = ["nivel_geografico", "country", "year"]
+    # Clave logica de la tabla de hechos.
+    clave = ["fuente", "nivel_geografico", "entidad", "anio", "mes", "indicador"]
     duplicados_clave = int(DF.duplicated(subset=clave).sum())
 
     # Valores fuera de dominio esperado.
-    anio_actual = date.today().year
     fuera_dominio = []
-    neg_co2 = int((DF["co2"] < 0).sum())
-    if neg_co2:
-        fuera_dominio.append("{} registros con co2 < 0 (no valido).".format(neg_co2))
-    neg_pc = int((DF["co2_per_capita"] < 0).sum())
-    if neg_pc:
-        fuera_dominio.append("{} registros con co2_per_capita < 0 (no valido).".format(neg_pc))
-    anio_mal = int(((DF["year"] < 1950) | (DF["year"] > anio_actual)).sum())
+    mask_nn = DF["indicador"].isin(IND_NO_NEGATIVOS) & (DF["valor"] < 0)
+    neg = int(mask_nn.sum())
+    if neg:
+        fuera_dominio.append(
+            "{} observaciones con valor negativo en indicadores que no lo admiten.".format(neg))
+    anio_mal = int(((DF["anio"] < ANIO_MIN) | (DF["anio"] > ANIO_MAX)).sum())
     if anio_mal:
-        fuera_dominio.append("{} registros con year fuera de 1950-{}.".format(anio_mal, anio_actual))
+        fuera_dominio.append("{} registros con anio fuera de {}-{}.".format(anio_mal, ANIO_MIN, ANIO_MAX))
     if not fuera_dominio:
         fuera_dominio.append(
-            "No se detectaron valores negativos en co2 / co2_per_capita ni anios "
-            "fuera del rango 1950-{}.".format(anio_actual)
-        )
+            "Sin valores negativos en indicadores que no lo admiten y todos los "
+            "registros dentro de la ventana {}-{}. Las anomalias de temperatura y las "
+            "variaciones porcentuales si pueden ser negativas (comportamiento esperado).".format(
+                ANIO_MIN, ANIO_MAX))
 
     return {
         "filas": len(DF),
@@ -150,20 +191,18 @@ def diagnostico_calidad():
 
 
 def serie_co2_global():
-    """Serie real de CO2 mundial (fila 'World'), anio a anio, para el
-    grafico de barras del hero de inicio. Nunca son numeros inventados:
-    salen directo del dataset consolidado."""
+    """Serie real de CO2 mundial (entidad 'World', indicador de emisiones totales)
+    para el grafico de barras del hero. Sale directo del dataset consolidado."""
     if DF is None:
         return None
-    mundo = DF[DF["country"] == "World"].sort_values("year")
+    mundo = DF[(DF["entidad"] == "World") &
+               (DF["indicador"] == "Emisiones de CO2 (total)")].sort_values("anio")
     if mundo.empty:
         return None
-
-    valores = mundo["co2"].round(1).tolist()
-    anios = mundo["year"].tolist()
+    valores = mundo["valor"].round(1).tolist()
+    anios = mundo["anio"].tolist()
     primero, ultimo = valores[0], valores[-1]
     variacion = round((ultimo - primero) / primero * 100, 1) if primero else 0
-
     return {
         "valores": valores,
         "anio_inicio": int(anios[0]),
@@ -182,7 +221,7 @@ PROYECTO = {
     "titulo": "Cambio climatico y eventos externos: analisis global, regional y nacional",
     "tema": "Cambio climatico y eventos externos",
     "integrantes": ["Ana Cortes", "Mateo Melgarejo", "Andres Pineda"],
-    "periodo": "1950 - 2024",
+    "periodo": "2020 - 2026",
 }
 
 CONTEXTO = {
@@ -195,199 +234,294 @@ CONTEXTO = {
         "crisis socioeconomicas."
     ),
     "problema": (
-        "El proyecto delimita el analisis a la relacion entre las tendencias de largo plazo "
-        "del cambio climatico (emisiones de CO2, GEI y su contribucion al calentamiento) y la "
-        "ocurrencia de eventos externos documentados, comparando tres escalas: global, "
-        "regional (continentes, con enfasis en Sudamerica) y nacional (paises, con foco en "
-        "Colombia), durante el periodo 1950-2024."
+        "El proyecto analiza la relacion entre las tendencias recientes del cambio climatico "
+        "(emisiones de CO2 y GEI, concentracion atmosferica de CO2 y anomalias de temperatura) "
+        "y la ocurrencia de eventos externos documentados, comparando tres escalas: global, "
+        "regional (Sudamerica) y nacional (Colombia), durante el periodo 2020-2026."
     ),
     "niveles": [
         {
             "nivel": "Global",
             "detalle": (
-                "Tendencias macro de emisiones de CO2, GEI y contribucion al cambio de "
-                "temperatura para el agregado mundial ('World')."
+                "Tendencias macro del agregado mundial ('World') mas mediciones globales "
+                "directas: concentracion de CO2 en Mauna Loa (NOAA) y anomalia de temperatura "
+                "(NASA GISTEMP y NOAA GCAG), a resolucion mensual."
             ),
         },
         {
             "nivel": "Regional (Sudamerica)",
             "detalle": (
-                "Comportamiento de los agregados continentales (Africa, Asia, Europa, "
-                "Norteamerica, Oceania y Sudamerica), con enfasis en Sudamerica como region "
-                "de referencia del proyecto."
+                "Agregados continentales de OWID y, a nivel de paises de Sudamerica, "
+                "reanalisis climatico de NASA POWER e indicadores del Banco Mundial, con "
+                "enfasis en Sudamerica como region de referencia del proyecto."
             ),
         },
         {
             "nivel": "Nacional (Colombia)",
             "detalle": (
-                "Indicadores por pais (218 paises con codigo ISO3), con Colombia como caso "
-                "de estudio principal comparado frente a su region y al mundo."
+                "Indicadores por pais (emisiones y energia) y, para Colombia, temperatura y "
+                "precipitacion de NASA POWER y observaciones de estaciones del IDEAM, como "
+                "caso de estudio principal frente a su region y al mundo."
             ),
         },
     ],
     "conocimiento_esperado": (
-        "Se espera caracterizar la evolucion de los indicadores climaticos por nivel, "
-        "identificar la brecha entre la dinamica global y la nacional/regional, y ubicar "
-        "temporalmente eventos externos que coincidan con variaciones relevantes, aportando "
+        "Se espera caracterizar la evolucion reciente (2020-2026) de los indicadores "
+        "climaticos por nivel, identificar la brecha entre la dinamica global y la "
+        "nacional/regional, y ubicar temporalmente eventos externos (La Nina 2020-2023, "
+        "El Nino 2023-2024, cumbres COP) que coincidan con variaciones relevantes, aportando "
         "evidencia para las etapas posteriores de limpieza, analisis y modelado."
     ),
 }
 
 PREGUNTAS = {
     "principal": (
-        "Como se relacionan las tendencias del cambio climatico (emisiones de CO2, GEI y su "
-        "contribucion a la temperatura) con la ocurrencia de eventos externos a nivel global, "
-        "regional (Sudamerica) y nacional (Colombia) entre 1950 y 2024?"
+        "Como se relacionan las tendencias recientes del cambio climatico (emisiones de CO2, "
+        "GEI, concentracion atmosferica y anomalias de temperatura) con la ocurrencia de "
+        "eventos externos a nivel global, regional (Sudamerica) y nacional (Colombia) entre "
+        "2020 y 2026?"
     ),
     "secundarias": [
         "Cual ha sido la evolucion de las emisiones de CO2 (total y per capita) a nivel "
-        "global, en Sudamerica y en Colombia dentro del periodo disponible?",
-        "Existen diferencias significativas en la magnitud y velocidad del cambio de "
-        "temperatura atribuible a GEI entre el nivel global, el regional y el nacional?",
+        "global, en Sudamerica y en Colombia entre 2020 y 2026?",
+        "Como se comporta la senal climatica de alta frecuencia (CO2 mensual de Mauna Loa y "
+        "anomalia de temperatura global) durante la ventana de estudio?",
         "Que eventos externos documentados (El Nino/La Nina, acuerdos climaticos, "
         "emergencias) coinciden temporalmente con variaciones relevantes en los indicadores?",
         "Como se posiciona Colombia frente al promedio de Sudamerica y del mundo en "
-        "emisiones per capita y consumo de energia primaria?",
+        "emisiones per capita, consumo de energia y participacion de renovables?",
     ],
 }
 
 NECESIDADES = [
     {"criterio": "Entidades involucradas",
-     "detalle": "El mundo (agregado 'World'), 6 regiones continentales y 218 paises; ademas, eventos externos documentados.",
+     "detalle": "El mundo (agregado 'World'), regiones continentales, paises (con foco en Colombia y Sudamerica) y eventos externos documentados.",
      "razon": "Permiten construir y comparar los tres niveles de analisis exigidos."},
     {"criterio": "Variables relevantes",
-     "detalle": "Emisiones de CO2 (total, per capita, crecimiento, acumuladas), GEI y su contribucion a la temperatura, metano, oxido nitroso, poblacion y energia primaria.",
+     "detalle": "Emisiones de CO2 (total, per capita, por fuente, acumuladas), GEI, metano, oxido nitroso, concentracion de CO2, anomalia de temperatura, energia y renovables.",
      "razon": "Son los indicadores que describen directamente el fenomeno climatico."},
     {"criterio": "Periodo de analisis",
-     "detalle": "1950-2024 (serie temporal anual).",
-     "razon": "Rango con buena completitud que cubre la aceleracion moderna de emisiones."},
+     "detalle": "2020-2026, con series anuales y mensuales segun la fuente.",
+     "razon": "Ventana reciente solicitada; combina tendencia anual con senal mensual de alta frecuencia."},
     {"criterio": "Cobertura geografica",
-     "detalle": "Global, regional (continentes) y nacional (paises), con enfasis en Sudamerica y Colombia.",
+     "detalle": "Global, regional (continentes y paises de Sudamerica) y nacional (paises, con foco en Colombia).",
      "razon": "Requisito de comparacion entre escalas del proyecto."},
-    {"criterio": "Poblacion / unidad de analisis",
-     "detalle": "Una combinacion entidad-anio (pais/region/mundo en un anio dado).",
-     "razon": "Define el registro base sobre el que se miden todas las variables."},
-    {"criterio": "Granularidad",
-     "detalle": "Anual por entidad; no se trabaja solo con agregados: el nivel nacional aporta ~16.350 registros pais-anio.",
-     "razon": "La guia pide evitar datos excesivamente agregados."},
+    {"criterio": "Unidad de analisis",
+     "detalle": "Una observacion = un indicador medido para una entidad, en una fecha y desde una fuente (tabla de hechos).",
+     "razon": "Define el registro base y permite integrar fuentes heterogeneas sin perder trazabilidad."},
+    {"criterio": "Diversidad de fuentes",
+     "detalle": "Fuentes primarias (Mauna Loa, GISTEMP, GCAG, NASA POWER, IDEAM), secundarias (Banco Mundial, eventos UNFCCC/UNGRD) y terciarias (OWID).",
+     "razon": "La guia pide al menos dos fuentes por nivel y los tres tipos; evita depender de una sola fuente."},
     {"criterio": "Variables de integracion entre escalas",
-     "detalle": "country / iso_code / nivel_geografico (geografia) y year (tiempo).",
+     "detalle": "entidad / iso_code / nivel_geografico (geografia), fecha / anio / mes (tiempo) y fuente / fuente_tipo (procedencia).",
      "razon": "Permiten unir las fuentes y comparar los niveles global, regional y nacional."},
 ]
 
+# ---------------------------------------------------------------------------
+# Fuentes de datos (documentacion completa por nivel y tipo).
+#   estado: "Integrada" = ya esta en clima_consolidado.csv (descargable de GitHub);
+#           "Automatizada" = el pipeline la descarga al ejecutarse con acceso a
+#           internet (portales institucionales no accesibles desde el entorno de build).
+# ---------------------------------------------------------------------------
 FUENTES = [
     {
-        "nombre": "Our World in Data - CO2 and Greenhouse Gas Emissions",
+        "nombre": "Our World in Data - CO2 & Greenhouse Gas Emissions",
         "institucion": "Our World in Data / Global Carbon Project",
         "url": "https://github.com/owid/co2-data",
-        "tipo": "Terciaria (compilacion curada de multiples fuentes primarias)",
+        "tipo": "Terciaria",
         "nivel": "Global / Regional / Nacional",
-        "cobertura": "Mundial, por pais y por region",
-        "periodo": "1750-2024 (usado 1950-2024)",
+        "cobertura": "Mundial, por region y por pais (ISO3)",
+        "periodo": "2020-2026 (disponible hasta 2024)",
         "formato": "CSV",
         "adquisicion": "Descarga directa del repositorio oficial (raw GitHub)",
-        "registros": "50.411 filas originales -> 16.875 tras filtro/mapeo",
-        "variables": "79 columnas originales -> 14 seleccionadas + nivel_geografico",
-        "fecha_consulta": "2026-08-25",
+        "registros": "16.524 observaciones integradas",
+        "variables": "CO2 total, per capita, por fuente, acumulado, GEI, metano, N2O, poblacion, energia",
+        "fecha_consulta": "2026-08-26",
         "restricciones": "Licencia abierta (CC-BY). Atribucion requerida.",
+        "estado": "Integrada en el CSV",
+    },
+    {
+        "nombre": "Our World in Data - Energy",
+        "institucion": "Energy Institute (Statistical Review) y Ember, via OWID",
+        "url": "https://github.com/owid/energy-data",
+        "tipo": "Terciaria",
+        "nivel": "Nacional / Global",
+        "cobertura": "Por pais (ISO3) y mundo",
+        "periodo": "2020-2026 (disponible hasta 2025)",
+        "formato": "CSV",
+        "adquisicion": "Descarga directa del repositorio oficial (raw GitHub)",
+        "registros": "4.616 observaciones integradas",
+        "variables": "Energia per capita, generacion electrica, participacion de renovables y fosiles, GEI del sector",
+        "fecha_consulta": "2026-08-26",
+        "restricciones": "Licencia abierta (CC-BY). Atribucion requerida.",
+        "estado": "Integrada en el CSV",
+    },
+    {
+        "nombre": "NOAA GML - Observatorio de Mauna Loa (CO2 in situ)",
+        "institucion": "NOAA Global Monitoring Laboratory / Scripps",
+        "url": "https://gml.noaa.gov/ccgg/trends/",
+        "tipo": "Primaria",
+        "nivel": "Global",
+        "cobertura": "Medicion directa de CO2 atmosferico (mensual)",
+        "periodo": "2020-2026 (hasta 2026-07)",
+        "formato": "CSV",
+        "adquisicion": "Descarga del registro mensual (raw GitHub, mirror datasets/co2-ppm)",
+        "registros": "79 observaciones mensuales integradas",
+        "variables": "Concentracion de CO2 atmosferico (ppm)",
+        "fecha_consulta": "2026-08-26",
+        "restricciones": "Dominio publico (dato del gobierno de EE.UU.).",
+        "estado": "Integrada en el CSV",
+    },
+    {
+        "nombre": "NASA GISS - GISTEMP (anomalia de temperatura)",
+        "institucion": "NASA Goddard Institute for Space Studies",
+        "url": "https://data.giss.nasa.gov/gistemp/",
+        "tipo": "Primaria",
+        "nivel": "Global",
+        "cobertura": "Anomalia de temperatura global (mensual)",
+        "periodo": "2020-2026 (hasta 2026-06)",
+        "formato": "CSV",
+        "adquisicion": "Descarga del indice mensual (raw GitHub, mirror datasets/global-temp)",
+        "registros": "72 observaciones mensuales integradas",
+        "variables": "Anomalia de temperatura global (grados C vs. base)",
+        "fecha_consulta": "2026-08-26",
+        "restricciones": "Dominio publico (dato del gobierno de EE.UU.).",
+        "estado": "Integrada en el CSV",
+    },
+    {
+        "nombre": "NOAA NCEI - GlobalTemp / GCAG (anomalia de temperatura)",
+        "institucion": "NOAA National Centers for Environmental Information",
+        "url": "https://www.ncei.noaa.gov/access/monitoring/global-temperature-anomalies/",
+        "tipo": "Primaria",
+        "nivel": "Global",
+        "cobertura": "Anomalia de temperatura global (mensual), fuente independiente de GISTEMP",
+        "periodo": "2020-2026 (hasta 2026-06)",
+        "formato": "CSV",
+        "adquisicion": "Descarga del indice mensual (raw GitHub, mirror datasets/global-temp)",
+        "registros": "78 observaciones mensuales integradas",
+        "variables": "Anomalia de temperatura global (grados C vs. base)",
+        "fecha_consulta": "2026-08-26",
+        "restricciones": "Dominio publico (dato del gobierno de EE.UU.).",
+        "estado": "Integrada en el CSV",
+    },
+    {
+        "nombre": "NASA POWER - reanalisis MERRA-2 (T2M y precipitacion)",
+        "institucion": "NASA Langley Research Center - POWER Project",
+        "url": "https://power.larc.nasa.gov/",
+        "tipo": "Primaria",
+        "nivel": "Nacional (Colombia) / Regional (Sudamerica)",
+        "cobertura": "Temperatura y precipitacion mensual para Colombia y 9 paises de Sudamerica",
+        "periodo": "2020-2026",
+        "formato": "API JSON",
+        "adquisicion": "API oficial (se descarga al ejecutar el pipeline con internet)",
+        "registros": "~840 observaciones mensuales (al ejecutar con red)",
+        "variables": "Temperatura media a 2 m, precipitacion total",
+        "fecha_consulta": "2026-08-26",
+        "restricciones": "Uso libre con atribucion.",
+        "estado": "Automatizada en el pipeline",
+    },
+    {
+        "nombre": "Banco Mundial - World Development Indicators (clima)",
+        "institucion": "Grupo Banco Mundial",
+        "url": "https://data.worldbank.org/topic/climate-change",
+        "tipo": "Secundaria",
+        "nivel": "Nacional / Regional",
+        "cobertura": "Colombia y paises de Sudamerica",
+        "periodo": "2020-2026 (segun disponibilidad del indicador)",
+        "formato": "API JSON",
+        "adquisicion": "API oficial (se descarga al ejecutar el pipeline con internet)",
+        "registros": "Segun indicador y anio disponible",
+        "variables": "CO2 per capita, uso de energia per capita, energia renovable (%)",
+        "fecha_consulta": "2026-08-26",
+        "restricciones": "Licencia abierta (CC-BY 4.0).",
+        "estado": "Automatizada en el pipeline",
     },
     {
         "nombre": "IDEAM - Datos abiertos de clima e hidrologia",
         "institucion": "Instituto de Hidrologia, Meteorologia y Estudios Ambientales (Colombia)",
-        "url": "http://www.ideam.gov.co",
-        "tipo": "Primaria (red de estaciones meteorologicas e hidrologicas)",
+        "url": "https://www.datos.gov.co/",
+        "tipo": "Primaria",
         "nivel": "Nacional (Colombia)",
-        "cobertura": "Colombia, por estacion / departamento",
-        "periodo": "Historico y boletines periodicos",
-        "formato": "CSV / Excel / servicios web",
-        "adquisicion": "Portal de datos abiertos (a integrar en Etapa 2)",
-        "registros": "Variable segun estacion y variable consultada",
-        "variables": "Temperatura, precipitacion, humedad, nivel de rios",
-        "fecha_consulta": "2026-08-25",
+        "cobertura": "Colombia, por estacion (temperatura / precipitacion)",
+        "periodo": "2020-2026",
+        "formato": "CSV / API Socrata",
+        "adquisicion": "Portal datos.gov.co (se descarga al ejecutar el pipeline con internet)",
+        "registros": "Variable segun estacion y recurso consultado",
+        "variables": "Temperatura y precipitacion observada por estacion",
+        "fecha_consulta": "2026-08-26",
         "restricciones": "Uso publico con atribucion.",
+        "estado": "Automatizada en el pipeline",
     },
     {
-        "nombre": "NOAA - Climate / ENSO (El Nino - La Nina)",
-        "institucion": "National Oceanic and Atmospheric Administration (EE.UU.)",
-        "url": "https://www.noaa.gov",
-        "tipo": "Primaria (mediciones satelitales y oceanicas)",
-        "nivel": "Global / Regional",
-        "cobertura": "Global, con foco en el Pacifico para ENSO",
-        "periodo": "Series historicas continuas",
-        "formato": "CSV / NetCDF / servicios web",
-        "adquisicion": "Descarga de indices oficiales (a integrar en Etapa 2)",
-        "registros": "Indices mensuales/anuales de ENSO",
-        "variables": "ONI, SST, indices de temperatura del oceano",
-        "fecha_consulta": "2026-08-25",
-        "restricciones": "Dominio publico (dato del gobierno de EE.UU.).",
-    },
-    {
-        "nombre": "UNGRD - Registros de emergencias y desastres",
-        "institucion": "Unidad Nacional para la Gestion del Riesgo de Desastres (Colombia)",
-        "url": "https://www.gestiondelriesgo.gov.co",
-        "tipo": "Secundaria (registros administrativos)",
-        "nivel": "Nacional (Colombia)",
-        "cobertura": "Colombia, por evento / municipio",
-        "periodo": "Actualizacion continua",
-        "formato": "CSV / Excel / tableros",
-        "adquisicion": "Portal institucional (a integrar en Etapa 2)",
-        "registros": "Miles de registros de eventos",
-        "variables": "Tipo de evento, fecha, ubicacion, afectacion",
-        "fecha_consulta": "2026-08-25",
+        "nombre": "Eventos externos (COP, ENSO, emergencias)",
+        "institucion": "UNFCCC, NOAA Climate Prediction Center, UNGRD",
+        "url": "https://unfccc.int/",
+        "tipo": "Secundaria",
+        "nivel": "Global / Nacional (Colombia)",
+        "cobertura": "Cumbres COP, fases El Nino/La Nina y emergencias en Colombia (2020-2026)",
+        "periodo": "2020-2026",
+        "formato": "CSV (curado)",
+        "adquisicion": "Documentacion oficial consolidada en eventos_externos_muestra.csv",
+        "registros": "7 eventos documentados",
+        "variables": "Fecha, evento, tipo, ambito, fuente",
+        "fecha_consulta": "2026-08-26",
         "restricciones": "Uso publico con atribucion.",
-    },
-    {
-        "nombre": "UNFCCC - Acuerdos y cumbres climaticas (COP)",
-        "institucion": "Convencion Marco de las Naciones Unidas sobre el Cambio Climatico",
-        "url": "https://unfccc.int",
-        "tipo": "Secundaria (documentacion oficial de politicas/eventos)",
-        "nivel": "Global",
-        "cobertura": "Global",
-        "periodo": "Eventos historicos documentados",
-        "formato": "Documentos / web",
-        "adquisicion": "Consulta documental (base del dataset de eventos)",
-        "registros": "Eventos discretos (COP, acuerdos)",
-        "variables": "Nombre del acuerdo, fecha, alcance",
-        "fecha_consulta": "2026-08-25",
-        "restricciones": "Uso publico con atribucion.",
+        "estado": "Integrada en el CSV",
     },
 ]
 
+# Diccionario del ESQUEMA (12 columnas de la tabla de hechos).
 DICCIONARIO = [
-    {"variable": "country", "tipo": "Categorica (texto)", "descripcion": "Pais, region agregada o 'World'.", "unidad": "-", "dominio": "218 paises + 6 regiones + World", "fuente": "OWID"},
-    {"variable": "year", "tipo": "Temporal (entero)", "descripcion": "Anio de referencia del registro.", "unidad": "anio", "dominio": "1950 - 2024", "fuente": "OWID"},
-    {"variable": "iso_code", "tipo": "Categorica (texto)", "descripcion": "Codigo ISO3 del pais (vacio en agregados regionales y World).", "unidad": "-", "dominio": "Codigos ISO3", "fuente": "OWID"},
-    {"variable": "nivel_geografico", "tipo": "Categorica (texto)", "descripcion": "Escala del registro: Global, Regional o Nacional (variable creada por el equipo).", "unidad": "-", "dominio": "Global / Regional / Nacional", "fuente": "Elaboracion propia"},
-    {"variable": "population", "tipo": "Numerica (entero)", "descripcion": "Poblacion total estimada.", "unidad": "personas", "dominio": ">= 0", "fuente": "OWID / ONU"},
-    {"variable": "co2", "tipo": "Numerica (continua)", "descripcion": "Emisiones anuales totales de CO2 (produccion).", "unidad": "millones de toneladas", "dominio": ">= 0", "fuente": "Global Carbon Project via OWID"},
-    {"variable": "co2_per_capita", "tipo": "Numerica (continua)", "descripcion": "Emisiones de CO2 por habitante.", "unidad": "t / persona", "dominio": ">= 0", "fuente": "OWID"},
-    {"variable": "co2_growth_prct", "tipo": "Numerica (continua)", "descripcion": "Variacion porcentual anual de las emisiones de CO2.", "unidad": "%", "dominio": "puede ser negativa", "fuente": "OWID"},
-    {"variable": "cumulative_co2", "tipo": "Numerica (continua)", "descripcion": "Emisiones acumuladas historicas de CO2.", "unidad": "millones de toneladas", "dominio": ">= 0", "fuente": "OWID"},
-    {"variable": "ghg_excluding_lucf_per_capita", "tipo": "Numerica (continua)", "descripcion": "GEI per capita (excluye uso del suelo).", "unidad": "t eq. CO2 / persona", "dominio": ">= 0", "fuente": "OWID"},
-    {"variable": "temperature_change_from_ghg", "tipo": "Numerica (continua)", "descripcion": "Contribucion de todos los GEI al cambio de temperatura.", "unidad": "grados Celsius", "dominio": ">= 0", "fuente": "OWID"},
-    {"variable": "temperature_change_from_co2", "tipo": "Numerica (continua)", "descripcion": "Contribucion del CO2 al cambio de temperatura.", "unidad": "grados Celsius", "dominio": ">= 0", "fuente": "OWID"},
-    {"variable": "methane", "tipo": "Numerica (continua)", "descripcion": "Emisiones de metano.", "unidad": "Mt eq. CO2", "dominio": ">= 0", "fuente": "OWID"},
-    {"variable": "nitrous_oxide", "tipo": "Numerica (continua)", "descripcion": "Emisiones de oxido nitroso.", "unidad": "Mt eq. CO2", "dominio": ">= 0", "fuente": "OWID"},
-    {"variable": "primary_energy_consumption", "tipo": "Numerica (continua)", "descripcion": "Consumo de energia primaria.", "unidad": "TWh", "dominio": ">= 0", "fuente": "OWID"},
+    {"variable": "fuente", "tipo": "Categorica (texto)", "descripcion": "Nombre de la fuente de la observacion.", "unidad": "-", "dominio": "9 fuentes documentadas", "fuente": "Elaboracion propia"},
+    {"variable": "fuente_tipo", "tipo": "Categorica (texto)", "descripcion": "Clasificacion de la fuente.", "unidad": "-", "dominio": "Primaria / Secundaria / Terciaria", "fuente": "Elaboracion propia"},
+    {"variable": "nivel_geografico", "tipo": "Categorica (texto)", "descripcion": "Escala del registro.", "unidad": "-", "dominio": "Global / Regional / Nacional", "fuente": "Elaboracion propia"},
+    {"variable": "entidad", "tipo": "Categorica (texto)", "descripcion": "Pais, region, 'World' o punto de medicion.", "unidad": "-", "dominio": "Paises, regiones y agregados", "fuente": "Fuentes originales"},
+    {"variable": "iso_code", "tipo": "Categorica (texto)", "descripcion": "Codigo ISO3 del pais (vacio en agregados globales/regionales).", "unidad": "-", "dominio": "Codigos ISO3", "fuente": "Fuentes originales"},
+    {"variable": "anio", "tipo": "Temporal (entero)", "descripcion": "Anio de la observacion.", "unidad": "anio", "dominio": "2020 - 2026", "fuente": "Fuentes originales"},
+    {"variable": "mes", "tipo": "Temporal (entero)", "descripcion": "Mes de la observacion (vacio en series anuales).", "unidad": "mes", "dominio": "1 - 12", "fuente": "Fuentes originales"},
+    {"variable": "periodicidad", "tipo": "Categorica (texto)", "descripcion": "Frecuencia del registro.", "unidad": "-", "dominio": "Anual / Mensual", "fuente": "Elaboracion propia"},
+    {"variable": "indicador", "tipo": "Categorica (texto)", "descripcion": "Variable climatica medida.", "unidad": "-", "dominio": "24 indicadores", "fuente": "Fuentes originales"},
+    {"variable": "valor", "tipo": "Numerica (continua)", "descripcion": "Valor medido del indicador.", "unidad": "segun indicador", "dominio": "Real (algunos indicadores admiten negativos)", "fuente": "Fuentes originales"},
+    {"variable": "unidad", "tipo": "Categorica (texto)", "descripcion": "Unidad de medida del valor.", "unidad": "-", "dominio": "ppm, Mt CO2, grados C, %, etc.", "fuente": "Elaboracion propia"},
+    {"variable": "fecha", "tipo": "Temporal (fecha)", "descripcion": "Fecha ISO de la observacion (dia 15 para series mensuales).", "unidad": "AAAA-MM-DD", "dominio": "2020-01-01 a 2026-12-31", "fuente": "Elaboracion propia"},
 ]
+
+
+def catalogo_indicadores():
+    """Catalogo de los indicadores presentes en el dataset (indicador -> unidad,
+    fuente_tipo, n de observaciones), calculado del archivo real."""
+    if DF is None:
+        return []
+    filas = []
+    for ind, sub in DF.groupby("indicador"):
+        filas.append({
+            "indicador": ind,
+            "unidad": sub["unidad"].iloc[0],
+            "tipo_fuente": "/".join(sorted(sub["fuente_tipo"].unique())),
+            "registros": int(len(sub)),
+        })
+    filas.sort(key=lambda x: x["registros"], reverse=True)
+    return filas
+
 
 LIMITACIONES = {
     "limitaciones": [
-        "Cobertura historica desigual: los indicadores mas completos empiezan hacia 1950; anios previos se excluyeron para no arrastrar vacios.",
-        "Nulos en variables especificas (energia primaria, GEI) para paises pequenos o con reporte tardio.",
-        "El dataset de eventos externos es aun una muestra documentada manualmente; se ampliara con IDEAM, NOAA y UNGRD en la Etapa 2.",
-        "Granularidad anual: no permite analizar estacionalidad intra-anual (eventos como El Nino se veran a escala anual).",
-        "Los agregados regionales y 'World' no tienen iso_code, por lo que ese campo queda vacio por diseno en esos registros.",
+        "Los indicadores anuales de emisiones (OWID) estan disponibles hasta 2024; 2025-2026 se cubren con las series mensuales (CO2 de Mauna Loa y anomalia de temperatura), que llegan a mediados de 2026.",
+        "Las fuentes primarias de nivel nacional/regional que se sirven desde portales institucionales (NASA POWER, Banco Mundial, IDEAM) se integran al ejecutar el pipeline con acceso a internet; en el CSV publicado su estado queda registrado en el manifiesto de fuentes.",
+        "El dataset de eventos externos es una muestra curada manualmente (7 eventos); se ampliara en la Etapa 2 con registros detallados de UNGRD e IDEAM.",
+        "Mezcla de periodicidades: conviven series anuales y mensuales; para comparar niveles habra que homogenizar la frecuencia en la Etapa 2.",
+        "Los agregados globales y regionales no tienen iso_code y las series anuales no tienen mes: esos campos quedan vacios por diseno (no son errores).",
     ],
     "sesgos": [
         "Posible sesgo de reporte: paises con mejores sistemas estadisticos tienen series mas completas.",
-        "Cambios metodologicos en la estimacion de emisiones a lo largo del tiempo.",
+        "Diferencias metodologicas entre fuentes (p. ej. GISTEMP vs. GCAG estiman la misma anomalia con metodos distintos).",
     ],
     "trazabilidad": [
-        "Se conserva el archivo fuente original (owid-co2-data.csv) sin modificar, fuera del control de versiones por su tamano.",
+        "Cada observacion conserva su procedencia en las columnas fuente y fuente_tipo.",
         "El dataset consolidado se genera con scripts/preparar_datos.py (reproducible), no editando a mano.",
-        "Toda transformacion (filtro year>=1950, seleccion de 14 columnas, mapeo de nivel_geografico) queda documentada en el script y en esta bitacora.",
-        "Fecha de consulta de la fuente: 2026-08-25.",
+        "El script escribe un manifiesto (fuentes_manifest.csv) con el estado de cada fuente (integrada u omitida por falta de red).",
+        "Toda transformacion (filtro 2020-2026, seleccion de indicadores, mapeo de nivel_geografico, formato largo) queda documentada en el script y en esta bitacora.",
+        "Fecha de consulta de las fuentes: 2026-08-26.",
     ],
 }
 
@@ -431,7 +565,8 @@ def dataset_etapa1():
 @app.route("/etapa-1/diccionario-datos")
 def diccionario_datos():
     return render_template("etapa1/diccionario_datos.html",
-                           proyecto=PROYECTO, diccionario=DICCIONARIO)
+                           proyecto=PROYECTO, diccionario=DICCIONARIO,
+                           indicadores=catalogo_indicadores())
 
 
 @app.route("/etapa-1/calidad-inicial")

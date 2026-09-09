@@ -1,8 +1,8 @@
-id,fecha_inicio,fecha_fin,evento,tipo,escala,pais_region,descripcion,fuente
-1,2015-11-30,2015-12-12,Acuerdo de Paris (COP21),Politico/Ambiental,Global,Global,Adopcion del Acuerdo de Paris sobre cambio climatico en la COP21,UNFCCC
-2,2015-06-01,2016-04-30,Fenomeno El Nino 2015-2016,Climatico,Global/Regional,Global - America del Sur,Uno de los episodios de El Nino mas fuertes registrados; afecto precipitacion y temperatura en Sudamerica,NOAA / IDEAM
-3,2020-08-01,2023-03-31,Fenomeno La Nina 2020-2023,Climatico,Global/Regional,Global - America del Sur,Triple episodio consecutivo de La Nina; afecto patrones de lluvia en Colombia,NOAA / IDEAM
-4,2021-10-31,2021-11-13,COP26 Glasgow,Politico/Ambiental,Global,Global,Cumbre climatica que establecio nuevos compromisos de reduccion de emisiones,UNFCCC
-5,2010-04-01,2011-06-30,Ola invernal Colombia 2010-2011,Climatico/Desastre,Nacional,Colombia,Temporada de lluvias extrema asociada a La Nina; mas de 3 millones de personas afectadas,UNGRD / IDEAM
-6,2023-01-01,2023-12-31,Emergencia por incendios forestales y sequia,Climatico/Desastre,Nacional,Colombia,Temporada de incendios forestales asociada a El Nino 2023,UNGRD / IDEAM
-7,2020-03-11,2023-05-05,Pandemia COVID-19,Socioeconomico,Global,Global,Reduccion temporal de emisiones de CO2 por la disminucion de la actividad economica global,OMS / Global Carbon Project
+fecha,evento,tipo,ambito,fuente
+2020-08,"Inicio de fase La Nina 2020-2023 (ENSO frio, triple)",Fenomeno climatico,Global/Sudamerica,NOAA CPC
+2021-11,COP26 - Pacto Climatico de Glasgow,Acuerdo climatico,Global,UNFCCC
+2021-11,Segunda temporada de lluvias intensas por La Nina en Colombia,Emergencia,Nacional (Colombia),UNGRD/IDEAM
+2022-11,COP27 - Fondo de perdidas y danos,Acuerdo climatico,Global,UNFCCC
+2023-06,Transicion a El Nino 2023-2024 (ENSO calido),Fenomeno climatico,Global/Sudamerica,NOAA CPC
+2023-12,COP28 - Balance mundial y transicion de combustibles fosiles,Acuerdo climatico,Global,UNFCCC
+2024-01,Sequia y desabastecimiento por El Nino en Colombia,Emergencia,Nacional (Colombia),UNGRD/IDEAM
