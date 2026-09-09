@@ -6,10 +6,12 @@
     <div class="icono-hero">📖</div>
     <p class="eyebrow"><span class="paso">06</span> Caracterizacion de los datos</p>
     <h1>Diccionario de datos</h1>
-    <p class="lede">Descripcion de cada variable del dataset consolidado, de forma que el conjunto
-    se entienda sin explicaciones adicionales. <strong>Unidad de analisis:</strong> combinacion
-    entidad–anio (una fila = un pais/region/mundo en un anio).</p>
+    <p class="lede">Descripcion de cada columna del esquema y catalogo de indicadores, de forma que
+    el conjunto se entienda sin explicaciones adicionales. <strong>Unidad de analisis:</strong> una
+    observacion (un indicador medido para una entidad, en una fecha y desde una fuente).</p>
 </div>
+
+<h2>Esquema del dataset (columnas)</h2>
 
 <div class="tabla-wrap animate-fade-up" style="animation-delay:150ms;">
     <table>
@@ -35,5 +37,33 @@
         </tbody>
     </table>
 </div>
+
+{% if indicadores %}
+<h2 style="margin-top:2rem;">Catalogo de indicadores</h2>
+<p style="color:var(--ink-soft);">Los {{ indicadores|length }} indicadores que transporta la columna
+<span class="mono">indicador</span>, con su unidad, el tipo de fuente que los aporta y el numero de
+observaciones (calculado en vivo del dataset).</p>
+<div class="tabla-wrap animate-fade-up" style="animation-delay:150ms;">
+    <table>
+        <thead>
+            <tr><th>Indicador</th><th>Unidad</th><th>Tipo de fuente</th><th>Observaciones</th></tr>
+        </thead>
+        <tbody>
+            {% for i in indicadores %}
+            <tr>
+                <td>{{ i.indicador }}</td>
+                <td>{{ i.unidad }}</td>
+                <td>
+                    {% if 'Primaria' in i.tipo_fuente %}<span class="tag num">primaria</span>{% endif %}
+                    {% if 'Secundaria' in i.tipo_fuente %}<span class="tag tmp">secundaria</span>{% endif %}
+                    {% if 'Terciaria' in i.tipo_fuente %}<span class="tag cat">terciaria</span>{% endif %}
+                </td>
+                <td class="mono">{{ "{:,}".format(i.registros).replace(',', '.') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
 
 {% endblock %}

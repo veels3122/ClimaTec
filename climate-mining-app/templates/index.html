@@ -40,7 +40,7 @@
                 <span>{{ serie.anio_fin }}</span>
             </div>
         </div>
-        <p class="stat-card-caption" style="margin-top:.9rem;">Dato real, fila &ldquo;World&rdquo; del dataset consolidado &middot; {{ serie.valores | length }} anios (1950-2024)</p>
+        <p class="stat-card-caption" style="margin-top:.9rem;">Dato real, entidad &ldquo;World&rdquo; del dataset consolidado &middot; emisiones anuales {{ serie.anio_inicio }}-{{ serie.anio_fin }}</p>
     </div>
     {% endif %}
 </section>
@@ -52,10 +52,9 @@
         <div class="etiqueta">registros consolidados<br>(minimo exigido: 10.000)</div>
     </div>
     <div class="panel stat animate-fade-up" style="animation-delay:100ms;">
-        <div class="valor">{{ resumen.n_variables }}</div>
-        <div class="etiqueta">variables ({{ resumen.n_numericas }} numericas ·
-            {{ resumen.n_categoricas }} categoricas · {{ resumen.n_temporales }} temporal ·
-            {{ resumen.n_geograficas }} geograficas)</div>
+        <div class="valor">{{ resumen.n_indicadores }}</div>
+        <div class="etiqueta">indicadores climaticos ·
+            {{ resumen.n_fuentes }} fuentes integradas (primarias, secundarias y terciarias)</div>
     </div>
     <div class="panel stat warm animate-fade-up" style="animation-delay:200ms;">
         <div class="valor">{{ resumen.anio_min }}–{{ resumen.anio_max }}</div>

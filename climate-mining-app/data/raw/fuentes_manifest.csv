@@ -1,0 +1,9 @@
+fuente,tipo,nivel,estado,registros_aportados
+Our World in Data - CO2 & GHG (Global Carbon Project),Terciaria,Global/Regional/Nacional,INTEGRADA,16524
+Our World in Data - Energy (Energy Institute / Ember),Terciaria,Nacional/Global,INTEGRADA,4616
+NOAA GML - Observatorio de Mauna Loa (CO2 in situ),Primaria,Global,INTEGRADA,79
+NASA GISS - GISTEMP (anomalia de temperatura),Primaria,Global,INTEGRADA,72
+NOAA NCEI - GlobalTemp/GCAG (anomalia de temperatura),Primaria,Global,INTEGRADA,78
+"NASA POWER - reanalisis MERRA-2 (T2M, precipitacion)",Primaria,Nacional/Regional,OMITIDA (sin red),0
+Banco Mundial - World Development Indicators (clima),Secundaria,Nacional/Regional,OMITIDA (sin red),0
+IDEAM - Datos abiertos de clima e hidrologia (Colombia),Primaria,Nacional,OMITIDA (sin red),0

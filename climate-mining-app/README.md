@@ -5,7 +5,7 @@ documentacion del proyecto de mineria de datos.
 
 - **Tema:** Cambio climatico y eventos externos
 - **Niveles de analisis:** Global / Regional (Sudamerica) / Nacional (Colombia)
-- **Periodo:** 1950–2024
+- **Periodo:** 2020–2026
 - **App publicada:** https://climatec-ctrm.onrender.com
 - **Repositorio:** https://github.com/veels3122/ClimaTec
 
@@ -31,60 +31,61 @@ Las paginas 5 (Dataset) y 7 (Calidad inicial) calculan sus metricas **en vivo**
 a partir del archivo real `data/raw/clima_consolidado.csv`, de modo que la
 documentacion nunca se aleja del contenido del dataset.
 
-## Dataset
+## Dataset (multi-fuente, formato de tabla de hechos)
 
-- **Fuente principal:** Our World in Data — CO2 and Greenhouse Gas Emissions
-  (https://github.com/owid/co2-data), fuente terciaria, licencia CC-BY.
-- **Consolidado:** `data/raw/clima_consolidado.csv` — **16.875 registros**, 15 variables
-  (11 numericas, 3 categoricas, 1 temporal, 3 geograficas).
-  - Global: 75 filas (World) · Regional: 450 filas (6 continentes) · Nacional: 16.350 filas (218 paises).
-- **Eventos externos:** `data/raw/eventos_externos_muestra.csv` (muestra documentada, se amplia en Etapa 2).
+El dataset consolidado esta en **formato largo/tidy**: una fila = una observacion
+(un indicador medido para una entidad, en una fecha, desde una fuente identificada).
+Este formato permite integrar fuentes heterogeneas —anuales y mensuales, de distintos
+proveedores y niveles— bajo un mismo esquema, con la procedencia de cada dato en las
+columnas `fuente` / `fuente_tipo`.
 
-Cumple los minimos de la guia: >= 10.000 registros, >= 10 variables, >= 3 numericas,
->= 3 categoricas, >= 1 temporal y >= 1 geografica.
+- **Archivo:** `data/raw/clima_consolidado.csv`
+- **Volumen:** ~21.369 observaciones · 12 columnas · 24 indicadores climaticos
+- **Cobertura:** Global, Regional y Nacional (231 paises con ISO3, incl. Colombia)
+- **Periodicidades:** anual y mensual
 
-## Trazabilidad y reproducibilidad
+### Fuentes integradas en el CSV (descargables desde GitHub)
+| Fuente | Tipo | Nivel |
+|---|---|---|
+| Our World in Data — CO2 & GHG (Global Carbon Project) | Terciaria | Global/Regional/Nacional |
+| Our World in Data — Energy (Energy Institute / Ember) | Terciaria | Nacional/Global |
+| NOAA GML — Observatorio de Mauna Loa (CO2 in situ) | Primaria | Global |
+| NASA GISS — GISTEMP (anomalia de temperatura) | Primaria | Global |
+| NOAA NCEI — GlobalTemp/GCAG (anomalia de temperatura) | Primaria | Global |
+| Eventos externos (COP, ENSO, emergencias) | Secundaria | Global/Nacional |
 
-1. Se descarga el archivo fuente original (owid-co2-data.csv) y se coloca en
-   `data/processed/` (no se versiona por su tamano, ~14 MB — ver `.gitignore`).
-   Descarga directa:
-   `https://raw.githubusercontent.com/owid/co2-data/master/owid-co2-data.csv`
-2. Se ejecuta el script reproducible:
-   ```bash
-   python scripts/preparar_datos.py
-   ```
-   que aplica las transformaciones documentadas (filtro `year >= 1950`, seleccion de
-   14 columnas, y mapeo de `nivel_geografico`) y genera `data/raw/clima_consolidado.csv`.
-3. El archivo fuente nunca se edita a mano.
-- **Fecha de consulta de la fuente:** 2026-08-25.
+### Fuentes automatizadas en el pipeline (nivel nacional/regional)
+Se descargan **al ejecutar el script con acceso a internet** (viven en portales
+institucionales, no accesibles desde el entorno de build):
 
-## Ejecutar en local
+| Fuente | Tipo | Nivel |
+|---|---|---|
+| NASA POWER — reanalisis MERRA-2 (T2M, precipitacion) | Primaria | Nacional (Colombia) / Regional (Sudamerica) |
+| Banco Mundial — World Development Indicators (clima) | Secundaria | Nacional / Regional |
+| IDEAM — Datos abiertos de clima e hidrologia | Primaria | Nacional (Colombia) |
 
-```bash
-pip install -r requirements.txt
-python app.py
-# http://127.0.0.1:5000
-```
+El manifiesto `data/raw/fuentes_manifest.csv` deja registrado el estado de cada
+fuente (integrada u omitida por falta de red) en cada ejecucion.
 
-## Despliegue
+## Regenerar el dataset
 
-- `Procfile`: `web: gunicorn app:app`
-- `render.yaml`: servicio web Python en Render (plan free).
+    pip install -r requirements.txt
+    python scripts/preparar_datos.py
 
-## Estructura del proyecto
+> **Importante:** ejecutalo en una maquina con **acceso abierto a internet** para
+> que se integren tambien NASA POWER, Banco Mundial e IDEAM (fuentes primarias de
+> nivel nacional/regional). El script descarga cada fuente, arma la tabla de hechos
+> filtrada a 2020-2026, escribe clima_consolidado.csv y actualiza el manifiesto.
+> Nunca inventa datos: solo consolida lo que descarga.
 
-```
-climate-mining-app/
-├── app.py                     # Rutas + logica + contenido documental
-├── requirements.txt
-├── Procfile / render.yaml
-├── data/
-│   ├── raw/                   # datasets versionados (incl. clima_consolidado.csv)
-│   └── processed/             # fuente original owid-co2-data.csv (ignorada)
-├── scripts/preparar_datos.py  # generacion reproducible del dataset
-├── static/css/style.css
-└── templates/
-    ├── base.html              # layout + menu "Etapa 1"
-    ├── index.html
-    └── etapa1/                # las 8 paginas del entregable
-```
+Para IDEAM se puede fijar el recurso de datos.gov.co con la variable de entorno
+`IDEAM_DATASET_ID` (por defecto usa un recurso de temperatura por estacion).
+
+## Ejecutar la app localmente
+
+    pip install -r requirements.txt
+    python app.py
+    # http://localhost:5000
+
+## Despliegue (Render)
+Procfile y render.yaml incluidos. El servicio arranca con gunicorn app:app.

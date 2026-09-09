@@ -19,7 +19,13 @@
             <span class="nivel {{ 'global' if 'Global' in f.nivel else ('nacional' if 'Nacional' in f.nivel and 'Regional' not in f.nivel else 'regional') }}">{{ f.nivel }}</span>
         </div>
         <h3>{{ f.nombre }}</h3>
-        <p class="mono" style="font-size:.78rem;color:var(--ink-soft);margin:.2rem 0 .7rem;">{{ f.tipo }}</p>
+        <p style="margin:.3rem 0 .7rem;display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;">
+            {% if f.tipo == 'Primaria' %}<span class="tag num">primaria</span>
+            {% elif f.tipo == 'Secundaria' %}<span class="tag tmp">secundaria</span>
+            {% else %}<span class="tag cat">terciaria</span>{% endif %}
+            {% if 'Integrada' in f.estado %}<span class="chip ok" style="margin:0;"><span class="marca-ico">✓</span> {{ f.estado }}</span>
+            {% else %}<span class="chip" style="margin:0;background:rgba(255,180,84,.14);color:#ffb454;border-color:rgba(255,180,84,.35);">⟳ {{ f.estado }}</span>{% endif %}
+        </p>
         <ul class="lista-limpia">
             <li><strong>Institucion:</strong> {{ f.institucion }}</li>
             <li><strong>URL:</strong> <a href="{{ f.url }}" target="_blank" rel="noopener">{{ f.url }}</a></li>
@@ -34,9 +40,13 @@
 </div>
 
 <div class="nota animate-fade-up" style="animation-delay:{{ 200 + fuentes|length * 80 }}ms;">
-    <strong>Cobertura por nivel:</strong> cada nivel de analisis (global, regional, nacional)
-    cuenta con al menos dos fuentes documentadas, e incluyen los tres tipos exigidos
-    (primaria, secundaria y terciaria).
+    <strong>Cobertura por nivel:</strong> cada nivel de analisis cuenta con al menos dos fuentes
+    y el conjunto incluye los tres tipos exigidos. <em>Global:</em> OWID (terciaria) + Mauna Loa,
+    GISTEMP y GCAG (primarias) + eventos UNFCCC (secundaria). <em>Regional (Sudamerica):</em> OWID
+    (terciaria) + NASA POWER (primaria) + Banco Mundial (secundaria). <em>Nacional (Colombia):</em>
+    OWID (terciaria) + NASA POWER e IDEAM (primarias) + Banco Mundial y UNGRD (secundarias).
+    Las fuentes marcadas <strong>⟳ Automatizada en el pipeline</strong> se descargan al ejecutar
+    <span class="mono">scripts/preparar_datos.py</span> con acceso a internet.
 </div>
 {% else %}
 <div class="nota">No se pudo cargar el listado de fuentes.</div>

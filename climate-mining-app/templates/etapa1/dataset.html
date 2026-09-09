@@ -6,64 +6,104 @@
     <div class="icono-hero">🗂️</div>
     <p class="eyebrow"><span class="paso">05</span> Construccion del dataset inicial</p>
     <h1>Dataset</h1>
-    <p class="lede">Ecosistema de datos consolidado a partir de la fuente OWID. Las cifras de
-    esta pagina se calculan directamente del archivo <span class="mono">clima_consolidado.csv</span>.</p>
+    <p class="lede">Dataset <strong>multi-fuente</strong> en formato de tabla de hechos: una fila =
+    una observacion (un indicador medido para una entidad, en una fecha, desde una fuente).
+    Las cifras se calculan directamente de <span class="mono">clima_consolidado.csv</span>.</p>
 </div>
 
 {% if resumen %}
 <div class="grid grid-3 animate-fade-up" style="margin:1.4rem 0; animation-delay:150ms;">
-    <div class="panel stat cold"><div class="valor">{{ "{:,}".format(resumen.total_consolidado).replace(',', '.') }}</div><div class="etiqueta">registros consolidados</div></div>
-    <div class="panel stat"><div class="valor">{{ resumen.n_variables }}</div><div class="etiqueta">variables totales</div></div>
-    <div class="panel stat warm"><div class="valor">{{ resumen.total_eventos }}</div><div class="etiqueta">eventos externos (muestra)</div></div>
+    <div class="panel stat cold"><div class="valor">{{ "{:,}".format(resumen.total_consolidado).replace(',', '.') }}</div><div class="etiqueta">observaciones consolidadas</div></div>
+    <div class="panel stat"><div class="valor">{{ resumen.n_indicadores }}</div><div class="etiqueta">indicadores climaticos distintos</div></div>
+    <div class="panel stat warm"><div class="valor">{{ resumen.n_fuentes }}</div><div class="etiqueta">fuentes integradas · {{ resumen.total_eventos }} eventos externos</div></div>
 </div>
 
 <h2>Verificacion de requisitos minimos</h2>
 <div>
     <span class="chip {{ 'ok' if resumen.cumple.registros_10k else 'no' }}"><span class="marca-ico">{{ '✓' if resumen.cumple.registros_10k else '✕' }}</span> ≥ 10.000 registros ({{ "{:,}".format(resumen.total_consolidado).replace(',', '.') }})</span>
-    <span class="chip {{ 'ok' if resumen.cumple.variables_10 else 'no' }}"><span class="marca-ico">{{ '✓' if resumen.cumple.variables_10 else '✕' }}</span> ≥ 10 variables ({{ resumen.n_variables }})</span>
+    <span class="chip {{ 'ok' if resumen.cumple.indicadores_10 else 'no' }}"><span class="marca-ico">{{ '✓' if resumen.cumple.indicadores_10 else '✕' }}</span> ≥ 10 variables/indicadores ({{ resumen.n_indicadores }})</span>
     <span class="chip {{ 'ok' if resumen.cumple.numericas_3 else 'no' }}"><span class="marca-ico">{{ '✓' if resumen.cumple.numericas_3 else '✕' }}</span> ≥ 3 numericas ({{ resumen.n_numericas }})</span>
     <span class="chip {{ 'ok' if resumen.cumple.categoricas_3 else 'no' }}"><span class="marca-ico">{{ '✓' if resumen.cumple.categoricas_3 else '✕' }}</span> ≥ 3 categoricas ({{ resumen.n_categoricas }})</span>
     <span class="chip {{ 'ok' if resumen.cumple.temporal_1 else 'no' }}"><span class="marca-ico">{{ '✓' if resumen.cumple.temporal_1 else '✕' }}</span> ≥ 1 temporal ({{ resumen.n_temporales }})</span>
     <span class="chip {{ 'ok' if resumen.cumple.geografica_1 else 'no' }}"><span class="marca-ico">{{ '✓' if resumen.cumple.geografica_1 else '✕' }}</span> ≥ 1 geografica ({{ resumen.n_geograficas }})</span>
 </div>
+<p style="margin-top:.7rem;color:var(--ink-soft);font-size:.9rem;">El esquema tiene {{ resumen.n_columnas }} columnas
+({{ resumen.n_numericas }} numericas, {{ resumen.n_categoricas }} categoricas, temporales y geograficas) y
+transporta {{ resumen.n_indicadores }} indicadores climaticos distintos, cada uno con su unidad y su fuente.</p>
 
 <h2>Composicion por nivel geografico</h2>
 <div class="tabla-wrap">
     <table>
-        <thead><tr><th>Nivel</th><th>Registros</th><th>Descripcion</th></tr></thead>
+        <thead><tr><th>Nivel</th><th>Observaciones</th><th>Descripcion</th></tr></thead>
         <tbody>
-            <tr><td><span class="nivel global">Global</span></td><td class="mono">{{ resumen.por_nivel.get('Global', 0) }}</td><td>Agregado mundial (World), {{ resumen.anio_min }}–{{ resumen.anio_max }}.</td></tr>
-            <tr><td><span class="nivel regional">Regional</span></td><td class="mono">{{ resumen.por_nivel.get('Regional', 0) }}</td><td>{{ resumen.n_regiones }} regiones continentales (incl. Sudamerica).</td></tr>
-            <tr><td><span class="nivel nacional">Nacional</span></td><td class="mono">{{ resumen.por_nivel.get('Nacional', 0) }}</td><td>{{ resumen.n_paises }} paises con codigo ISO3 (incl. Colombia).</td></tr>
+            <tr><td><span class="nivel global">Global</span></td><td class="mono">{{ "{:,}".format(resumen.por_nivel.get('Global', 0)).replace(',', '.') }}</td><td>Agregado mundial (World) y mediciones globales directas (CO2 Mauna Loa, temperatura).</td></tr>
+            <tr><td><span class="nivel regional">Regional</span></td><td class="mono">{{ "{:,}".format(resumen.por_nivel.get('Regional', 0)).replace(',', '.') }}</td><td>{{ resumen.n_regiones }} regiones/paises de referencia (incl. Sudamerica).</td></tr>
+            <tr><td><span class="nivel nacional">Nacional</span></td><td class="mono">{{ "{:,}".format(resumen.por_nivel.get('Nacional', 0)).replace(',', '.') }}</td><td>{{ resumen.n_paises }} paises con codigo ISO3 (incl. Colombia).</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<h2>Composicion por fuente</h2>
+<div class="tabla-wrap">
+    <table>
+        <thead><tr><th>Fuente</th><th>Tipo</th><th>Periodicidad</th><th>Observaciones</th></tr></thead>
+        <tbody>
+            {% for f in resumen.por_fuente %}
+            <tr>
+                <td>{{ f.fuente }}</td>
+                <td>{% if f.tipo == 'Primaria' %}<span class="tag num">primaria</span>{% elif f.tipo == 'Secundaria' %}<span class="tag tmp">secundaria</span>{% else %}<span class="tag cat">terciaria</span>{% endif %}</td>
+                <td class="mono">{{ f.periodicidad }}</td>
+                <td class="mono">{{ "{:,}".format(f.registros).replace(',', '.') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<p style="margin-top:.5rem;color:var(--ink-soft);font-size:.9rem;">Fuentes por tipo:
+{% for t, n in resumen.tipos_fuente.items() %}{{ n }} {{ t|lower }}{{ '' if loop.last else ' · ' }}{% endfor %}.
+Ademas, NASA POWER, Banco Mundial e IDEAM (nivel nacional/regional) se integran al ejecutar el
+pipeline con acceso a internet (ver <a href="{{ url_for('fuentes_datos') }}">Fuentes de datos</a>).</p>
+
+<h2>Composicion por periodicidad</h2>
+<div class="tabla-wrap">
+    <table>
+        <thead><tr><th>Periodicidad</th><th>Observaciones</th></tr></thead>
+        <tbody>
+            {% for per, n in resumen.por_periodicidad.items() %}
+            <tr><td>{{ per }}</td><td class="mono">{{ "{:,}".format(n).replace(',', '.') }}</td></tr>
+            {% endfor %}
         </tbody>
     </table>
 </div>
 
 <h2>Integracion de fuentes</h2>
 <p>Las fuentes se integran mediante variables <strong>geograficas</strong>
-(<span class="mono">country</span>, <span class="mono">iso_code</span>,
-<span class="mono">nivel_geografico</span>) y <strong>temporales</strong>
-(<span class="mono">year</span>), lo que permite comparar las tres escalas y cruzar el
-dataset climatico con los eventos externos.</p>
+(<span class="mono">entidad</span>, <span class="mono">iso_code</span>,
+<span class="mono">nivel_geografico</span>), <strong>temporales</strong>
+(<span class="mono">fecha</span>, <span class="mono">anio</span>, <span class="mono">mes</span>) y de
+<strong>procedencia</strong> (<span class="mono">fuente</span>, <span class="mono">fuente_tipo</span>),
+lo que permite comparar las tres escalas y cruzar el dataset climatico con los eventos externos
+sin perder la trazabilidad de cada observacion.</p>
 
 <h2>Muestra del dataset</h2>
 <div class="tabla-wrap">
     <table>
         <thead>
             <tr>
-                <th>country</th><th>year</th><th>nivel</th><th>co2</th>
-                <th>co2_per_capita</th><th>population</th>
+                <th>entidad</th><th>nivel</th><th>anio</th><th>indicador</th>
+                <th>valor</th><th>unidad</th><th>fuente</th>
             </tr>
         </thead>
         <tbody>
             {% for r in resumen.muestra %}
             <tr>
-                <td>{{ r.country }}</td>
-                <td class="mono">{{ r.year }}</td>
+                <td>{{ r.entidad }}</td>
                 <td>{{ r.nivel_geografico }}</td>
-                <td class="mono">{{ r.co2 }}</td>
-                <td class="mono">{{ r.co2_per_capita }}</td>
-                <td class="mono">{{ r.population | int if r.population == r.population else '—' }}</td>
+                <td class="mono">{{ r.anio }}{% if r.mes == r.mes %}-{{ '%02d'|format(r.mes|int) }}{% endif %}</td>
+                <td>{{ r.indicador }}</td>
+                <td class="mono">{{ r.valor }}</td>
+                <td class="mono">{{ r.unidad }}</td>
+                <td style="font-size:.82rem;">{{ r.fuente_tipo }}</td>
             </tr>
             {% endfor %}
         </tbody>

@@ -14,7 +14,7 @@
 <div class="grid grid-3 animate-fade-up" style="margin:1.4rem 0; animation-delay:150ms;">
     <div class="panel stat cold"><div class="valor">{{ calidad.completitud }}%</div><div class="etiqueta">completitud global</div></div>
     <div class="panel stat"><div class="valor">{{ "{:,}".format(calidad.celdas_nulas).replace(',', '.') }}</div><div class="etiqueta">celdas faltantes</div></div>
-    <div class="panel stat warm"><div class="valor">{{ calidad.duplicados_clave }}</div><div class="etiqueta">duplicados por clave (nivel+pais+anio)</div></div>
+    <div class="panel stat warm"><div class="valor">{{ calidad.duplicados_clave }}</div><div class="etiqueta">duplicados por clave logica</div></div>
 </div>
 
 <h2>Valores faltantes por variable</h2>
@@ -23,7 +23,7 @@
         <thead><tr><th>Variable</th><th>Faltantes</th><th>% del total</th></tr></thead>
         <tbody>
             {% for n in calidad.nulos_por_columna %}
-            <tr><td><code>{{ n.columna }}</code></td><td class="mono">{{ "{:,}".format(n.faltantes).replace(',', '.') }}</td><td class="mono">{{ n.porcentaje }}%</td></tr>
+            <tr><td><code>{{ n.columna }}</code>{% if n.por_diseno %} <span class="tag cat">nulo por diseno</span>{% endif %}</td><td class="mono">{{ "{:,}".format(n.faltantes).replace(',', '.') }}</td><td class="mono">{{ n.porcentaje }}%</td></tr>
             {% else %}
             <tr><td colspan="3">No hay valores faltantes.</td></tr>
             {% endfor %}
@@ -34,7 +34,7 @@
 <h2>Registros duplicados</h2>
 <ul class="lista-limpia">
     <li>Filas totalmente duplicadas: <span class="mono">{{ calidad.duplicados_totales }}</span></li>
-    <li>Duplicados segun la clave logica <span class="mono">nivel_geografico + country + year</span>: <span class="mono">{{ calidad.duplicados_clave }}</span></li>
+    <li>Duplicados segun la clave logica <span class="mono">fuente + nivel_geografico + entidad + anio + mes + indicador</span>: <span class="mono">{{ calidad.duplicados_clave }}</span></li>
 </ul>
 
 <h2>Valores fuera de dominio</h2>
@@ -44,9 +44,9 @@
 
 <h2>Diferencias de formato e integracion</h2>
 <ul class="lista-limpia">
-    <li>Codificacion unificada en UTF-8; separador decimal punto; <span class="mono">year</span> como entero.</li>
-    <li><span class="mono">iso_code</span> vacio por diseno en agregados regionales y en 'World' (no es un error).</li>
-    <li>Integracion entre fuentes por variables geograficas y temporales comunes.</li>
+    <li>Codificacion unificada en UTF-8; separador decimal punto; <span class="mono">anio</span> y <span class="mono">mes</span> como enteros.</li>
+    <li><span class="mono">iso_code</span> vacio por diseno en agregados globales/regionales; <span class="mono">mes</span> vacio por diseno en las series anuales (no son errores).</li>
+    <li>Integracion entre fuentes por variables geograficas, temporales y de procedencia (<span class="mono">fuente</span>/<span class="mono">fuente_tipo</span>).</li>
 </ul>
 
 <div class="nota">
