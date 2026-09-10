@@ -560,7 +560,7 @@ ol.preguntas li { margin: .6rem 0; padding-left: .3rem; color: var(--ink-soft); 
 }
 
 /* ---------------------------------------------------------------------------
-   Etapa 2 - barras horizontales (graficas simples, sin dependencias JS)
+   Recoleccion de Datos - barras horizontales (graficas simples, sin dependencias JS)
 --------------------------------------------------------------------------- */
 .barra-h-fila { display:flex; align-items:center; gap:.7rem; margin:.5rem 0; }
 .barra-h-label { flex:0 0 42%; font-size:.82rem; color:var(--ink-soft); }
