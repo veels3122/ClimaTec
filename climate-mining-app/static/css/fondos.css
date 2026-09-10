@@ -1,0 +1,125 @@
+/* ==========================================================================
+   ClimaTec — fondos animados por seccion de Etapa 1.
+   Cada <div class="page-hero" data-fondo="..."> recibe un <canvas
+   class="fondo-seccion"> como primer hijo. El canvas se pinta detras del
+   contenido (mismo truco de apilamiento que .page-hero::before, que ya
+   usa z-index:-1 dentro del "isolation: isolate" del propio .page-hero),
+   y por encima de el se deja un degradado de legibilidad para que el
+   texto siga leyendose con cualquier animacion.
+   ========================================================================== */
+
+/* ==========================================================================
+   FOTO/VIDEO REAL DE FONDO ("Ken Burns": paneo + zoom lento) — capa
+   fotografica que va DEBAJO del canvas y del degradado de legibilidad.
+   Mientras el archivo no exista todavia en static/img/fondos/, el
+   background-image simplemente no pinta nada (sin icono roto, a
+   diferencia de un <img>) y se ve el degradado de color de respaldo que
+   ya trae cada .page-hero -- asi el sitio nunca se rompe, y en cuanto se
+   agregue el archivo con el nombre exacto, aparece solo.
+   Ver LISTA-DE-IMAGENES.md para el nombre/tamano exacto de cada archivo.
+   ========================================================================== */
+.fondo-foto {
+    position: absolute;
+    inset: -2%;
+    z-index: -3;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    animation: ken-burns 28s ease-in-out infinite alternate;
+    will-change: transform;
+}
+@keyframes ken-burns {
+    0%   { transform: scale(1) translate(0, 0); }
+    100% { transform: scale(1.16) translate(-2.5%, -1.5%); }
+}
+/* Capa de "tinte" de color (une la foto real con la identidad frio/calido
+   del sitio) — mismo color que ya usa el resplandor de cada .page-hero. */
+.fondo-foto-tinte {
+    position: absolute; inset: -2%; z-index: -2;
+    mix-blend-mode: multiply;
+    opacity: .55;
+    background: linear-gradient(160deg, rgba(8,11,22,.15), rgba(8,11,22,.85));
+}
+.page-hero.acento-cold .fondo-foto-tinte { background: linear-gradient(150deg, rgba(73,199,224,.35), rgba(5,7,15,.85)); }
+.page-hero.acento-warm .fondo-foto-tinte { background: linear-gradient(150deg, rgba(255,106,77,.32), rgba(5,7,15,.85)); }
+.page-hero.acento-amber .fondo-foto-tinte { background: linear-gradient(150deg, rgba(255,180,84,.32), rgba(5,7,15,.85)); }
+.page-hero.acento-ok .fondo-foto-tinte { background: linear-gradient(150deg, rgba(61,220,151,.3), rgba(5,7,15,.85)); }
+
+/* Inicio: la Tierra real (Blue Marble) de fondo, en vez del video de la
+   spec Apogee (no contamos con ese archivo real). */
+.fondo-foto-inicio {
+    background-image: url('../img/fondos/inicio.jpg');
+    opacity: .9;
+}
+#inicio-hero .fondo-foto-tinte-auto {
+    position: absolute; inset: -2%; z-index: -2;
+    mix-blend-mode: multiply; opacity: .6;
+    background: linear-gradient(120deg, rgba(73,199,224,.3), rgba(5,7,15,.35) 45%, rgba(255,106,77,.28));
+}
+
+.fondo-foto-problema      { background-image: url('../img/fondos/problema.jpg'); }
+.fondo-foto-necesidades   { background-image: url('../img/fondos/necesidades.jpg'); }
+.fondo-foto-fuentes       { background-image: url('../img/fondos/fuentes.jpg'); }
+.fondo-foto-dataset       { background-image: url('../img/fondos/dataset.jpg'); }
+.fondo-foto-diccionario   { background-image: url('../img/fondos/diccionario.jpg'); }
+.fondo-foto-calidad       { background-image: url('../img/fondos/calidad.jpg'); }
+.fondo-foto-limitaciones  { background-image: url('../img/fondos/limitaciones.jpg'); }
+
+/* "Preguntas" usa DOS fotos reales (El Nino / La Nina) que se van
+   cruzando (crossfade) segun el scroll de toda la pagina — ver fondos.js,
+   funcion fondoPreguntas() / calcularProgresoScroll(). Ambas son
+   position:fixed porque el fondo de esta pagina reacciona al scroll
+   completo, no solo al alto del hero. */
+.fondo-foto-preguntas-base,
+.fondo-foto-preguntas-cruce {
+    position: fixed; inset: -2%; z-index: -4;
+    background-size: cover; background-position: center;
+    background-repeat: no-repeat;
+    animation: ken-burns 34s ease-in-out infinite alternate;
+}
+.fondo-foto-preguntas-base { background-image: url('../img/fondos/preguntas_la_nina.jpg'); }
+.fondo-foto-preguntas-cruce {
+    background-image: url('../img/fondos/preguntas_el_nino.jpg');
+    opacity: 0;
+    transition: opacity .4s linear;
+}
+
+.fondo-seccion {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+    display: block;
+    opacity: .85;
+}
+
+/* Degradado de legibilidad: oscurece el lado donde vive el texto (izquierda) */
+.page-hero[data-fondo]::after {
+    content: "";
+    position: absolute; inset: 0; z-index: -1;
+    background: linear-gradient(100deg, rgba(5,7,15,.72) 0%, rgba(5,7,15,.42) 38%, transparent 68%);
+    pointer-events: none;
+}
+
+/* La pagina de "preguntas" usa un canvas FIJO a pantalla completa (detras
+   de todo el documento) porque su fondo reacciona al scroll de toda la
+   pagina, no solo al alto del hero. */
+.fondo-preguntas-fijo {
+    position: fixed;
+    inset: 0;
+    z-index: -3;
+    width: 100vw;
+    height: 100vh;
+    display: block;
+}
+.fondo-preguntas-veo {
+    position: fixed; inset: 0; z-index: -2;
+    background: linear-gradient(180deg, rgba(8,11,22,.35) 0%, rgba(8,11,22,.75) 100%);
+    pointer-events: none;
+}
+body:has(.fondo-preguntas-fijo) .atmosfera { opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+    .fondo-seccion, .fondo-preguntas-fijo { display: none; }
+}
