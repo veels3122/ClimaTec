@@ -1,10 +1,11 @@
 {% extends 'base.html' %}
-{% block titulo %}Etapa 2 · Resultados del perfilamiento · ClimaTec{% endblock %}
+{% block titulo %}2. Resultados del perfilamiento · ClimaTec{% endblock %}
 {% block contenido %}
 
-<div class="page-hero acento-cold animate-fade-down">
+<div class="page-hero acento-cold animate-fade-down" data-fondo="e2_perfilamiento">
+    <canvas class="fondo-seccion" aria-hidden="true"></canvas>
     <div class="icono-hero">🔬</div>
-    <p class="eyebrow"><span class="paso">Etapa 2 · 02</span> Perfilamiento</p>
+    <p class="eyebrow"><span class="paso">02</span> Perfilamiento</p>
     <h1>Resultados del perfilamiento</h1>
     <p class="lede">Perfil calculado en vivo sobre el dataset: tipo, valores unicos y nulos por columna,
     estadisticos de las variables numericas y cardinalidad de las categoricas.</p>

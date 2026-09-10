@@ -1,10 +1,11 @@
 {% extends 'base.html' %}
-{% block titulo %}Etapa 2 · Dimensiones y metricas · ClimaTec{% endblock %}
+{% block titulo %}3. Dimensiones y metricas · ClimaTec{% endblock %}
 {% block contenido %}
 
-<div class="page-hero acento-ok animate-fade-down">
+<div class="page-hero acento-ok animate-fade-down" data-fondo="e2_dimensiones">
+    <canvas class="fondo-seccion" aria-hidden="true"></canvas>
     <div class="icono-hero">📐</div>
-    <p class="eyebrow"><span class="paso">Etapa 2 · 03</span> Calidad de datos</p>
+    <p class="eyebrow"><span class="paso">03</span> Calidad de datos</p>
     <h1>Dimensiones y metricas evaluadas</h1>
     <p class="lede">Dimensiones de calidad revisadas durante el perfilamiento, con la metrica usada y
     el resultado obtenido sobre el dataset.</p>
@@ -28,7 +29,7 @@
 </div>
 
 <div class="nota" style="margin-top:1.4rem;">
-    <strong>Lectura:</strong> el conjunto llega a la Etapa 2 con alta calidad estructural (sin
+    <strong>Lectura:</strong> el conjunto llega a esta etapa con alta calidad estructural (sin
     duplicados ni valores fuera de dominio). El trabajo de limpieza se concentra en la consistencia de
     tipos, el marcado de observaciones atipicas y la preparacion de variables para el analisis, mas que
     en corregir errores graves.

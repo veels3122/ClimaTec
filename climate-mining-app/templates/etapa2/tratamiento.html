@@ -1,10 +1,11 @@
 {% extends 'base.html' %}
-{% block titulo %}Etapa 2 · Acciones de tratamiento · ClimaTec{% endblock %}
+{% block titulo %}5. Acciones de tratamiento · ClimaTec{% endblock %}
 {% block contenido %}
 
-<div class="page-hero acento-cold animate-fade-down">
+<div class="page-hero acento-cold animate-fade-down" data-fondo="e2_tratamiento">
+    <canvas class="fondo-seccion" aria-hidden="true"></canvas>
     <div class="icono-hero">🧰</div>
-    <p class="eyebrow"><span class="paso">Etapa 2 · 05</span> Tratamiento</p>
+    <p class="eyebrow"><span class="paso">05</span> Tratamiento</p>
     <h1>Acciones de tratamiento aplicadas</h1>
     <p class="lede">Transformaciones aplicadas por <span class="mono">scripts/limpieza.py</span> sobre el
     dataset. El proceso es reproducible y no elimina informacion valida ni imputa los nulos
@@ -36,7 +37,7 @@
     <strong>Criterio sobre atipicos:</strong> se marcan con la columna <code>atipico</code> (regla
     1.5·IQR por indicador) en lugar de eliminarlos, porque muchos valores extremos son reales
     (el agregado mundial y los grandes emisores). La columna <code>valor_z</code> permite comparar
-    indicadores de distinta escala en la Etapa 3.
+    indicadores de distinta escala en Analisis.
 </div>
 {% else %}
 <div class="nota">No se pudo generar el detalle de tratamiento.</div>

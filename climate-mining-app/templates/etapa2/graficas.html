@@ -1,10 +1,11 @@
 {% extends 'base.html' %}
-{% block titulo %}Etapa 2 · Graficas e indicadores · ClimaTec{% endblock %}
+{% block titulo %}7. Graficas e indicadores · ClimaTec{% endblock %}
 {% block contenido %}
 
-<div class="page-hero acento-cold animate-fade-down">
+<div class="page-hero acento-cold animate-fade-down" data-fondo="e2_graficas">
+    <canvas class="fondo-seccion" aria-hidden="true"></canvas>
     <div class="icono-hero">📊</div>
-    <p class="eyebrow"><span class="paso">Etapa 2 · 07</span> Visualizacion</p>
+    <p class="eyebrow"><span class="paso">07</span> Visualizacion</p>
     <h1>Graficas, tablas e indicadores</h1>
     <p class="lede">Indicadores clave del perfilamiento y del tratamiento, calculados sobre el dataset.</p>
 </div>
@@ -60,7 +61,7 @@
 
 <div class="nota" style="margin-top:1.4rem;">
     Las barras se dibujan directamente de las cifras calculadas sobre <span class="mono">clima_limpio.csv</span>;
-    no son valores fijos. La Etapa 3 (analisis) profundizara con graficas de series de tiempo por nivel.
+    no son valores fijos. La etapa de Analisis profundizara con graficas de series de tiempo por nivel.
 </div>
 {% else %}
 <div class="nota">No se pudieron generar las graficas.</div>

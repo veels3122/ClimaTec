@@ -1,13 +1,14 @@
 {% extends 'base.html' %}
-{% block titulo %}Etapa 2 · Comparacion antes y despues · ClimaTec{% endblock %}
+{% block titulo %}6. Comparacion antes y despues · ClimaTec{% endblock %}
 {% block contenido %}
 
-<div class="page-hero acento-warm animate-fade-down">
+<div class="page-hero acento-warm animate-fade-down" data-fondo="e2_comparacion">
+    <canvas class="fondo-seccion" aria-hidden="true"></canvas>
     <div class="icono-hero">🔄</div>
-    <p class="eyebrow"><span class="paso">Etapa 2 · 06</span> Antes / Despues</p>
+    <p class="eyebrow"><span class="paso">06</span> Antes / Despues</p>
     <h1>Comparacion antes y despues</h1>
-    <p class="lede">Estado del dataset antes del tratamiento (salida de la Etapa 1) frente al dataset
-    limpio (salida de la Etapa 2).</p>
+    <p class="lede">Estado del dataset antes del tratamiento (salida de Definicion) frente al dataset
+    limpio (salida de esta etapa).</p>
 </div>
 
 {% if rep %}
@@ -30,7 +31,7 @@
     <strong>Resumen:</strong> no se perdieron observaciones porque no habia registros invalidos que
     eliminar; el valor agregado del tratamiento esta en la consistencia de tipos, el marcado de
     {{ rep.n_atipicos }} observaciones atipicas y dos columnas nuevas (<code>atipico</code>,
-    <code>valor_z</code>) que dejan el conjunto listo para el analisis de la Etapa 3.
+    <code>valor_z</code>) que dejan el conjunto listo para la etapa de Analisis.
 </div>
 {% else %}
 <div class="nota">No se pudo generar la comparacion.</div>
