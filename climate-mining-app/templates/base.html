@@ -52,7 +52,22 @@
                     </ul>
                 </div>
 
-                {% block nav_etapa2 %}{% endblock %}
+                {% block nav_etapa2 %}
+                <div class="nav-grupo">
+                    <button class="nav-grupo-btn" aria-expanded="false">
+                        Etapa 2 <span class="caret">&#9662;</span>
+                    </button>
+                    <ul class="submenu">
+                        <li><a href="{{ url_for('e2_descripcion') }}" class="{{ 'activo' if request.endpoint == 'e2_descripcion' }}"><span class="num">1</span> Descripcion del conjunto de datos</a></li>
+                        <li><a href="{{ url_for('e2_perfilamiento') }}" class="{{ 'activo' if request.endpoint == 'e2_perfilamiento' }}"><span class="num">2</span> Resultados del perfilamiento</a></li>
+                        <li><a href="{{ url_for('e2_dimensiones') }}" class="{{ 'activo' if request.endpoint == 'e2_dimensiones' }}"><span class="num">3</span> Dimensiones y metricas evaluadas</a></li>
+                        <li><a href="{{ url_for('e2_problemas') }}" class="{{ 'activo' if request.endpoint == 'e2_problemas' }}"><span class="num">4</span> Problemas identificados</a></li>
+                        <li><a href="{{ url_for('e2_tratamiento') }}" class="{{ 'activo' if request.endpoint == 'e2_tratamiento' }}"><span class="num">5</span> Acciones de tratamiento aplicadas</a></li>
+                        <li><a href="{{ url_for('e2_comparacion') }}" class="{{ 'activo' if request.endpoint == 'e2_comparacion' }}"><span class="num">6</span> Comparacion antes y despues</a></li>
+                        <li><a href="{{ url_for('e2_graficas') }}" class="{{ 'activo' if request.endpoint == 'e2_graficas' }}"><span class="num">7</span> Graficas, tablas e indicadores</a></li>
+                    </ul>
+                </div>
+                {% endblock %}
             </nav>
         </div>
         <div class="stripes" aria-hidden="true"></div>

@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block titulo %}Etapa 2 · Acciones de tratamiento · ClimaTec{% endblock %}
+{% block contenido %}
+
+<div class="page-hero acento-cold animate-fade-down">
+    <div class="icono-hero">🧰</div>
+    <p class="eyebrow"><span class="paso">Etapa 2 · 05</span> Tratamiento</p>
+    <h1>Acciones de tratamiento aplicadas</h1>
+    <p class="lede">Transformaciones aplicadas por <span class="mono">scripts/limpieza.py</span> sobre el
+    dataset. El proceso es reproducible y no elimina informacion valida ni imputa los nulos
+    estructurales.</p>
+</div>
+
+{% if rep %}
+<div class="tabla-wrap animate-fade-up" style="animation-delay:150ms;">
+    <table>
+        <thead><tr><th>Accion</th><th>Columna(s)</th><th>Resultado</th></tr></thead>
+        <tbody>
+            {% for a in rep.acciones %}
+            <tr>
+                <td><strong>{{ a.accion }}</strong></td>
+                <td class="mono">{{ a.columna }}</td>
+                <td>{{ a.resultado }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<h2>Columnas del dataset limpio</h2>
+<p>El resultado se guarda en <span class="mono">clima_limpio.csv</span> con
+{{ rep.columnas_finales|length }} columnas:</p>
+<p>{% for c in rep.columnas_finales %}<code>{{ c }}</code>{{ '' if loop.last else ' · ' }}{% endfor %}</p>
+
+<div class="nota">
+    <strong>Criterio sobre atipicos:</strong> se marcan con la columna <code>atipico</code> (regla
+    1.5·IQR por indicador) en lugar de eliminarlos, porque muchos valores extremos son reales
+    (el agregado mundial y los grandes emisores). La columna <code>valor_z</code> permite comparar
+    indicadores de distinta escala en la Etapa 3.
+</div>
+{% else %}
+<div class="nota">No se pudo generar el detalle de tratamiento.</div>
+{% endif %}
+
+{% endblock %}

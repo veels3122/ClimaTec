@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block titulo %}Etapa 2 · Graficas e indicadores · ClimaTec{% endblock %}
+{% block contenido %}
+
+<div class="page-hero acento-cold animate-fade-down">
+    <div class="icono-hero">📊</div>
+    <p class="eyebrow"><span class="paso">Etapa 2 · 07</span> Visualizacion</p>
+    <h1>Graficas, tablas e indicadores</h1>
+    <p class="lede">Indicadores clave del perfilamiento y del tratamiento, calculados sobre el dataset.</p>
+</div>
+
+{% if rep %}
+<div class="grid grid-3 animate-fade-up" style="margin:1.4rem 0; animation-delay:150ms;">
+    <div class="panel stat cold"><div class="valor">{{ rep.comp_efec_desp }}%</div><div class="etiqueta">completitud efectiva (post-limpieza)</div></div>
+    <div class="panel stat warm"><div class="valor">{{ rep.pct_atipicos }}%</div><div class="etiqueta">observaciones atipicas marcadas</div></div>
+    <div class="panel stat"><div class="valor">{{ rep.cols_desp }}</div><div class="etiqueta">columnas tras el tratamiento</div></div>
+</div>
+
+<h2>Observaciones por fuente</h2>
+<div class="panel">
+    {% set maxf = rep.por_fuente[0].n %}
+    {% for f in rep.por_fuente %}
+    <div class="barra-h-fila">
+        <div class="barra-h-label">{{ f.fuente }}</div>
+        <div class="barra-h-track"><div class="barra-h-fill" style="width:{{ (100 * f.n / maxf) | round(1) }}%;"></div></div>
+        <div class="barra-h-val">{{ "{:,}".format(f.n).replace(',', '.') }}</div>
+    </div>
+    {% endfor %}
+</div>
+
+<h2>Atipicos por indicador (top 8)</h2>
+{% if rep.atipicos_top %}
+<div class="panel">
+    {% set maxa = rep.atipicos_top[0].n %}
+    {% for a in rep.atipicos_top %}
+    <div class="barra-h-fila warm">
+        <div class="barra-h-label">{{ a.indicador }}</div>
+        <div class="barra-h-track"><div class="barra-h-fill" style="width:{{ (100 * a.n / maxa) | round(1) }}%;"></div></div>
+        <div class="barra-h-val">{{ a.n }}</div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p>No se marcaron observaciones atipicas.</p>
+{% endif %}
+
+<h2>Completitud: antes vs. despues</h2>
+<div class="panel">
+    <div class="barra-h-fila">
+        <div class="barra-h-label">Global antes (incluye nulos estructurales)</div>
+        <div class="barra-h-track"><div class="barra-h-fill" style="width:{{ rep.comp_glob_antes }}%;"></div></div>
+        <div class="barra-h-val">{{ rep.comp_glob_antes }}%</div>
+    </div>
+    <div class="barra-h-fila">
+        <div class="barra-h-label">Efectiva despues (excluye nulos por diseno)</div>
+        <div class="barra-h-track"><div class="barra-h-fill" style="width:{{ rep.comp_efec_desp }}%;"></div></div>
+        <div class="barra-h-val">{{ rep.comp_efec_desp }}%</div>
+    </div>
+</div>
+
+<div class="nota" style="margin-top:1.4rem;">
+    Las barras se dibujan directamente de las cifras calculadas sobre <span class="mono">clima_limpio.csv</span>;
+    no son valores fijos. La Etapa 3 (analisis) profundizara con graficas de series de tiempo por nivel.
+</div>
+{% else %}
+<div class="nota">No se pudieron generar las graficas.</div>
+{% endif %}
+
+{% endblock %}
