@@ -23,7 +23,7 @@
     {% for f in rep.por_fuente %}
     <div class="barra-h-fila">
         <div class="barra-h-label">{{ f.fuente }}</div>
-        <div class="barra-h-track"><div class="barra-h-fill" style="width:{{ (100 * f.n / maxf) | round(1) }}%;"></div></div>
+        <div class="barra-h-track"><div class="barra-h-fill" style="--p: {{ (100 * f.n / maxf) | round(1) }}%; width: var(--p);"></div></div>
         <div class="barra-h-val">{{ "{:,}".format(f.n).replace(',', '.') }}</div>
     </div>
     {% endfor %}
@@ -36,7 +36,7 @@
     {% for a in rep.atipicos_top %}
     <div class="barra-h-fila warm">
         <div class="barra-h-label">{{ a.indicador }}</div>
-        <div class="barra-h-track"><div class="barra-h-fill" style="width:{{ (100 * a.n / maxa) | round(1) }}%;"></div></div>
+        <div class="barra-h-track"><div class="barra-h-fill" style="--p: {{ ((100 * a.n / maxa) | round(1)) }}%; width: var(--p);"></div></div>
         <div class="barra-h-val">{{ a.n }}</div>
     </div>
     {% endfor %}
@@ -49,12 +49,12 @@
 <div class="panel">
     <div class="barra-h-fila">
         <div class="barra-h-label">Global antes (incluye nulos estructurales)</div>
-        <div class="barra-h-track"><div class="barra-h-fill" style="width:{{ rep.comp_glob_antes }}%;"></div></div>
+        <div class="barra-h-track"><div class="barra-h-fill" style="--p: {{ rep.comp_glob_antes }}%; width: var(--p);"></div></div>
         <div class="barra-h-val">{{ rep.comp_glob_antes }}%</div>
     </div>
     <div class="barra-h-fila">
         <div class="barra-h-label">Efectiva despues (excluye nulos por diseno)</div>
-        <div class="barra-h-track"><div class="barra-h-fill" style="width:{{ rep.comp_efec_desp }}%;"></div></div>
+        <div class="barra-h-track"><div class="barra-h-fill" style="--p: {{ rep.comp_efec_desp }}%; width: var(--p);"></div></div>
         <div class="barra-h-val">{{ rep.comp_efec_desp }}%</div>
     </div>
 </div>
