@@ -520,8 +520,8 @@ LIMITACIONES = {
     "limitaciones": [
         "Los indicadores anuales de emisiones (OWID) estan disponibles hasta 2024; 2025-2026 se cubren con las series mensuales (CO2 de Mauna Loa y anomalia de temperatura), que llegan a mediados de 2026.",
         "Las fuentes primarias de nivel nacional/regional que se sirven desde portales institucionales (NASA POWER, Banco Mundial, IDEAM) se integran al ejecutar el pipeline con acceso a internet; en el CSV publicado su estado queda registrado en el manifiesto de fuentes.",
-        "El dataset de eventos externos es una muestra curada manualmente (7 eventos); se ampliara en la Etapa 2 con registros detallados de UNGRD e IDEAM.",
-        "Mezcla de periodicidades: conviven series anuales y mensuales; para comparar niveles habra que homogenizar la frecuencia en la Etapa 2.",
+        "El dataset de eventos externos es una muestra curada manualmente (7 eventos); se ampliara en Recoleccion de Datos con registros detallados de UNGRD e IDEAM.",
+        "Mezcla de periodicidades: conviven series anuales y mensuales; para comparar niveles habra que homogenizar la frecuencia en Recoleccion de Datos.",
         "Los agregados globales y regionales no tienen iso_code y las series anuales no tienen mes: esos campos quedan vacios por diseno (no son errores).",
     ],
     "sesgos": [
@@ -597,7 +597,7 @@ def limitaciones():
 # ---------------------------------------------------------------------------
 ETAPA2_INTRO = {
     "objetivo": (
-        "La Etapa 2 evalua la calidad del dataset consolidado en la Etapa 1 y aplica un "
+        "Recoleccion de Datos evalua la calidad del dataset consolidado en Definicion y aplica un "
         "tratamiento reproducible. Todas las metricas se calculan en vivo con "
         "scripts/limpieza.py sobre clima_consolidado.csv; el resultado limpio se guarda en "
         "clima_limpio.csv."
