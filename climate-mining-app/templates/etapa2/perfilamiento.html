@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block titulo %}2. Resultados del perfilamiento · ClimaTec{% endblock %}
+{% block contenido %}
+
+<div class="page-hero acento-cold animate-fade-down" data-fondo="e2_perfilamiento">
+    <canvas class="fondo-seccion" aria-hidden="true"></canvas>
+    <div class="icono-hero">🔬</div>
+    <p class="eyebrow"><span class="paso">02</span> Perfilamiento</p>
+    <h1>Resultados del perfilamiento</h1>
+    <p class="lede">Perfil calculado en vivo sobre el dataset: tipo, valores unicos y nulos por columna,
+    estadisticos de las variables numericas y cardinalidad de las categoricas.</p>
+</div>
+
+{% if rep %}
+<div class="grid grid-3 animate-fade-up" style="margin:1.4rem 0; animation-delay:150ms;">
+    <div class="panel stat cold"><div class="valor">{{ "{:,}".format(rep.filas_antes).replace(',', '.') }}</div><div class="etiqueta">filas perfiladas</div></div>
+    <div class="panel stat"><div class="valor">{{ rep.dup_exactos + rep.dup_clave }}</div><div class="etiqueta">duplicados (exactos + por clave)</div></div>
+    <div class="panel stat warm"><div class="valor">{{ rep.n_atipicos }}</div><div class="etiqueta">atipicos por IQR ({{ rep.pct_atipicos }}%)</div></div>
+</div>
+
+<h2>Perfil por columna</h2>
+<div class="tabla-wrap">
+    <table>
+        <thead><tr><th>Columna</th><th>Tipo</th><th>No nulos</th><th>Nulos</th><th>Unicos</th></tr></thead>
+        <tbody>
+            {% for c in rep.perfil %}
+            <tr>
+                <td><code>{{ c.columna }}</code>{% if c.por_diseno %} <span class="tag cat">nulo por diseno</span>{% endif %}</td>
+                <td>
+                    {% if c.tipo == 'Numerica' %}<span class="tag num">numerica</span>
+                    {% elif c.tipo == 'Temporal' %}<span class="tag tmp">temporal</span>
+                    {% elif c.tipo == 'Booleana' %}<span class="tag cat">booleana</span>
+                    {% else %}<span class="tag cat">categorica</span>{% endif %}
+                </td>
+                <td class="mono">{{ "{:,}".format(c.no_nulos).replace(',', '.') }}</td>
+                <td class="mono">{{ "{:,}".format(c.nulos).replace(',', '.') }}</td>
+                <td class="mono">{{ "{:,}".format(c.unicos).replace(',', '.') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<h2>Variables numericas</h2>
+<div class="tabla-wrap">
+    <table>
+        <thead><tr><th>Columna</th><th>Minimo</th><th>Maximo</th><th>Media</th><th>Desv. estandar</th></tr></thead>
+        <tbody>
+            {% for e in rep.est_num %}
+            <tr><td><code>{{ e.columna }}</code></td><td class="mono">{{ e.min }}</td><td class="mono">{{ e.max }}</td><td class="mono">{{ e.media }}</td><td class="mono">{{ e.desv }}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<p style="color:var(--ink-soft);font-size:.9rem;">La columna <code>valor</code> mezcla indicadores de
+distinta escala y unidad, por eso sus estadisticos globales son solo de referencia; para comparar se
+usa <code>valor_z</code> (z-score dentro de cada indicador).</p>
+
+<h2>Cardinalidad de categoricas</h2>
+<div class="tabla-wrap">
+    <table>
+        <thead><tr><th>Columna</th><th>Valores unicos</th></tr></thead>
+        <tbody>
+            {% for c in rep.cardinalidad %}
+            <tr><td><code>{{ c.columna }}</code></td><td class="mono">{{ c.unicos }}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="nota">No se pudo calcular el perfilamiento.</div>
+{% endif %}
+
+{% endblock %}

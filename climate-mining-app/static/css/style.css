@@ -558,3 +558,19 @@ ol.preguntas li { margin: .6rem 0; padding-left: .3rem; color: var(--ink-soft); 
     h1 { font-size: 1.8rem; }
     .stat-card { max-width: 100%; }
 }
+
+/* ---------------------------------------------------------------------------
+   Recoleccion de Datos - barras horizontales (graficas simples, sin dependencias JS)
+--------------------------------------------------------------------------- */
+.barra-h-fila { display:flex; align-items:center; gap:.7rem; margin:.5rem 0; }
+.barra-h-label { flex:0 0 42%; font-size:.82rem; color:var(--ink-soft); }
+.barra-h-track { flex:1; height:12px; background:var(--line-soft); border-radius:6px; overflow:hidden; }
+.barra-h-fill { height:100%; border-radius:6px;
+    background:linear-gradient(90deg, var(--cold), #6ad9ee); }
+.barra-h-fila.warm .barra-h-fill { background:linear-gradient(90deg, var(--warm), #ff8f78); }
+.barra-h-val { flex:0 0 auto; font-family:"IBM Plex Mono",monospace; font-size:.78rem; color:#fff; min-width:56px; text-align:right; }
+.sev { font-family:"IBM Plex Mono",monospace; font-size:.66rem; padding:.15rem .5rem; border-radius:6px; white-space:nowrap; }
+.sev.alta { background:var(--warm-soft); color:#ff8f78; }
+.sev.media { background:rgba(255,180,84,.16); color:#ffb454; }
+.sev.baja { background:var(--cold-soft); color:var(--cold); }
+.sev.info { background:rgba(255,255,255,.08); color:var(--ink-soft); }

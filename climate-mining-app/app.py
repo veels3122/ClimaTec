@@ -16,9 +16,13 @@ el conjunto de datos.
 """
 
 import os
+import sys
 
 import pandas as pd
 from flask import Flask, render_template, redirect, url_for
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "scripts"))
+import limpieza  # noqa: E402  (perfilamiento y limpieza de la Etapa 2)
 
 app = Flask(__name__)
 
@@ -65,6 +69,14 @@ def _cargar(nombre):
 DF = _cargar(DATASET_PRINCIPAL)
 DF_EVENTOS = _cargar(DATASET_EVENTOS)
 DF_MANIFIESTO = _cargar(DATASET_MANIFIESTO)
+
+# Etapa 2: perfilamiento + limpieza calculados una sola vez al arrancar.
+DF_LIMPIO, REPORTE_E2 = (None, None)
+if DF is not None:
+    try:
+        DF_LIMPIO, REPORTE_E2 = limpieza.limpiar(DF)
+    except Exception:
+        DF_LIMPIO, REPORTE_E2 = None, None
 
 
 # ---------------------------------------------------------------------------
@@ -508,8 +520,8 @@ LIMITACIONES = {
     "limitaciones": [
         "Los indicadores anuales de emisiones (OWID) estan disponibles hasta 2024; 2025-2026 se cubren con las series mensuales (CO2 de Mauna Loa y anomalia de temperatura), que llegan a mediados de 2026.",
         "Las fuentes primarias de nivel nacional/regional que se sirven desde portales institucionales (NASA POWER, Banco Mundial, IDEAM) se integran al ejecutar el pipeline con acceso a internet; en el CSV publicado su estado queda registrado en el manifiesto de fuentes.",
-        "El dataset de eventos externos es una muestra curada manualmente (7 eventos); se ampliara en la Etapa 2 con registros detallados de UNGRD e IDEAM.",
-        "Mezcla de periodicidades: conviven series anuales y mensuales; para comparar niveles habra que homogenizar la frecuencia en la Etapa 2.",
+        "El dataset de eventos externos es una muestra curada manualmente (7 eventos); se ampliara en Recoleccion de Datos con registros detallados de UNGRD e IDEAM.",
+        "Mezcla de periodicidades: conviven series anuales y mensuales; para comparar niveles habra que homogenizar la frecuencia en Recoleccion de Datos.",
         "Los agregados globales y regionales no tienen iso_code y las series anuales no tienen mes: esos campos quedan vacios por diseno (no son errores).",
     ],
     "sesgos": [
@@ -578,6 +590,55 @@ def calidad_inicial():
 @app.route("/etapa-1/limitaciones")
 def limitaciones():
     return render_template("etapa1/limitaciones.html", proyecto=PROYECTO, info=LIMITACIONES)
+
+
+# ---------------------------------------------------------------------------
+# Etapa 2 - Perfilamiento y limpieza
+# ---------------------------------------------------------------------------
+ETAPA2_INTRO = {
+    "objetivo": (
+        "Recoleccion de Datos evalua la calidad del dataset consolidado en Definicion y aplica un "
+        "tratamiento reproducible. Todas las metricas se calculan en vivo con "
+        "scripts/limpieza.py sobre clima_consolidado.csv; el resultado limpio se guarda en "
+        "clima_limpio.csv."
+    ),
+}
+
+
+@app.route("/etapa-2/descripcion")
+def e2_descripcion():
+    return render_template("etapa2/descripcion.html", proyecto=PROYECTO,
+                           resumen=resumen_dataset(), rep=REPORTE_E2, intro=ETAPA2_INTRO)
+
+
+@app.route("/etapa-2/perfilamiento")
+def e2_perfilamiento():
+    return render_template("etapa2/perfilamiento.html", proyecto=PROYECTO, rep=REPORTE_E2)
+
+
+@app.route("/etapa-2/dimensiones")
+def e2_dimensiones():
+    return render_template("etapa2/dimensiones.html", proyecto=PROYECTO, rep=REPORTE_E2)
+
+
+@app.route("/etapa-2/problemas")
+def e2_problemas():
+    return render_template("etapa2/problemas.html", proyecto=PROYECTO, rep=REPORTE_E2)
+
+
+@app.route("/etapa-2/tratamiento")
+def e2_tratamiento():
+    return render_template("etapa2/tratamiento.html", proyecto=PROYECTO, rep=REPORTE_E2)
+
+
+@app.route("/etapa-2/comparacion")
+def e2_comparacion():
+    return render_template("etapa2/comparacion.html", proyecto=PROYECTO, rep=REPORTE_E2)
+
+
+@app.route("/etapa-2/graficas")
+def e2_graficas():
+    return render_template("etapa2/graficas.html", proyecto=PROYECTO, rep=REPORTE_E2)
 
 
 # Compatibilidad con rutas antiguas (evita 404 en enlaces previos).

@@ -27,6 +27,20 @@ Menu principal **Etapa 1** con los 8 apartados del entregable:
 7. Calidad inicial de los datos
 8. Limitaciones y consideraciones
 
+Menu **Etapa 2** (perfilamiento y limpieza) con 7 apartados:
+
+1. Descripcion del conjunto de datos
+2. Resultados del perfilamiento
+3. Dimensiones y metricas evaluadas
+4. Problemas identificados
+5. Acciones de tratamiento aplicadas
+6. Comparacion antes y despues
+7. Graficas, tablas e indicadores
+
+La Etapa 2 se calcula en vivo con `scripts/limpieza.py` sobre
+`clima_consolidado.csv`; el dataset limpio se guarda en `data/raw/clima_limpio.csv`
+(tipos normalizados, columna `atipico` por IQR e `valor_z` por indicador).
+
 Las paginas 5 (Dataset) y 7 (Calidad inicial) calculan sus metricas **en vivo**
 a partir del archivo real `data/raw/clima_consolidado.csv`, de modo que la
 documentacion nunca se aleja del contenido del dataset.
@@ -80,6 +94,16 @@ fuente (integrada u omitida por falta de red) en cada ejecucion.
 
 Para IDEAM se puede fijar el recurso de datos.gov.co con la variable de entorno
 `IDEAM_DATASET_ID` (por defecto usa un recurso de temperatura por estacion).
+
+## Etapa 2 — perfilamiento y limpieza
+
+    python scripts/limpieza.py
+
+Lee `data/raw/clima_consolidado.csv`, ejecuta el perfilamiento, aplica el
+tratamiento (normalizacion de tipos, verificacion de duplicados y dominio, marcado
+de atipicos por IQR y variable `valor_z`) y escribe `data/raw/clima_limpio.csv`.
+La app tambien recalcula este reporte en vivo al arrancar, asi que las paginas de
+la Etapa 2 siempre reflejan el dataset actual.
 
 ## Ejecutar la app localmente
 

@@ -16,17 +16,34 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ---- Desplegable "Etapa 1" (funciona en escritorio y movil) ------
-    const grupoBtn = document.querySelector('.nav-grupo-btn');
-    const grupo = document.querySelector('.nav-grupo');
-    if (grupoBtn && grupo) {
-        grupoBtn.addEventListener('click', (e) => {
+    // ---- Desplegables de nav ("Etapa 1", "Etapa 2") -----------------
+    // Cada grupo abre/cierra su propio submenu; al abrir uno se cierran
+    // los demas. Funciona en escritorio y movil.
+    const grupos = Array.from(document.querySelectorAll('.nav-grupo'));
+    grupos.forEach((grupo) => {
+        const btn = grupo.querySelector('.nav-grupo-btn');
+        if (!btn) return;
+        btn.addEventListener('click', (e) => {
             e.stopPropagation();
-            grupo.classList.toggle('abierto');
-            grupoBtn.setAttribute('aria-expanded', String(grupo.classList.contains('abierto')));
+            const abierto = grupo.classList.contains('abierto');
+            grupos.forEach((g) => {
+                g.classList.remove('abierto');
+                const b = g.querySelector('.nav-grupo-btn');
+                if (b) b.setAttribute('aria-expanded', 'false');
+            });
+            if (!abierto) {
+                grupo.classList.add('abierto');
+                btn.setAttribute('aria-expanded', 'true');
+            }
         });
-        document.addEventListener('click', () => grupo.classList.remove('abierto'));
-    }
+    });
+    document.addEventListener('click', () => {
+        grupos.forEach((g) => {
+            g.classList.remove('abierto');
+            const b = g.querySelector('.nav-grupo-btn');
+            if (b) b.setAttribute('aria-expanded', 'false');
+        });
+    });
 
     // Cierra el menu movil si cambia a tamano de escritorio
     window.addEventListener('resize', () => {

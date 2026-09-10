@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block titulo %}4. Problemas identificados · ClimaTec{% endblock %}
+{% block contenido %}
+
+<div class="page-hero acento-amber animate-fade-down" data-fondo="e2_problemas">
+    <canvas class="fondo-seccion" aria-hidden="true"></canvas>
+    <div class="icono-hero">⚠️</div>
+    <p class="eyebrow"><span class="paso">04</span> Hallazgos</p>
+    <h1>Problemas identificados</h1>
+    <p class="lede">Situaciones detectadas durante el perfilamiento que requieren tratamiento o, al
+    menos, documentacion explicita.</p>
+</div>
+
+{% if rep %}
+<div class="grid grid-2">
+    {% for p in rep.problemas %}
+    <div class="panel animate-fade-up" style="animation-delay:{{ 100 + loop.index0 * 70 }}ms;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.6rem;">
+            <h3 style="margin:0;">{{ p.problema }}</h3>
+            <span class="sev {{ 'alta' if p.severidad == 'Alta' else ('media' if p.severidad == 'Media' else ('baja' if p.severidad == 'Baja' else 'info')) }}">{{ p.severidad }}</span>
+        </div>
+        <p class="mono" style="font-size:.78rem;color:var(--cold);margin:.3rem 0 .5rem;">{{ p.cantidad }}</p>
+        <p style="margin:0;">{{ p.detalle }}</p>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="nota">No se pudo generar el listado de problemas.</div>
+{% endif %}
+
+{% endblock %}

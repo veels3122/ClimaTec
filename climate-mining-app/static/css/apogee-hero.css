@@ -1,0 +1,309 @@
+/* ==========================================================================
+   ClimaTec — porte LITERAL de la especificacion "Apogee" (medidas exactas
+   de las secciones 4 a 8 del prompt) aplicado a la topbar y al hero de
+   Inicio. Se carga DESPUES de style.css y solo sobreescribe selectores de
+   navegacion / hero / tarjeta de estadistica / menu movil: no toca nada
+   mas del sitio (paneles, tablas, tarjetas de contenido siguen iguales).
+
+   Sustitucion obligatoria frente al prompt original: Apogee usa un <video>
+   de fondo cargado de un CDN externo. Aqui no hay ese video (no conviene
+   subir un archivo pesado a un repo academico ni depender de un CDN
+   ajeno), asi que el fondo se genera con <canvas> en fondos.js
+   (ver seccion "FONDO DEL HERO" mas abajo) reproduciendo la misma
+   composicion visual: haz de luz central frio->calido sobre un fondo
+   oscuro, igual que la referencia.
+   ========================================================================== */
+
+:root {
+    /* Paleta neutra exacta de la seccion 6 del prompt, para botones/pills */
+    --apogee-bg:      #080A19;
+    --apogee-light:   #E9E9E9;
+    --apogee-dark:    #0A0707;
+    --apogee-nav-glass:  rgba(10, 7, 7, 0.35);
+    --apogee-auth-glass: rgba(0, 0, 0, 0.35);
+    --apogee-card-glass: rgba(17, 16, 15, 0.35);
+    --apogee-panel-glass: rgba(17, 16, 15, 0.6);
+    --apogee-panel-border: rgba(255, 255, 255, 0.06);
+    --apogee-ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ==========================================================================
+   1) CONTENEDOR ANCHO — max-w-[1800px] + px 20/32/82 (seccion 5.1)
+   Solo para la topbar y el hero de Inicio: el resto del sitio conserva su
+   contenedor normal de 1120px para que la lectura de las demas paginas no
+   cambie.
+   ========================================================================== */
+.topbar-inner,
+#inicio-hero {
+    width: min(1800px, 100% - 40px);
+    max-width: 1800px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 0;
+    padding-right: 0;
+}
+@media (min-width: 640px) {
+    .topbar-inner, #inicio-hero { width: min(1800px, 100% - 64px); }
+}
+@media (min-width: 768px) {
+    .topbar-inner, #inicio-hero { width: min(1800px, 100% - 164px); }
+}
+
+/* ==========================================================================
+   2) LOGO — seccion 4.5(i) / 5.2
+   ========================================================================== */
+.marca-icono { width: 28px; height: 28px; }
+@media (min-width: 640px) { .marca-icono { width: 32px; height: 32px; } }
+.marca { gap: 10px; }
+.marca-nombre { font-size: 22px; line-height: 1; }
+@media (min-width: 640px) { .marca-nombre { font-size: 26px; } }
+
+/* ==========================================================================
+   3) TOPBAR — padding superior 20px / 30px (seccion 5.1)
+   ========================================================================== */
+.topbar { padding-top: 20px; }
+@media (min-width: 640px) { .topbar { padding-top: 30px; } }
+.topbar-inner { padding-bottom: 0; }
+
+/* ==========================================================================
+   4) PILL CENTRAL DE NAV (desktop >=1024px) — seccion 5.3
+   Altura fija 52px, padding horizontal 24px, gap entre items 30px,
+   radio 11px, glass rgba(10,7,7,.35), blur 17px.
+   ========================================================================== */
+@media (min-width: 1024px) {
+    .nav-pill {
+        display: flex; align-items: center; gap: 30px;
+        height: 52px; padding: 0 24px;
+        background: var(--apogee-nav-glass);
+        border: 1px solid var(--glass-border);
+        border-radius: 11px;
+        backdrop-filter: blur(17px);
+        -webkit-backdrop-filter: blur(17px);
+    }
+    .nav-pill-link {
+        font-size: 14px; line-height: 14px; font-weight: 450;
+        color: rgba(255,255,255,.8); text-decoration: none; background: none; border: none;
+        cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 5px;
+        padding: 0; transition: color .2s ease;
+    }
+    .nav-pill-link:hover, .nav-pill-link.activo { color: #fff; }
+    .nav-pill-link .caret { width: 10px; height: 10px; font-size: 10px; opacity: .8; transition: transform .2s ease; }
+    .nav-pill-link[aria-expanded="true"] .caret { transform: rotate(180deg); }
+}
+@media (max-width: 1023px) { .nav-pill { display: none; } }
+
+/* ==========================================================================
+   5) PILL DERECHA (auth) desktop — seccion 5.4
+   Outer 52px alto, padding 3px, radio 13px, glass rgba(0,0,0,.35).
+   Botones internos 46px alto, padding 24px, radio 11px, gap 5px.
+   ========================================================================== */
+@media (min-width: 1024px) {
+    .nav-auth {
+        display: flex; align-items: center; gap: 5px;
+        height: 52px; padding: 3px;
+        background: var(--apogee-auth-glass);
+        border-radius: 13px;
+        backdrop-filter: blur(17px);
+        -webkit-backdrop-filter: blur(17px);
+    }
+    .nav-auth-link {
+        height: 46px; padding: 0 24px; border-radius: 11px;
+        display: inline-flex; align-items: center;
+        font-size: 14px; line-height: 14px; font-weight: 450;
+        text-decoration: none; transition: background .2s ease, opacity .2s ease;
+    }
+    .nav-auth-link.ghost { color: #fff; }
+    .nav-auth-link.ghost:hover { background: rgba(255,255,255,.05); }
+    .nav-auth-link.solido { background: var(--apogee-light); color: var(--apogee-dark); }
+    .nav-auth-link.solido:hover { background: #fff; }
+}
+@media (max-width: 1023px) { .nav-auth { display: none; } }
+
+/* ==========================================================================
+   6) HAMBURGUESA MOVIL — seccion 4.5(iv) / 5.5
+   ========================================================================== */
+.menu-toggle {
+    width: 44px; height: 44px; border-radius: 11px;
+    background: var(--apogee-nav-glass); border: none;
+    backdrop-filter: blur(17px); -webkit-backdrop-filter: blur(17px);
+}
+.menu-toggle:hover { background: rgba(255,255,255,.1); }
+@media (min-width: 1024px) { .menu-toggle { display: none; } }
+
+/* ==========================================================================
+   7) MENU OVERLAY MOVIL — seccion 4.5(v) / 5.10
+   Visibility-toggled (nunca display:none) para que la transicion de cierre
+   tambien se anime, igual que pide la spec.
+   ========================================================================== */
+.menu-overlay {
+    display: block;
+    position: fixed; inset: 0; z-index: 70;
+    visibility: hidden;
+    transition: visibility .5s var(--apogee-ease);
+    pointer-events: none;
+}
+.menu-overlay.abierto { visibility: visible; pointer-events: auto; }
+@media (min-width: 1024px) { .menu-overlay { display: none; } }
+
+.menu-overlay-fondo {
+    position: absolute; inset: 0;
+    background: rgba(8, 10, 25, .9);
+    backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+    opacity: 0; transition: opacity .5s var(--apogee-ease);
+}
+.menu-overlay.abierto .menu-overlay-fondo { opacity: 1; }
+
+.menu-overlay-panel {
+    position: absolute; top: 76px; left: 16px; right: 16px;
+    background: var(--apogee-panel-glass);
+    backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+    border-radius: 20px; border: 1px solid var(--apogee-panel-border);
+    padding: 24px;
+    opacity: 0; transform: translateY(-16px) scale(.97);
+    transform-origin: top;
+    transition: opacity .5s var(--apogee-ease), transform .5s var(--apogee-ease);
+}
+@media (min-width: 640px) {
+    .menu-overlay-panel { top: 86px; left: 24px; right: 24px; padding: 32px; }
+}
+.menu-overlay.abierto .menu-overlay-panel { opacity: 1; transform: translateY(0) scale(1); }
+
+.menu-overlay-links { display: flex; flex-direction: column; gap: 4px; }
+.menu-overlay-links a, .menu-overlay-links button {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px; border-radius: 12px;
+    color: rgba(255,255,255,.9); font-size: 18px; font-weight: 450;
+    text-decoration: none; background: none; border: none; width: 100%;
+    font-family: inherit; cursor: pointer; text-align: left;
+    transition: background .3s ease, opacity .3s ease, transform .3s ease;
+    opacity: 0; transform: translateX(-12px);
+}
+.menu-overlay-links a:hover, .menu-overlay-links button:hover { background: rgba(255,255,255,.06); }
+.menu-overlay.abierto .menu-overlay-links a,
+.menu-overlay.abierto .menu-overlay-links button { opacity: 1; transform: translateX(0); }
+.menu-overlay-links .caret { width: 16px; height: 16px; opacity: .5; }
+
+.menu-overlay-sep { height: 1px; background: rgba(255,255,255,.1); margin: 20px 0; }
+
+.menu-overlay-cta { display: flex; flex-direction: column; gap: 12px; opacity: 0; transform: translateY(8px); transition: opacity .3s ease, transform .3s ease; }
+.menu-overlay.abierto .menu-overlay-cta { opacity: 1; transform: translateY(0); }
+.menu-overlay-cta a {
+    height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 450; text-decoration: none; transition: background .2s ease;
+}
+.menu-overlay-cta a.solido { background: var(--apogee-light); color: var(--apogee-dark); }
+.menu-overlay-cta a.solido:hover { background: #fff; }
+.menu-overlay-cta a.ghost { border: 1px solid rgba(255,255,255,.3); color: #fff; }
+.menu-overlay-cta a.ghost:hover { background: rgba(255,255,255,.05); }
+
+/* ==========================================================================
+   8) HERO — copy + CTA — secciones 4.3 / 5.6 / 5.7 / 8
+   ========================================================================== */
+#inicio-hero {
+    position: relative;
+    display: flex; flex-direction: column;
+    min-height: 84vh;
+    justify-content: center;
+    gap: 12px;
+    padding: 32px 20px;
+    overflow: visible;
+}
+@media (min-width: 640px) { #inicio-hero { padding: 32px; } }
+@media (min-width: 768px) { #inicio-hero { padding: 32px 82px; } }
+
+.hero-fila {
+    display: flex; flex-direction: column; gap: 40px;
+}
+@media (min-width: 1024px) {
+    .hero-fila { flex-direction: row; align-items: center; justify-content: space-between; gap: 48px; }
+}
+
+/* Columna derecha del hero: tarjeta de CO2 + riel de Etapas, apilados */
+.hero-panel-derecho {
+    display: flex; flex-direction: column; gap: 18px;
+    width: 100%;
+}
+@media (min-width: 1024px) { .hero-panel-derecho { width: auto; } }
+
+.hero-copy { max-width: 593px; }
+.hero-copy h1 {
+    font-size: 36px; line-height: .95; margin: 0 0 20px; font-weight: 400;
+    background: none; -webkit-text-fill-color: initial; color: #fff;
+}
+@media (min-width: 640px) { .hero-copy h1 { font-size: 52px; margin-bottom: 32px; } }
+@media (min-width: 768px) { .hero-copy h1 { font-size: 64px; } }
+@media (min-width: 1024px) { .hero-copy h1 { font-size: 72px; } }
+
+.hero-copy .lede {
+    color: rgba(255,255,255,.8); font-size: 16px; font-weight: 450; line-height: 1.3;
+    max-width: 370px; margin: 0 0 28px;
+}
+@media (min-width: 640px) { .hero-copy .lede { font-size: 18px; margin-bottom: 40px; } }
+@media (min-width: 768px) { .hero-copy .lede { font-size: 20px; } }
+
+.hero-cta { display: flex; flex-wrap: wrap; gap: 12px; }
+@media (min-width: 640px) { .hero-cta { gap: 16px; } }
+
+#inicio-hero .btn {
+    height: 46px; padding: 0 20px; border-radius: 12px;
+    font-size: 14px; font-weight: 450; line-height: 15.5px;
+}
+@media (min-width: 640px) { #inicio-hero .btn { height: 51px; padding: 0 27px; font-size: 15.5px; } }
+#inicio-hero .btn-light { background: var(--apogee-light); color: var(--apogee-dark); }
+#inicio-hero .btn-outline { border: 1px solid #fff; color: #fff; }
+
+/* ==========================================================================
+   9) TARJETA DE ESTADISTICA — secciones 4.4 / 5.8 / 5.9
+   ========================================================================== */
+.stat-card {
+    width: 100%; max-width: 405px; margin: 0 auto;
+    border-radius: 24px;
+    background: var(--apogee-card-glass);
+    border: none;
+    padding: 20px 20px 20px;
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    box-shadow: none;
+}
+@media (min-width: 1024px) { .stat-card { margin: 0; } }
+@media (min-width: 640px) { .stat-card { border-radius: 33px; padding: 32px 32px 24px; } }
+
+.stat-card .stat-card-label { font-size: 16px; line-height: 20px; margin-bottom: 12px; color: #fff; }
+@media (min-width: 640px) { .stat-card .stat-card-label { font-size: 20px; margin-bottom: 16px; } }
+
+.stat-card .stat-card-amount { font-size: 28px; line-height: 1; margin-bottom: 8px; }
+@media (min-width: 640px) { .stat-card .stat-card-amount { font-size: 46px; margin-bottom: 12px; } }
+.stat-card .stat-card-amount .unidad { font-size: .55em; color: rgba(255,255,255,.2); }
+
+.stat-card .stat-card-delta { gap: 10px; margin-bottom: 24px; }
+@media (min-width: 640px) { .stat-card .stat-card-delta { margin-bottom: 32px; } }
+.stat-card .badge-delta { padding: 7px 6px; border-radius: 6px; font-size: 12px; line-height: 14px; background: rgba(255,255,255,.2); color: #fff; }
+@media (min-width: 640px) { .stat-card .badge-delta { font-size: 14px; } }
+.stat-card .stat-card-caption { font-size: 12px; line-height: 14px; opacity: .7; }
+@media (min-width: 640px) { .stat-card .stat-card-caption { font-size: 14px; } }
+
+.bar-chart .barras { height: 80px; gap: 1.5px; }
+@media (min-width: 640px) { .bar-chart .barras { height: 100px; } }
+.bar-chart .barra { border-radius: .5px; }
+.bar-chart .eje { margin-top: 12px; }
+.bar-chart .eje span { font-size: 9px; line-height: 10px; }
+@media (min-width: 640px) { .bar-chart .eje span { font-size: 10px; } }
+
+/* ==========================================================================
+   10) FONDO DEL HERO — sustituto del <video> de la spec.
+   No se crea un canvas nuevo: el sitio YA tiene un fondo animado fijo de
+   pantalla completa (.atmosfera, definido en style.css) que es, en los
+   hechos, el mismo concepto que el video de Apogee -- haz de luz central
+   frio->calido sobre fondo oscuro, con blobs a la deriva -- asi que el
+   hero de Inicio simplemente lo deja ver por transparencia (stat-card y
+   nav-pill ya son de vidrio). Se sube un poco su intensidad SOLO detras
+   del hero para que se note como fondo protagonico, igual que el video
+   de referencia.
+   ========================================================================== */
+#inicio-hero { isolation: isolate; }
+#inicio-hero::before {
+    content: "";
+    position: absolute; inset: -10% -6vw;
+    z-index: -1;
+    background: radial-gradient(55% 70% at 78% 30%, rgba(73,199,224,.16), transparent 70%);
+    pointer-events: none;
+}

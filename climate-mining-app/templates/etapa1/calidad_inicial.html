@@ -2,7 +2,10 @@
 {% block titulo %}7. Calidad inicial · ClimaTec{% endblock %}
 {% block contenido %}
 
-<div class="page-hero acento-amber animate-fade-down">
+<div class="page-hero acento-amber animate-fade-down" data-fondo="calidad">
+    <div class="fondo-foto fondo-foto-calidad" aria-hidden="true"></div>
+    <div class="fondo-foto-tinte" aria-hidden="true"></div>
+    <canvas class="fondo-seccion" aria-hidden="true"></canvas>
     <div class="icono-hero">🔍</div>
     <p class="eyebrow"><span class="paso">07</span> Diagnostico inicial de calidad</p>
     <h1>Calidad inicial de los datos</h1>
@@ -51,7 +54,7 @@
 
 <div class="nota">
     <strong>Nota:</strong> en esta etapa solo se diagnostica; la limpieza (imputacion,
-    tratamiento de outliers, normalizacion) se realizara en la Etapa 2, conservando la
+    tratamiento de outliers, normalizacion) se realizara en Recoleccion de Datos, conservando la
     trazabilidad de los datos originales.
 </div>
 {% else %}

@@ -1,0 +1,186 @@
+/* ==========================================================================
+   ClimaTec — navegacion por "etapas" y "secciones".
+   Dos componentes distintos, cada uno con su propia forma (a proposito, no
+   son lo mismo):
+
+   1) .etapas-rail  — RIEL VERTICAL con los nombres siempre visibles
+      (Definicion, Recoleccion de Datos, Analisis, Verificacion,
+      Publicacion), tal como la referencia entregada. Vive en Inicio, junto
+      a la tarjeta de CO2. Solo "Definicion" esta activa hoy; el resto se
+      ve apagada ("proximamente"). Al hacer clic en la etapa activa se abre
+      la rueda circular de secciones (punto 2).
+
+   2) .rueda-secciones — RUEDA CIRCULAR (donut de 8 gajos), uno por cada
+      seccion de la etapa Definicion. Al pasar el mouse por un gajo se
+      resalta y su nombre aparece en el centro; el clic navega. Se abre
+      en un overlay flotante, disparado desde el boton "Definicion" de la
+      topbar (cualquier pagina) o desde el riel de Inicio.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------
+   1) Riel vertical de ETAPAS
+   -------------------------------------------------------------------- */
+.etapas-rail {
+    width: 100%;
+    max-width: 300px;
+    background: rgba(13, 18, 36, .55);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: 1.3rem 1.5rem 1.4rem;
+    backdrop-filter: blur(var(--blur-card));
+    -webkit-backdrop-filter: blur(var(--blur-card));
+    font-family: "IBM Plex Mono", monospace;
+}
+.etapas-rail-titulo {
+    font-size: .68rem; letter-spacing: .22em; text-transform: uppercase;
+    color: var(--ink-mute); margin: 0 0 1.1rem;
+}
+.etapas-rail-lista {
+    list-style: none; margin: 0; padding: 0; position: relative;
+}
+.etapas-rail-lista::before {
+    content: "";
+    position: absolute; left: 15px; top: 16px; bottom: 16px; width: 2px;
+    background: linear-gradient(180deg, var(--warm), var(--cold));
+    opacity: .3;
+}
+.etapas-rail-item {
+    display: flex; align-items: center; gap: .85rem;
+    padding: .5rem 0; position: relative; z-index: 1;
+    opacity: .4;
+}
+.etapas-rail-item.es-activa { opacity: 1; }
+.etapas-rail-nodo {
+    width: 30px; height: 30px; flex: none;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; font-size: .78rem; font-weight: 700;
+    background: rgba(13, 18, 36, .9); border: 1px solid var(--glass-border);
+    color: var(--ink-mute); font-family: inherit; cursor: default;
+    transition: transform .2s var(--ease-apogee), box-shadow .2s ease, border-color .2s ease;
+}
+.etapas-rail-item.es-activa .etapas-rail-nodo {
+    border-color: var(--warm); color: #fff; background: rgba(255, 106, 77, .18);
+    box-shadow: 0 0 0 4px rgba(255, 106, 77, .12);
+    cursor: pointer;
+}
+.etapas-rail-item.es-activa .etapas-rail-nodo:hover,
+.etapas-rail-item.es-activa .etapas-rail-nodo:focus-visible {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 6px rgba(255, 106, 77, .18);
+    outline: none;
+}
+.etapas-rail-nombre {
+    font-family: "Spectral", serif; font-size: .92rem; line-height: 1.25;
+    color: var(--ink-soft);
+}
+.etapas-rail-item.es-activa .etapas-rail-nombre { color: #fff; }
+.etapas-rail-tag {
+    font-size: .6rem; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--ink-mute); display: block; margin-top: .1rem;
+}
+
+@media (max-width: 1023px) {
+    .etapas-rail { max-width: 100%; margin: 0 auto; }
+}
+
+/* --------------------------------------------------------------------
+   2) Rueda circular de SECCIONES (donut de 8 gajos)
+   -------------------------------------------------------------------- */
+.rueda-secciones-caja {
+    position: relative;
+    width: min(320px, 78vw);
+    height: min(320px, 78vw);
+    margin: 1.2rem auto 0;
+}
+.rueda-secciones { width: 100%; height: 100%; overflow: visible; }
+
+.gajo {
+    fill: rgba(255, 255, 255, .05);
+    stroke: rgba(8, 11, 22, .9);
+    stroke-width: 2;
+    cursor: pointer;
+    transition: fill .2s var(--ease-apogee), transform .2s var(--ease-apogee);
+    transform-box: fill-box;
+    transform-origin: center;
+}
+.gajo:hover, .gajo:focus-visible, .gajo.es-actual {
+    fill: rgba(255, 106, 77, .38);
+    outline: none;
+}
+.gajo:hover, .gajo:focus-visible {
+    transform: translate(var(--gdx, 0), var(--gdy, 0)) scale(1.04);
+}
+.gajo-num {
+    fill: rgba(255, 255, 255, .8);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13px;
+    font-weight: 600;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    pointer-events: none;
+}
+.gajo:hover ~ .gajo-num,
+.gajo.es-actual ~ .gajo-num { fill: #fff; }
+
+.rueda-secciones-centro {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 0 1.6rem;
+    pointer-events: none;
+}
+.rueda-secciones-num {
+    font-family: "IBM Plex Mono", monospace; font-size: .72rem;
+    letter-spacing: .12em; color: var(--ink-mute); margin: 0 0 .3rem;
+}
+.rueda-secciones-titulo {
+    font-family: "Spectral", serif; font-size: 1.05rem; color: #fff; margin: 0;
+    line-height: 1.2;
+}
+
+/* --------------------------------------------------------------------
+   Overlay que aloja la rueda circular (topbar -> boton "Definicion")
+   -------------------------------------------------------------------- */
+.ruleta-overlay-fondo {
+    position: fixed; inset: 0; z-index: 80;
+    background: rgba(6, 8, 18, .78);
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    opacity: 0; visibility: hidden;
+    transition: opacity .35s var(--ease-apogee), visibility .35s;
+    display: flex; align-items: center; justify-content: center;
+    padding: 2rem;
+}
+.ruleta-overlay-fondo.abierto { opacity: 1; visibility: visible; }
+
+.ruleta-overlay-panel {
+    background: rgba(13, 18, 36, .82);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: 1.6rem 1.8rem 1.8rem;
+    box-shadow: var(--shadow);
+    transform: scale(.94); transition: transform .35s var(--ease-apogee);
+    max-width: 420px; width: 100%;
+    text-align: center;
+    position: relative;
+}
+.ruleta-overlay-fondo.abierto .ruleta-overlay-panel { transform: scale(1); }
+.ruleta-overlay-cerrar {
+    position: absolute; top: .8rem; right: .8rem;
+    width: 32px; height: 32px; border-radius: 8px;
+    background: rgba(255,255,255,.06); border: none; color: #fff;
+    cursor: pointer; font-size: 1rem; line-height: 1; z-index: 2;
+}
+.ruleta-overlay-cerrar:hover { background: rgba(255,255,255,.14); }
+.ruleta-titulo {
+    font-family: "IBM Plex Mono", monospace; font-size: .68rem;
+    letter-spacing: .22em; text-transform: uppercase; color: var(--ink-mute);
+    margin: 0;
+}
+
+/* --------------------------------------------------------------------
+   Boton disparador dentro del nav pill / menu movil (icono + texto)
+   -------------------------------------------------------------------- */
+.ruleta-disparador { display: inline-flex; }
+
+@media (prefers-reduced-motion: reduce) {
+    .gajo, .etapas-rail-nodo, .ruleta-overlay-fondo, .ruleta-overlay-panel { transition: none !important; }
+}

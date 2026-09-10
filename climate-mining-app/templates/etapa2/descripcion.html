@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block titulo %}1. Descripcion del conjunto de datos · ClimaTec{% endblock %}
+{% block contenido %}
+
+<div class="page-hero acento-cold animate-fade-down" data-fondo="e2_descripcion">
+    <canvas class="fondo-seccion" aria-hidden="true"></canvas>
+    <div class="icono-hero">🧾</div>
+    <p class="eyebrow"><span class="paso">01</span> Perfilamiento y limpieza</p>
+    <h1>Descripcion del conjunto de datos</h1>
+    <p class="lede">{{ intro.objetivo }}</p>
+</div>
+
+{% if resumen %}
+<div class="grid grid-3 animate-fade-up" style="margin:1.4rem 0; animation-delay:150ms;">
+    <div class="panel stat cold"><div class="valor">{{ "{:,}".format(resumen.total_consolidado).replace(',', '.') }}</div><div class="etiqueta">observaciones (entrada de esta etapa)</div></div>
+    <div class="panel stat"><div class="valor">{{ resumen.n_indicadores }}</div><div class="etiqueta">indicadores climaticos</div></div>
+    <div class="panel stat warm"><div class="valor">{{ resumen.n_fuentes }}</div><div class="etiqueta">fuentes · {{ resumen.anio_min }}–{{ resumen.anio_max }}</div></div>
+</div>
+
+<h2>Que contiene</h2>
+<p>El insumo de esta etapa es el dataset consolidado <span class="mono">clima_consolidado.csv</span>,
+en formato de tabla de hechos (formato largo): cada fila es una observacion de un indicador para una
+entidad, en una fecha y desde una fuente identificada. Reune fuentes primarias, secundarias y
+terciarias en los niveles global, regional (Sudamerica) y nacional (Colombia).</p>
+
+<div class="tabla-wrap">
+    <table>
+        <thead><tr><th>Caracteristica</th><th>Detalle</th></tr></thead>
+        <tbody>
+            <tr><td>Unidad de analisis</td><td>Una observacion (indicador · entidad · fecha · fuente)</td></tr>
+            <tr><td>Volumen</td><td class="mono">{{ "{:,}".format(resumen.total_consolidado).replace(',', '.') }} filas · {{ resumen.n_columnas }} columnas</td></tr>
+            <tr><td>Indicadores</td><td class="mono">{{ resumen.n_indicadores }}</td></tr>
+            <tr><td>Periodicidades</td><td>{% for p, n in resumen.por_periodicidad.items() %}{{ p }} ({{ "{:,}".format(n).replace(',', '.') }}){{ '' if loop.last else ' · ' }}{% endfor %}</td></tr>
+            <tr><td>Niveles</td><td>Global · Regional · Nacional ({{ resumen.n_paises }} paises, {{ resumen.n_regiones }} regiones)</td></tr>
+            <tr><td>Periodo</td><td class="mono">{{ resumen.anio_min }}–{{ resumen.anio_max }}</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<h2>Uso en esta etapa</h2>
+<p>Sobre este conjunto se ejecuta el perfilamiento (apartado 2), se evaluan las dimensiones de
+calidad (3), se listan los problemas (4) y se aplica el tratamiento (5). El resultado, con tipos
+normalizados, atipicos marcados y una variable normalizada, se guarda en
+<span class="mono">clima_limpio.csv</span> y se compara con el original (apartado 6).</p>
+{% else %}
+<div class="nota">No se pudo cargar el dataset consolidado.</div>
+{% endif %}
+
+{% endblock %}
