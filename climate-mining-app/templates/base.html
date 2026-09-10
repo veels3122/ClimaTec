@@ -8,9 +8,35 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/apogee-hero.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ruleta.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/fondos.css') }}">
 </head>
 <body>
     <div class="atmosfera" aria-hidden="true"><div class="rayo"></div><div class="grano"></div></div>
+
+    {% set secciones_etapa1 = [
+        {'num': 1, 'titulo': 'Problema y contexto', 'endpoint': 'problema_contexto'},
+        {'num': 2, 'titulo': 'Pregunta principal y secundarias', 'endpoint': 'preguntas'},
+        {'num': 3, 'titulo': 'Necesidades de informacion', 'endpoint': 'necesidades_informacion'},
+        {'num': 4, 'titulo': 'Fuentes de datos', 'endpoint': 'fuentes_datos'},
+        {'num': 5, 'titulo': 'Dataset', 'endpoint': 'dataset_etapa1'},
+        {'num': 6, 'titulo': 'Diccionario de datos', 'endpoint': 'diccionario_datos'},
+        {'num': 7, 'titulo': 'Calidad inicial de los datos', 'endpoint': 'calidad_inicial'},
+        {'num': 8, 'titulo': 'Limitaciones y consideraciones', 'endpoint': 'limitaciones'},
+    ] %}
+    {% set endpoints_etapa1 = secciones_etapa1 | map(attribute='endpoint') | list %}
+
+    {% set secciones_etapa2 = [
+        {'num': 1, 'titulo': 'Descripcion del conjunto de datos', 'endpoint': 'e2_descripcion'},
+        {'num': 2, 'titulo': 'Resultados del perfilamiento', 'endpoint': 'e2_perfilamiento'},
+        {'num': 3, 'titulo': 'Dimensiones y metricas evaluadas', 'endpoint': 'e2_dimensiones'},
+        {'num': 4, 'titulo': 'Problemas identificados', 'endpoint': 'e2_problemas'},
+        {'num': 5, 'titulo': 'Acciones de tratamiento aplicadas', 'endpoint': 'e2_tratamiento'},
+        {'num': 6, 'titulo': 'Comparacion antes y despues', 'endpoint': 'e2_comparacion'},
+        {'num': 7, 'titulo': 'Graficas, tablas e indicadores', 'endpoint': 'e2_graficas'},
+    ] %}
+    {% set endpoints_etapa2 = secciones_etapa2 | map(attribute='endpoint') | list %}
 
     <header class="topbar">
         <div class="contenedor topbar-inner">
@@ -28,50 +54,93 @@
                 <span class="marca-nombre">ClimaTec</span>
             </a>
 
+            <!-- Pill central (desktop >=1024px) -->
+            <nav class="nav-pill" aria-label="Navegacion principal">
+                <a href="{{ url_for('index') }}" class="nav-pill-link{{ ' activo' if request.endpoint == 'index' }}">Inicio</a>
+                <button type="button" class="nav-pill-link ruleta-disparador{{ ' activo' if request.endpoint in endpoints_etapa1 }}" data-etapa="definicion" aria-haspopup="dialog" aria-expanded="false">
+                    Definicion <span class="caret">&#9662;</span>
+                </button>
+                {% block nav_etapa2 %}
+                <button type="button" class="nav-pill-link ruleta-disparador{{ ' activo' if request.endpoint in endpoints_etapa2 }}" data-etapa="recoleccion" aria-haspopup="dialog" aria-expanded="false">
+                    Recoleccion de Datos <span class="caret">&#9662;</span>
+                </button>
+                {% endblock %}
+                <a href="{{ url_for('dataset_etapa1') }}" class="nav-pill-link{{ ' activo' if request.endpoint == 'dataset_etapa1' }}">Dataset</a>
+                <a href="{{ url_for('fuentes_datos') }}" class="nav-pill-link{{ ' activo' if request.endpoint == 'fuentes_datos' }}">Fuentes</a>
+            </nav>
+
+            <!-- Pill derecha (desktop >=1024px) -->
+            <div class="nav-auth">
+                <a class="nav-auth-link ghost" href="https://github.com/veels3122/ClimaTec" target="_blank" rel="noopener">Repositorio</a>
+                <a class="nav-auth-link solido" href="{{ url_for('dataset_etapa1') }}">Ver el dataset</a>
+            </div>
+
+            <!-- Hamburguesa (movil <1024px) -->
             <button class="menu-toggle" aria-label="Abrir menu" aria-expanded="false">
                 <span></span><span></span><span></span>
             </button>
-
-            <nav class="nav" id="nav">
-                <a href="{{ url_for('index') }}"
-                   class="{{ 'activo' if request.endpoint == 'index' }}">Inicio</a>
-
-                <div class="nav-grupo">
-                    <button class="nav-grupo-btn" aria-expanded="false">
-                        Etapa 1 <span class="caret">&#9662;</span>
-                    </button>
-                    <ul class="submenu">
-                        <li><a href="{{ url_for('problema_contexto') }}" class="{{ 'activo' if request.endpoint == 'problema_contexto' }}"><span class="num">1</span> Problema y contexto</a></li>
-                        <li><a href="{{ url_for('preguntas') }}" class="{{ 'activo' if request.endpoint == 'preguntas' }}"><span class="num">2</span> Pregunta principal y secundarias</a></li>
-                        <li><a href="{{ url_for('necesidades_informacion') }}" class="{{ 'activo' if request.endpoint == 'necesidades_informacion' }}"><span class="num">3</span> Necesidades de informacion</a></li>
-                        <li><a href="{{ url_for('fuentes_datos') }}" class="{{ 'activo' if request.endpoint == 'fuentes_datos' }}"><span class="num">4</span> Fuentes de datos</a></li>
-                        <li><a href="{{ url_for('dataset_etapa1') }}" class="{{ 'activo' if request.endpoint == 'dataset_etapa1' }}"><span class="num">5</span> Dataset</a></li>
-                        <li><a href="{{ url_for('diccionario_datos') }}" class="{{ 'activo' if request.endpoint == 'diccionario_datos' }}"><span class="num">6</span> Diccionario de datos</a></li>
-                        <li><a href="{{ url_for('calidad_inicial') }}" class="{{ 'activo' if request.endpoint == 'calidad_inicial' }}"><span class="num">7</span> Calidad inicial de los datos</a></li>
-                        <li><a href="{{ url_for('limitaciones') }}" class="{{ 'activo' if request.endpoint == 'limitaciones' }}"><span class="num">8</span> Limitaciones y consideraciones</a></li>
-                    </ul>
-                </div>
-
-                {% block nav_etapa2 %}
-                <div class="nav-grupo">
-                    <button class="nav-grupo-btn" aria-expanded="false">
-                        Etapa 2 <span class="caret">&#9662;</span>
-                    </button>
-                    <ul class="submenu">
-                        <li><a href="{{ url_for('e2_descripcion') }}" class="{{ 'activo' if request.endpoint == 'e2_descripcion' }}"><span class="num">1</span> Descripcion del conjunto de datos</a></li>
-                        <li><a href="{{ url_for('e2_perfilamiento') }}" class="{{ 'activo' if request.endpoint == 'e2_perfilamiento' }}"><span class="num">2</span> Resultados del perfilamiento</a></li>
-                        <li><a href="{{ url_for('e2_dimensiones') }}" class="{{ 'activo' if request.endpoint == 'e2_dimensiones' }}"><span class="num">3</span> Dimensiones y metricas evaluadas</a></li>
-                        <li><a href="{{ url_for('e2_problemas') }}" class="{{ 'activo' if request.endpoint == 'e2_problemas' }}"><span class="num">4</span> Problemas identificados</a></li>
-                        <li><a href="{{ url_for('e2_tratamiento') }}" class="{{ 'activo' if request.endpoint == 'e2_tratamiento' }}"><span class="num">5</span> Acciones de tratamiento aplicadas</a></li>
-                        <li><a href="{{ url_for('e2_comparacion') }}" class="{{ 'activo' if request.endpoint == 'e2_comparacion' }}"><span class="num">6</span> Comparacion antes y despues</a></li>
-                        <li><a href="{{ url_for('e2_graficas') }}" class="{{ 'activo' if request.endpoint == 'e2_graficas' }}"><span class="num">7</span> Graficas, tablas e indicadores</a></li>
-                    </ul>
-                </div>
-                {% endblock %}
-            </nav>
         </div>
         <div class="stripes" aria-hidden="true"></div>
     </header>
+
+    <!-- Menu overlay movil -->
+    <div class="menu-overlay">
+        <div class="menu-overlay-fondo"></div>
+        <div class="menu-overlay-panel">
+            <div class="menu-overlay-links">
+                <a href="{{ url_for('index') }}">Inicio</a>
+                <button type="button" class="ruleta-disparador" data-etapa="definicion" aria-haspopup="dialog" aria-expanded="false">
+                    Definicion <span class="caret">&#9662;</span>
+                </button>
+                <button type="button" class="ruleta-disparador" data-etapa="recoleccion" aria-haspopup="dialog" aria-expanded="false">
+                    Recoleccion de Datos <span class="caret">&#9662;</span>
+                </button>
+                <a href="{{ url_for('dataset_etapa1') }}">Dataset</a>
+                <a href="{{ url_for('fuentes_datos') }}">Fuentes</a>
+            </div>
+            <div class="menu-overlay-sep"></div>
+            <div class="menu-overlay-cta">
+                <a class="solido" href="{{ url_for('dataset_etapa1') }}">Ver el dataset</a>
+                <a class="ghost" href="https://github.com/veels3122/ClimaTec" target="_blank" rel="noopener">Repositorio</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay de la ruleta circular de secciones. Es UN solo componente,
+         reutilizado por cada etapa disponible (hoy: Definicion y Recoleccion
+         de Datos): el boton que lo abre (.ruleta-disparador) trae en
+         data-etapa la clave de la etapa, y ruleta.js carga con esa clave el
+         bloque #ruleta-secciones-<clave>-data correspondiente, impreso mas
+         abajo. -->
+    <div class="ruleta-overlay-fondo">
+        <div class="ruleta-overlay-panel" role="dialog" aria-label="Secciones de la etapa">
+            <button type="button" class="ruleta-overlay-cerrar" aria-label="Cerrar">&times;</button>
+            <p class="ruleta-titulo">&nbsp;</p>
+            <div class="rueda-secciones-caja">
+                <svg class="rueda-secciones" viewBox="0 0 240 240" role="img" aria-label="Rueda de secciones"></svg>
+                <div class="rueda-secciones-centro">
+                    <p class="rueda-secciones-num">&nbsp;</p>
+                    <p class="rueda-secciones-titulo">Pasa el mouse por un gajo</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="application/json" id="ruleta-secciones-definicion-data">{"titulo": "Definicion", "secciones": [
+        {% for s in secciones_etapa1 %}{"num": {{ s.num }}, "titulo": {{ s.titulo|tojson }}, "href": {{ url_for(s.endpoint)|tojson }}, "activo": {{ (request.endpoint == s.endpoint)|tojson }}}{{ ',' if not loop.last }}
+        {% endfor %}
+    ]}</script>
+    <script type="application/json" id="ruleta-secciones-recoleccion-data">{"titulo": "Recoleccion de Datos", "secciones": [
+        {% for s in secciones_etapa2 %}{"num": {{ s.num }}, "titulo": {{ s.titulo|tojson }}, "href": {{ url_for(s.endpoint)|tojson }}, "activo": {{ (request.endpoint == s.endpoint)|tojson }}}{{ ',' if not loop.last }}
+        {% endfor %}
+    ]}</script>
+    <script type="application/json" id="ruleta-etapas-data">[
+        {"num": 1, "titulo": "Definicion", "disponible": true, "clave": "definicion"},
+        {"num": 2, "titulo": "Recoleccion de Datos", "disponible": true, "clave": "recoleccion"},
+        {"num": 3, "titulo": "Analisis", "disponible": false},
+        {"num": 4, "titulo": "Verificacion", "disponible": false},
+        {"num": 5, "titulo": "Publicacion", "disponible": false}
+    ]</script>
 
     <main class="contenedor contenido">
         {% block contenido %}{% endblock %}
@@ -85,5 +154,7 @@
     </footer>
 
     <script src="{{ url_for('static', filename='js/site.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/ruleta.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/fondos.js') }}"></script>
 </body>
 </html>
