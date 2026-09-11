@@ -2,47 +2,55 @@
 {% block titulo %}ClimaTec · Inicio{% endblock %}
 {% block contenido %}
 
-<section class="hero">
-    <div class="hero-copy">
-        <div class="animate-fade-down" style="animation-delay:0ms;">
-            <p class="eyebrow"><span class="paso">Etapa 1</span> Definicion del problema y datos</p>
-        </div>
-        <div class="animate-fade-up" style="animation-delay:150ms;">
-            <h1>{{ proyecto.titulo }}</h1>
-        </div>
-        <div class="animate-fade-up" style="animation-delay:300ms;">
-            <p class="lede">
-                Bitacora tecnica del proyecto <strong>{{ proyecto.nombre }}</strong> de mineria de datos.
-                Documenta el problema, las fuentes, el dataset y la calidad inicial del analisis de
-                <strong>{{ proyecto.tema }}</strong> en tres escalas: global, regional (Sudamerica) y nacional (Colombia).
-            </p>
-        </div>
-        <div class="hero-cta animate-fade-up" style="animation-delay:450ms;">
-            <a class="btn btn-light" href="{{ url_for('dataset_etapa1') }}">Ver el dataset</a>
-            <a class="btn btn-outline" href="{{ url_for('problema_contexto') }}">Leer el problema</a>
-        </div>
-    </div>
-
-    {% if serie %}
-    <div class="stat-card animate-fade-scale" style="animation-delay:500ms;">
-        <div class="stat-card-label">Emisiones globales de CO2</div>
-        <div class="stat-card-amount">{{ "{:,.0f}".format(serie.valor_actual).replace(',', '.') }}<span class="unidad">Mt · {{ serie.anio_fin }}</span></div>
-        <div class="stat-card-delta">
-            <span class="badge-delta">+{{ serie.variacion_pct }}%</span>
-            <span class="stat-card-caption">vs. {{ serie.anio_inicio }} ({{ "{:,.0f}".format(serie.valores[0]).replace(',', '.') }} Mt)</span>
-        </div>
-        <div class="bar-chart" data-valores="{{ serie.valores | join(',') }}" data-proyectadas="{{ serie.proyectadas }}">
-            <div class="rejilla" aria-hidden="true"></div>
-            <div class="barras"></div>
-            <div class="eje">
-                <span>{{ serie.anio_inicio }}</span>
-                <span>{{ ((serie.anio_inicio + serie.anio_fin) // 2) }}</span>
-                <span>{{ serie.anio_fin }}</span>
+<section id="inicio-hero">
+    <div class="hero-fila">
+        <div class="hero-copy">
+            <div class="animate-fade-down" style="animation-delay:0ms;">
+                <p class="eyebrow"><span class="paso">Etapa 1</span> Definicion del problema y datos</p>
+            </div>
+            <div class="animate-fade-up" style="animation-delay:150ms;">
+                <h1>{{ proyecto.titulo }}</h1>
+            </div>
+            <div class="animate-fade-up" style="animation-delay:300ms;">
+                <p class="lede">
+                    Bitacora tecnica del proyecto <strong>{{ proyecto.nombre }}</strong> de mineria de datos.
+                    Documenta el problema, las fuentes, el dataset y la calidad inicial del analisis de
+                    <strong>{{ proyecto.tema }}</strong> en tres escalas: global, regional (Sudamerica) y nacional (Colombia).
+                </p>
+            </div>
+            <div class="hero-cta animate-fade-up" style="animation-delay:450ms;">
+                <a class="btn btn-light" href="{{ url_for('dataset_etapa1') }}">Ver el dataset</a>
+                <a class="btn btn-outline" href="{{ url_for('problema_contexto') }}">Leer el problema</a>
             </div>
         </div>
-        <p class="stat-card-caption" style="margin-top:.9rem;">Dato real, entidad &ldquo;World&rdquo; del dataset consolidado &middot; emisiones anuales {{ serie.anio_inicio }}-{{ serie.anio_fin }}</p>
+
+        <div class="hero-panel-derecho">
+            {% if serie %}
+            <div class="stat-card animate-fade-scale" style="animation-delay:500ms;">
+                <div class="stat-card-label">Emisiones globales de CO2</div>
+                <div class="stat-card-amount">{{ "{:,.0f}".format(serie.valor_actual).replace(',', '.') }}<span class="unidad">Mt · {{ serie.anio_fin }}</span></div>
+                <div class="stat-card-delta">
+                    <span class="badge-delta">+{{ serie.variacion_pct }}%</span>
+                    <span class="stat-card-caption">vs. {{ serie.anio_inicio }} ({{ "{:,.0f}".format(serie.valores[0]).replace(',', '.') }} Mt)</span>
+                </div>
+                <div class="bar-chart" data-valores="{{ serie.valores | join(',') }}" data-proyectadas="{{ serie.proyectadas }}">
+                    <div class="rejilla" aria-hidden="true"></div>
+                    <div class="barras"></div>
+                    <div class="eje">
+                        <span>{{ serie.anio_inicio }}</span>
+                        <span>{{ ((serie.anio_inicio + serie.anio_fin) // 2) }}</span>
+                        <span>{{ serie.anio_fin }}</span>
+                    </div>
+                </div>
+                <p class="stat-card-caption" style="margin-top:.9rem;">Dato real, entidad &ldquo;World&rdquo; del dataset consolidado &middot; emisiones anuales {{ serie.anio_inicio }}-{{ serie.anio_fin }}</p>
+            </div>
+            {% endif %}
+
+            <div id="etapas-rail" class="etapas-rail animate-fade-up" style="animation-delay:650ms;">
+                <p class="etapas-rail-titulo">Etapas del proyecto</p>
+            </div>
+        </div>
     </div>
-    {% endif %}
 </section>
 
 {% if resumen %}
