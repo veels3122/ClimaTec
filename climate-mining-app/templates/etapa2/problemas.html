@@ -1,4 +1,4 @@
-{# Optimización de tarjetas de problemas e inventario de hallazgos}
+{# Optimización de tarjetas de problemas e inventario de hallazgos #}
 {% extends 'base.html' %}
 {% block titulo %}4. Problemas identificados · ClimaTec{% endblock %}
 {% block contenido %}
@@ -15,7 +15,7 @@
 {% if rep %}
 <div class="grid grid-2">
     {% for p in rep.problemas %}
-    <div class="panel animate-fade-up" style="--delay: {{ loop.index0 * 70 }}ms;">
+    <div class="panel animate-fade-up" style="animation-delay:{{ 100 + loop.index0 * 70 }}ms;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.6rem;">
             <h3 style="margin:0;">{{ p.problema }}</h3>
             <span class="sev {{ 'alta' if p.severidad == 'Alta' else ('media' if p.severidad == 'Media' else ('baja' if p.severidad == 'Baja' else 'info')) }}">{{ p.severidad }}</span>

@@ -1,63 +1,51 @@
-// ClimaTec — interacciones del sitio (menu movil, submenu, marcado de
-// enlace activo dentro de "Etapa 1", y utilidades de animacion).
-// Sin frameworks, sin IntersectionObserver: las animaciones de entrada
-// las dispara el CSS (@keyframes + animation-delay), este script solo
-// gestiona interaccion (menu) y arma el grafico de barras del hero.
+// ClimaTec — interacciones del sitio (menu movil tipo overlay, grafico de
+// barras animado del hero). El antiguo desplegable "Etapa 1 ▾" (submenu en
+// <ul>) se elimino de aqui: esa navegacion ahora la resuelve la "ruleta"
+// (ver ruleta.js), que lee sus datos de los bloques JSON que imprime
+// base.html. Este archivo solo sigue encargandose de:
+//   1) abrir/cerrar el menu overlay movil (con stagger de entrada, igual
+//      que la especificacion de referencia: cada enlace aparece con un
+//      pequeno retraso adicional respecto al anterior);
+//   2) construir el grafico de barras animado del hero (con datos reales
+//      de emisiones, nunca inventados).
 
 document.addEventListener('DOMContentLoaded', () => {
-    // ---- Menu movil -------------------------------------------------
+    // ---- Menu movil (overlay) ----------------------------------------
     const toggle = document.querySelector('.menu-toggle');
-    const nav = document.getElementById('nav');
-    if (toggle && nav) {
-        toggle.addEventListener('click', () => {
-            const abierto = nav.classList.toggle('abierto');
-            toggle.setAttribute('aria-expanded', String(abierto));
-            document.body.style.overflow = abierto ? 'hidden' : '';
-        });
+    const overlay = document.querySelector('.menu-overlay');
+    const enlaces = overlay ? overlay.querySelectorAll('.menu-overlay-links a, .menu-overlay-links button') : [];
+
+    function abrirMenu() {
+        overlay.classList.add('abierto');
+        toggle.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden';
+        enlaces.forEach((a, i) => { a.style.transitionDelay = (100 + i * 50) + 'ms'; });
     }
-
-    // ---- Desplegables de nav ("Etapa 1", "Etapa 2") -----------------
-    // Cada grupo abre/cierra su propio submenu; al abrir uno se cierran
-    // los demas. Funciona en escritorio y movil.
-    const grupos = Array.from(document.querySelectorAll('.nav-grupo'));
-    grupos.forEach((grupo) => {
-        const btn = grupo.querySelector('.nav-grupo-btn');
-        if (!btn) return;
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const abierto = grupo.classList.contains('abierto');
-            grupos.forEach((g) => {
-                g.classList.remove('abierto');
-                const b = g.querySelector('.nav-grupo-btn');
-                if (b) b.setAttribute('aria-expanded', 'false');
-            });
-            if (!abierto) {
-                grupo.classList.add('abierto');
-                btn.setAttribute('aria-expanded', 'true');
-            }
+    function cerrarMenu() {
+        overlay.classList.remove('abierto');
+        toggle.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
+        enlaces.forEach((a) => { a.style.transitionDelay = '0ms'; });
+    }
+    if (toggle && overlay) {
+        toggle.addEventListener('click', () => {
+            overlay.classList.contains('abierto') ? cerrarMenu() : abrirMenu();
         });
-    });
-    document.addEventListener('click', () => {
-        grupos.forEach((g) => {
-            g.classList.remove('abierto');
-            const b = g.querySelector('.nav-grupo-btn');
-            if (b) b.setAttribute('aria-expanded', 'false');
-        });
-    });
-
-    // Cierra el menu movil si cambia a tamano de escritorio
+        const fondo = overlay.querySelector('.menu-overlay-fondo');
+        if (fondo) fondo.addEventListener('click', cerrarMenu);
+        overlay.querySelectorAll('a').forEach((a) => a.addEventListener('click', cerrarMenu));
+    }
     window.addEventListener('resize', () => {
-        if (window.innerWidth > 820 && nav && nav.classList.contains('abierto')) {
-            nav.classList.remove('abierto');
-            toggle && toggle.setAttribute('aria-expanded', 'false');
-            document.body.style.overflow = '';
+        if (window.innerWidth >= 1024 && overlay && overlay.classList.contains('abierto')) {
+            cerrarMenu();
         }
     });
 
-    // ---- Grafico de barras animado (hero) ----------------------------
+    // ---- Grafico de barras animado (hero) -----------------------------
     // Lee los valores desde data-valores="12,45,30,..." en .bar-chart,
-    // dibuja una barra por valor y las hace crecer en cascada, igual que
-    // la referencia de diseno (delay escalonado, origen inferior).
+    // dibuja una barra por valor y las hace crecer en cascada. El
+    // retraso por barra (1100ms + i*30ms) replica literalmente el
+    // timeline de animacion de la especificacion de referencia.
     document.querySelectorAll('.bar-chart[data-valores]').forEach((contenedor) => {
         const valores = contenedor.dataset.valores
             .split(',')
@@ -78,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const esProyectada = i >= valores.length - nProyectadas;
             barra.className = 'barra animate-bar-grow' + (esProyectada ? ' proyectada' : '');
             barra.style.height = alturaPct + '%';
-            barra.style.animationDelay = (300 + i * 22) + 'ms';
+            barra.style.animationDelay = (1100 + i * 30) + 'ms';
             barra.title = valor.toString();
             barrasEl.appendChild(barra);
         });
