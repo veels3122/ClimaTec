@@ -54,6 +54,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!valores.length) return;
 
         const max = Math.max(...valores);
+        const min = Math.min(...valores);
+        // Los valores son grandes y parecidos (p. ej. 35.158 -> 38.599), asi que
+        // una escala desde 0 dibuja todas las barras casi llenas e iguales. Para
+        // que se note la tendencia, la escala arranca cerca del minimo: la barra
+        // mas baja mide PISO% y la mas alta 100%, conservando las proporciones.
+        const PISO = 18; // % de altura de la barra mas baja
+        const alturaDe = (valor) => (max === min
+            ? 100
+            : PISO + ((valor - min) / (max - min)) * (100 - PISO));
+
         const barrasEl = contenedor.querySelector('.barras');
         const rejillaEl = contenedor.querySelector('.rejilla');
         if (!barrasEl) return;
@@ -62,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
         barrasEl.innerHTML = '';
         valores.forEach((valor, i) => {
             const barra = document.createElement('div');
-            const alturaPct = max > 0 ? (valor / max) * 100 : 0;
+            const alturaPct = alturaDe(valor);
             const esProyectada = i >= valores.length - nProyectadas;
             barra.className = 'barra animate-bar-grow' + (esProyectada ? ' proyectada' : '');
             barra.style.height = alturaPct + '%';
