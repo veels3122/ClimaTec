@@ -771,7 +771,7 @@ def plan_tratamiento():
         {"accion": "Homologacion de categorias",
          "criterio": "Unificar niveles (Global/Regional/Nacional), catalogo de indicadores y unidades por indicador.",
          "columnas": "nivel_geografico, indicador, unidad",
-         "estado": "Aplicado", "detalle": "Ver Punto 8 (integracion y homologacion)."},
+         "estado": "Aplicado", "detalle": "Ver la seccion de integracion y homologacion."},
         {"accion": "Validacion de rangos",
          "criterio": "anio dentro de 2020-2026 y no negativos en indicadores que no lo admiten; se respetan negativos legitimos (anomalias, variaciones).",
          "columnas": "anio, valor",
