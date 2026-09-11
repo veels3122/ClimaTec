@@ -1,10 +1,11 @@
 {% extends 'base.html' %}
-{% block titulo %}Etapa 2 · Analisis de causas · ClimaTec{% endblock %}
+{% block titulo %}8. Analisis de causas · ClimaTec{% endblock %}
 {% block contenido %}
 
-<div class="page-hero acento-amber animate-fade-down">
+<div class="page-hero acento-amber animate-fade-down" data-fondo="e2_causas">
+    <canvas class="fondo-seccion" aria-hidden="true"></canvas>
     <div class="icono-hero">🧩</div>
-    <p class="eyebrow"><span class="paso">Etapa 2 · Punto 7</span> Analisis de causas</p>
+    <p class="eyebrow"><span class="paso">08</span> Diagnostico</p>
     <h1>Analisis de causas de los problemas</h1>
     <p class="lede">Para cada problema detectado en el perfilamiento se analiza su posible causa,
     considerando errores de captura, formatos diferentes, ausencia de validaciones, duplicidad de
@@ -35,7 +36,7 @@
 <div class="nota" style="margin-top:1.4rem;">
     <strong>Lectura:</strong> la mayoria de los hallazgos provienen de la <em>heterogeneidad entre
     fuentes</em> (formatos, unidades y granularidad distintas) y del <em>rezago de actualizacion</em>
-    de las series anuales, no de errores de captura. Esto orienta el tratamiento del Punto 9 hacia la
+    de las series anuales, no de errores de captura. Esto orienta el plan de tratamiento hacia la
     homologacion y la normalizacion mas que hacia la correccion de datos erroneos.
 </div>
 {% else %}
