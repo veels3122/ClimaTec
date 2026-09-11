@@ -27,6 +27,34 @@
         <div class="hero-panel-derecho">
             {% if serie %}
             <div class="stat-card animate-fade-scale" style="animation-delay:500ms;">
+<section class="hero" id="inicio-hero">
+
+    <div class="fondo-foto fondo-foto-inicio" aria-hidden="true"></div>
+
+    <div class="hero-fila">
+        <div class="hero-copy">
+            <div class="animate-fade-down" style="animation-delay:0ms;">
+                <p class="eyebrow"><span class="paso">Definicion</span> del problema y los datos</p>
+            </div>
+            <div class="animate-fade-up" style="animation-delay:300ms;">
+                <h1>{{ proyecto.titulo }}</h1>
+            </div>
+            <div class="animate-fade-up" style="animation-delay:500ms;">
+                <p class="lede">
+                    Bitacora tecnica del proyecto <strong>{{ proyecto.nombre }}</strong> de mineria de datos.
+                    Documenta el problema, las fuentes, el dataset y la calidad inicial del analisis de
+                    <strong>{{ proyecto.tema }}</strong> en tres escalas: global, regional (Sudamerica) y nacional (Colombia).
+                </p>
+            </div>
+            <div class="hero-cta animate-fade-up" style="animation-delay:700ms;">
+                <a class="btn btn-light" href="{{ url_for('dataset_etapa1') }}">Ver el dataset</a>
+                <a class="btn btn-outline" href="{{ url_for('problema_contexto') }}">Leer el problema</a>
+            </div>
+        </div>
+
+        <div class="hero-panel-derecho">
+            {% if serie %}
+            <div class="stat-card animate-fade-scale" style="animation-delay:900ms;">
                 <div class="stat-card-label">Emisiones globales de CO2</div>
                 <div class="stat-card-amount">{{ "{:,.0f}".format(serie.valor_actual).replace(',', '.') }}<span class="unidad">Mt · {{ serie.anio_fin }}</span></div>
                 <div class="stat-card-delta">
@@ -47,6 +75,11 @@
             {% endif %}
 
             <div id="etapas-rail" class="etapas-rail animate-fade-up" style="animation-delay:650ms;">
+            <!-- Riel de ETAPAS del proyecto (ver ruleta.js: se llena solo a
+                 partir de #ruleta-etapas-data, impreso en base.html). Clic en
+                 la etapa activa ("Definicion") abre la rueda circular de sus
+                 8 secciones. -->
+            <div class="etapas-rail animate-fade-scale" id="etapas-rail" style="animation-delay:1000ms;">
                 <p class="etapas-rail-titulo">Etapas del proyecto</p>
             </div>
         </div>
@@ -72,7 +105,7 @@
 {% endif %}
 
 <h2>Como navegar esta bitacora</h2>
-<p>El menu <strong>Etapa 1</strong> contiene los ocho apartados del entregable. Cada uno se explica por si mismo, sin necesidad de sustentacion oral:</p>
+<p>La rueda de secciones (haz clic en <strong>Definicion</strong>, arriba o en el riel de Etapas) contiene los ocho apartados del entregable. Cada uno se explica por si mismo, sin necesidad de sustentacion oral:</p>
 
 <div class="grid grid-2">
     <a class="panel enlace" href="{{ url_for('problema_contexto') }}"><span class="kicker">01</span><h3>Problema y contexto</h3><p>Contexto del tema, delimitacion del problema y analisis en los tres niveles.</p></a>
