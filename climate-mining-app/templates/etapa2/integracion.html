@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block titulo %}Etapa 2 · Integracion y homologacion · ClimaTec{% endblock %}
+{% block contenido %}
+
+<div class="page-hero acento-cold animate-fade-down">
+    <div class="icono-hero">🔗</div>
+    <p class="eyebrow"><span class="paso">Etapa 2 · Punto 8</span> Integracion y homologacion</p>
+    <h1>Integracion y homologacion de datos</h1>
+    <p class="lede">Los distintos archivos, fuentes, nombres, categorias, unidades y formatos se
+    integran en un unico dataset y se homologan a un esquema comun (tabla de hechos).</p>
+</div>
+
+{% if info %}
+<div class="grid grid-3 animate-fade-up" style="margin:1.4rem 0; animation-delay:150ms;">
+    <div class="panel stat cold"><div class="valor">{{ info.n_fuentes }}</div><div class="etiqueta">fuentes integradas</div></div>
+    <div class="panel stat"><div class="valor">{{ info.n_indicadores }}</div><div class="etiqueta">indicadores homologados</div></div>
+    <div class="panel stat warm"><div class="valor">{{ info.n_unidades }}</div><div class="etiqueta">unidades · {{ info.n_niveles }} niveles</div></div>
+</div>
+
+<h2>Homologacion aplicada</h2>
+<div class="tabla-wrap">
+    <table>
+        <thead><tr><th>Aspecto</th><th>Antes (heterogeneo)</th><th>Homologado a</th></tr></thead>
+        <tbody>
+            {% for h in info.homologacion %}
+            <tr>
+                <td><strong>{{ h.aspecto }}</strong></td>
+                <td style="color:var(--ink-soft);">{{ h.antes }}</td>
+                <td class="mono">{{ h.homologado }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<h2>Fuentes integradas</h2>
+<div class="tabla-wrap">
+    <table>
+        <thead><tr><th>Fuente</th><th>Tipo</th><th>Periodicidad</th><th>Observaciones</th></tr></thead>
+        <tbody>
+            {% for f in info.por_fuente %}
+            <tr>
+                <td>{{ f.fuente }}</td>
+                <td>{% if f.tipo == 'Primaria' %}<span class="tag num">primaria</span>{% elif f.tipo == 'Secundaria' %}<span class="tag tmp">secundaria</span>{% else %}<span class="tag cat">terciaria</span>{% endif %}</td>
+                <td class="mono">{{ f.periodicidad }}</td>
+                <td class="mono">{{ "{:,}".format(f.registros).replace(',', '.') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="nota" style="margin-top:1.4rem;">
+    <strong>Clave de integracion:</strong> las fuentes se unen por las variables geograficas
+    (<span class="mono">entidad</span>, <span class="mono">iso_code</span>,
+    <span class="mono">nivel_geografico</span>), temporales (<span class="mono">fecha</span>,
+    <span class="mono">anio</span>, <span class="mono">mes</span>) y de procedencia
+    (<span class="mono">fuente</span>, <span class="mono">fuente_tipo</span>). El resultado es un solo
+    archivo <span class="mono">clima_consolidado.csv</span> donde cada observacion queda trazada a su
+    origen.
+</div>
+{% else %}
+<div class="nota">No se pudo generar la informacion de integracion.</div>
+{% endif %}
+
+{% endblock %}

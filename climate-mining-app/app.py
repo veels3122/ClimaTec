@@ -641,6 +641,154 @@ def e2_graficas():
     return render_template("etapa2/graficas.html", proyecto=PROYECTO, rep=REPORTE_E2)
 
 
+# ===========================================================================
+# Etapa 2 - Puntos 7, 8 y 9 del requerimiento
+#   Punto 7: Analisis de causas de los problemas detectados.
+#   Punto 8: Integracion y homologacion de datos.
+#   Punto 9: Plan de tratamiento.
+# El contenido se apoya en el reporte de perfilamiento/limpieza (REPORTE_E2)
+# y en el dataset real, para que sea coherente con lo que contiene el CSV.
+# ===========================================================================
+
+# --- Punto 7: Analisis de causas -------------------------------------------
+# Cada problema detectado en el perfilamiento se clasifica segun las posibles
+# causas indicadas en el requerimiento: errores de captura, formatos
+# diferentes, ausencia de validaciones, duplicidad de fuentes o falta de
+# actualizacion.
+CAUSAS_CATEGORIAS = [
+    "Errores de captura", "Formatos diferentes", "Ausencia de validaciones",
+    "Duplicidad de fuentes", "Falta de actualizacion",
+]
+
+ANALISIS_CAUSAS = [
+    {"problema": "La columna 'mes' se cargaba como decimal",
+     "categoria": "Formatos diferentes · Ausencia de validaciones",
+     "causa": "Al integrar series anuales (sin mes) con series mensuales, el campo quedaba como "
+              "flotante con vacios; faltaba una validacion de tipo al consolidar las fuentes."},
+    {"problema": "Nulos estructurales en iso_code y mes",
+     "categoria": "Duplicidad de fuentes · Formatos diferentes",
+     "causa": "Las fuentes tienen distinta granularidad geografica y temporal: los agregados "
+              "globales/regionales no manejan codigo ISO y las series anuales no tienen mes. Es una "
+              "diferencia de formato entre fuentes, no un error de captura."},
+    {"problema": "Escalas y unidades heterogeneas entre indicadores",
+     "categoria": "Duplicidad de fuentes · Ausencia de validaciones",
+     "causa": "Cada proveedor reporta sus indicadores con unidades y escalas propias (ppm, Mt, %, "
+              "grados C); sin una homologacion previa los valores no son comparables."},
+    {"problema": "Observaciones atipicas (IQR)",
+     "categoria": "Falta de actualizacion · Diferencias metodologicas",
+     "causa": "Valores extremos por diferencias de metodo entre fuentes (p. ej. GISTEMP frente a "
+              "GCAG) y por entidades de gran magnitud (mundo, grandes emisores). En su mayoria son "
+              "reales, por eso se marcan y no se eliminan."},
+    {"problema": "Cobertura anual disponible solo hasta 2024",
+     "categoria": "Falta de actualizacion",
+     "causa": "Las series anuales de emisiones se publican con rezago; 2025-2026 quedan cubiertos por "
+              "las series mensuales (CO2 de Mauna Loa y anomalia de temperatura)."},
+    {"problema": "Duplicados y valores fuera de dominio",
+     "categoria": "Ausencia de validaciones (controlada)",
+     "causa": "No se detectaron duplicados ni valores invalidos porque las fuentes son oficiales y el "
+              "pipeline aplica validaciones reproducibles; se documenta como control preventivo."},
+]
+
+
+@app.route("/etapa-2/causas")
+def e2_causas():
+    return render_template("etapa2/causas.html", proyecto=PROYECTO,
+                           causas=ANALISIS_CAUSAS, categorias=CAUSAS_CATEGORIAS, rep=REPORTE_E2)
+
+
+# --- Punto 8: Integracion y homologacion -----------------------------------
+def integracion_homologacion():
+    """Resumen de la integracion/homologacion, con cifras calculadas del dataset."""
+    n_fuentes = int(DF["fuente"].nunique()) if DF is not None else 0
+    n_indicadores = int(DF["indicador"].nunique()) if DF is not None else 0
+    n_unidades = int(DF["unidad"].nunique()) if DF is not None else 0
+    n_niveles = int(DF["nivel_geografico"].nunique()) if DF is not None else 0
+    por_fuente = resumen_dataset()["por_fuente"] if DF is not None else []
+    homologacion = [
+        {"aspecto": "Archivos / fuentes",
+         "antes": "Varios CSV y APIs (OWID CO2, OWID Energy, Mauna Loa, GISTEMP, GCAG, ...)",
+         "homologado": "Un unico clima_consolidado.csv (tabla de hechos)"},
+        {"aspecto": "Nombres de columnas",
+         "antes": "country, year, Date, Mean, Interpolated, T2M, ...",
+         "homologado": "entidad, anio, mes, indicador, valor, unidad, fecha, fuente"},
+        {"aspecto": "Categorias de nivel",
+         "antes": "World / continentes / codigos ISO3",
+         "homologado": "Global / Regional / Nacional"},
+        {"aspecto": "Nombres de indicadores",
+         "antes": "co2, co2_per_capita, T2M, Mean, ...",
+         "homologado": "Catalogo en espanol ({} indicadores)".format(n_indicadores)},
+        {"aspecto": "Unidades",
+         "antes": "ppm, Mt, t/persona, %, grados C, ...",
+         "homologado": "Una unidad por indicador, declarada en la columna unidad ({} unidades)".format(n_unidades)},
+        {"aspecto": "Formatos de fecha",
+         "antes": "AAAA (anual) y AAAA-MM (mensual)",
+         "homologado": "fecha ISO AAAA-MM-DD + columnas anio y mes"},
+        {"aspecto": "Tipo de fuente",
+         "antes": "Primaria/secundaria/terciaria dispersas por archivo",
+         "homologado": "Columna fuente_tipo homologada"},
+        {"aspecto": "Codigos de pais",
+         "antes": "iso_code en distinto formato",
+         "homologado": "ISO3 en mayusculas"},
+    ]
+    return {
+        "n_fuentes": n_fuentes, "n_indicadores": n_indicadores,
+        "n_unidades": n_unidades, "n_niveles": n_niveles,
+        "homologacion": homologacion, "por_fuente": por_fuente,
+    }
+
+
+@app.route("/etapa-2/integracion")
+def e2_integracion():
+    return render_template("etapa2/integracion.html", proyecto=PROYECTO,
+                           info=integracion_homologacion())
+
+
+# --- Punto 9: Plan de tratamiento ------------------------------------------
+def plan_tratamiento():
+    """Plan de tratamiento con las acciones del requerimiento; el estado se toma
+    del reporte real (lo ya aplicado por scripts/limpieza.py)."""
+    r = REPORTE_E2 or {}
+    dups = (r.get("dup_exactos", 0) + r.get("dup_clave", 0))
+    invalidos = r.get("invalidos", 0)
+    atip = r.get("n_atipicos", 0)
+    return [
+        {"accion": "Eliminacion de duplicados",
+         "criterio": "Duplicados exactos y por la clave logica (fuente + nivel + entidad + anio + mes + indicador).",
+         "columnas": "todas / clave logica",
+         "estado": "Aplicado", "detalle": "{} duplicados encontrados.".format(dups)},
+        {"accion": "Tratamiento de valores nulos",
+         "criterio": "Distinguir nulos por diseno (iso_code, mes) de nulos reales; los estructurales se documentan y no se imputan.",
+         "columnas": "iso_code, mes",
+         "estado": "Documentado", "detalle": "Sin nulos reales; no se imputa en esta etapa."},
+        {"accion": "Correccion de tipos de datos",
+         "criterio": "anio y mes a entero nullable, valor a numerico, fecha a tipo fecha.",
+         "columnas": "anio, mes, valor, fecha",
+         "estado": "Aplicado", "detalle": "'mes' pasa de decimal a entero."},
+        {"accion": "Estandarizacion de fechas y textos",
+         "criterio": "Fecha en formato ISO; recorte de espacios y normalizacion de texto; iso_code en mayusculas.",
+         "columnas": "fecha, entidad, indicador, unidad, iso_code",
+         "estado": "Aplicado", "detalle": "Formato uniforme en todas las fuentes."},
+        {"accion": "Homologacion de categorias",
+         "criterio": "Unificar niveles (Global/Regional/Nacional), catalogo de indicadores y unidades por indicador.",
+         "columnas": "nivel_geografico, indicador, unidad",
+         "estado": "Aplicado", "detalle": "Ver Punto 8 (integracion y homologacion)."},
+        {"accion": "Validacion de rangos",
+         "criterio": "anio dentro de 2020-2026 y no negativos en indicadores que no lo admiten; se respetan negativos legitimos (anomalias, variaciones).",
+         "columnas": "anio, valor",
+         "estado": "Aplicado", "detalle": "{} valores fuera de dominio.".format(invalidos)},
+        {"accion": "Tratamiento justificado de valores atipicos",
+         "criterio": "Deteccion por 1.5*IQR dentro de cada indicador. Se marcan (columna atipico) y NO se eliminan porque muchos son reales; se agrega valor_z para el analisis.",
+         "columnas": "+ atipico, + valor_z",
+         "estado": "Aplicado", "detalle": "{} observaciones marcadas.".format(atip)},
+    ]
+
+
+@app.route("/etapa-2/plan-tratamiento")
+def e2_plan():
+    return render_template("etapa2/plan_tratamiento.html", proyecto=PROYECTO,
+                           plan=plan_tratamiento(), rep=REPORTE_E2)
+
+
 # Compatibilidad con rutas antiguas (evita 404 en enlaces previos).
 @app.route("/problema")
 def problema():

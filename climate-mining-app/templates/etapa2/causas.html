@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block titulo %}Etapa 2 · Analisis de causas · ClimaTec{% endblock %}
+{% block contenido %}
+
+<div class="page-hero acento-amber animate-fade-down">
+    <div class="icono-hero">🧩</div>
+    <p class="eyebrow"><span class="paso">Etapa 2 · Punto 7</span> Analisis de causas</p>
+    <h1>Analisis de causas de los problemas</h1>
+    <p class="lede">Para cada problema detectado en el perfilamiento se analiza su posible causa,
+    considerando errores de captura, formatos diferentes, ausencia de validaciones, duplicidad de
+    fuentes o falta de actualizacion.</p>
+</div>
+
+<div class="nota animate-fade-up" style="animation-delay:120ms;">
+    <strong>Categorias de causa consideradas:</strong>
+    {% for c in categorias %}<span class="tag cat" style="margin:.1rem .2rem;">{{ c }}</span>{% endfor %}
+</div>
+
+{% if causas %}
+<div class="tabla-wrap animate-fade-up" style="animation-delay:180ms;">
+    <table>
+        <thead><tr><th>Problema detectado</th><th>Categoria de causa</th><th>Causa probable</th></tr></thead>
+        <tbody>
+            {% for c in causas %}
+            <tr>
+                <td><strong>{{ c.problema }}</strong></td>
+                <td>{{ c.categoria }}</td>
+                <td>{{ c.causa }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="nota" style="margin-top:1.4rem;">
+    <strong>Lectura:</strong> la mayoria de los hallazgos provienen de la <em>heterogeneidad entre
+    fuentes</em> (formatos, unidades y granularidad distintas) y del <em>rezago de actualizacion</em>
+    de las series anuales, no de errores de captura. Esto orienta el tratamiento del Punto 9 hacia la
+    homologacion y la normalizacion mas que hacia la correccion de datos erroneos.
+</div>
+{% else %}
+<div class="nota">No se pudo generar el analisis de causas.</div>
+{% endif %}
+
+{% endblock %}
