@@ -307,3 +307,53 @@
     background: radial-gradient(55% 70% at 78% 30%, rgba(73,199,224,.16), transparent 70%);
     pointer-events: none;
 }
+
+/* ==========================================================================
+   11) AJUSTE DE APROVECHAMIENTO DEL HERO (evita espacios vacios)
+   La columna izquierda (copy) crece para llenar el ancho disponible, de modo
+   que no queda un hueco grande en el centro entre el titulo y el panel
+   derecho. El panel derecho (tarjeta de CO2 + riel de Etapas) queda a la
+   derecha con ancho fijo. Se conserva el diseno, las animaciones y el
+   comportamiento responsive (en <1024px todo se apila).
+   ========================================================================== */
+#inicio-hero { min-height: auto; justify-content: flex-start; padding-top: 24px; padding-bottom: 24px; }
+
+.hero-panel-derecho { align-items: stretch; }
+.hero-panel-derecho .stat-card { max-width: none; margin: 0; }
+.hero-panel-derecho .etapas-rail { max-width: none; }
+
+@media (min-width: 1024px) {
+    /* El hero se ensancha mas alla del contenedor de 1120px, pero acotado
+       para que las dos columnas queden juntas (sin hueco central) y sin
+       provocar scroll horizontal. */
+    #inicio-hero {
+        min-height: auto;
+        justify-content: flex-start;
+        position: relative;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(1240px, 100vw - 80px);
+        max-width: none;
+        padding-top: clamp(24px, 5vh, 64px);
+        padding-bottom: clamp(32px, 6vh, 72px);
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+    .hero-fila {
+        width: 100%;
+        align-items: center;
+        justify-content: space-between;
+        gap: clamp(40px, 4.5vw, 72px);
+    }
+    /* La copy crece y absorbe el espacio sobrante: cero hueco en el centro. */
+    .hero-copy { flex: 1 1 auto; max-width: 760px; }
+    .hero-copy h1 { max-width: 15ch; }
+    /* Panel derecho: ancho fijo comodo, tarjeta y riel al 100% de esa columna. */
+    .hero-panel-derecho { flex: 0 0 clamp(320px, 30%, 380px); width: auto; }
+}
+
+/* En pantallas medianas/pequenas todo se apila y se centra, sin huecos. */
+@media (max-width: 1023px) {
+    #inicio-hero { min-height: auto; padding-top: 24px; padding-bottom: 8px; }
+    .hero-panel-derecho { max-width: 460px; margin: 0 auto; }
+}
