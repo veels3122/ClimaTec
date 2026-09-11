@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block titulo %}Etapa 2 · Plan de tratamiento · ClimaTec{% endblock %}
+{% block contenido %}
+
+<div class="page-hero acento-ok animate-fade-down">
+    <div class="icono-hero">🧭</div>
+    <p class="eyebrow"><span class="paso">Etapa 2 · Punto 9</span> Plan de tratamiento</p>
+    <h1>Plan de tratamiento</h1>
+    <p class="lede">Plan con las acciones necesarias para corregir o controlar los problemas
+    identificados. El estado indica lo ya aplicado por <span class="mono">scripts/limpieza.py</span>
+    y lo documentado para etapas siguientes.</p>
+</div>
+
+{% if plan %}
+<div class="tabla-wrap animate-fade-up" style="animation-delay:150ms;">
+    <table>
+        <thead><tr><th>Accion</th><th>Criterio y justificacion</th><th>Columnas</th><th>Estado</th></tr></thead>
+        <tbody>
+            {% for a in plan %}
+            <tr>
+                <td><strong>{{ a.accion }}</strong></td>
+                <td>{{ a.criterio }}<br><span style="color:var(--ink-soft);font-size:.85rem;">{{ a.detalle }}</span></td>
+                <td class="mono">{{ a.columnas }}</td>
+                <td>
+                    {% if a.estado == 'Aplicado' %}<span class="chip ok" style="margin:0;"><span class="marca-ico">✓</span> Aplicado</span>
+                    {% else %}<span class="sev info">{{ a.estado }}</span>{% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="nota" style="margin-top:1.4rem;">
+    <strong>Justificacion de los atipicos:</strong> se aplican todas las acciones sin perder
+    informacion valida. Los valores atipicos se <em>marcan</em> (columna <span class="mono">atipico</span>)
+    en lugar de eliminarse, porque en este dominio muchos son reales (el agregado mundial y los grandes
+    emisores); la decision de excluirlos o transformarlos se tomara en el analisis de la Etapa 3 segun
+    cada indicador.
+</div>
+{% else %}
+<div class="nota">No se pudo generar el plan de tratamiento.</div>
+{% endif %}
+
+{% endblock %}
