@@ -643,6 +643,195 @@
         ctx.globalAlpha = 1;
     }
 
+    // ------------------------------------------------------------------
+    // 16) RECOLECCION DE DATOS · Analisis de causas — un agente (lupa)
+    // revisa una carpeta y saca una hoja para inspeccionarla: la hoja sale,
+    // se examina y vuelve a guardarse, en bucle. Metafora directa de
+    // "investigar la causa detras de cada hallazgo".
+    // ------------------------------------------------------------------
+    function fondoE2Causas(ctx, w, h, t) {
+        ctx.clearRect(0, 0, w, h);
+        const cx = w * 0.78, cyFolder = h * 0.66;
+        const fw = Math.min(w, h) * 0.36, fh = fw * 0.7;
+
+        // Ciclo: 0-0.5 la hoja sale y se inspecciona, 0.5-1 vuelve a guardarse.
+        const ciclo = (t * 0.22) % 1;
+        const salida = ciclo < 0.5 ? easeInOutSine(ciclo / 0.5) : easeInOutSine(1 - (ciclo - 0.5) / 0.5);
+
+        // Parte trasera de la carpeta (con pestana superior)
+        ctx.fillStyle = 'rgba(255,180,84,.18)';
+        ctx.beginPath();
+        ctx.moveTo(cx - fw / 2, cyFolder - fh * 0.12);
+        ctx.lineTo(cx - fw / 2 + fw * 0.2, cyFolder - fh * 0.34);
+        ctx.lineTo(cx - fw / 2 + fw * 0.52, cyFolder - fh * 0.34);
+        ctx.lineTo(cx - fw / 2 + fw * 0.62, cyFolder - fh * 0.12);
+        ctx.lineTo(cx + fw / 2, cyFolder - fh * 0.12);
+        ctx.lineTo(cx + fw / 2, cyFolder + fh * 0.55);
+        ctx.lineTo(cx - fw / 2, cyFolder + fh * 0.55);
+        ctx.closePath();
+        ctx.fill();
+
+        // Hoja que sale/entra (detras del frente de la carpeta)
+        const hojaY = lerp(cyFolder + fh * 0.18, cyFolder - fh * 0.95, salida);
+        ctx.save();
+        ctx.translate(cx - fw * 0.04, hojaY);
+        ctx.rotate(lerp(0, -0.07, salida));
+        ctx.fillStyle = 'rgba(255,255,255,.94)';
+        ctx.fillRect(-fw * 0.3, -fh * 0.4, fw * 0.6, fh * 0.56);
+        ctx.strokeStyle = 'rgba(20,20,30,.28)';
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 4; i++) {
+            const ly = -fh * 0.4 + fh * 0.13 + i * fh * 0.1;
+            ctx.beginPath();
+            ctx.moveTo(-fw * 0.2, ly);
+            ctx.lineTo(fw * (i === 3 ? 0.02 : 0.2), ly);
+            ctx.stroke();
+        }
+        ctx.restore();
+
+        // Frente de la carpeta (tapa la mitad inferior de la hoja cuando esta guardada)
+        ctx.fillStyle = 'rgba(255,180,84,.34)';
+        ctx.beginPath();
+        ctx.moveTo(cx - fw / 2, cyFolder + fh * 0.55);
+        ctx.lineTo(cx - fw / 2, cyFolder);
+        ctx.lineTo(cx + fw / 2, cyFolder);
+        ctx.lineTo(cx + fw / 2, cyFolder + fh * 0.55);
+        ctx.closePath();
+        ctx.fill();
+
+        // Lupa del "agente" que inspecciona la hoja cuando ya salio lo suficiente
+        if (salida > 0.3) {
+            const a = clamp01((salida - 0.3) / 0.35);
+            const lx = cx + fw * 0.4, ly = hojaY - fh * 0.04;
+            ctx.globalAlpha = a * 0.9;
+            ctx.beginPath();
+            ctx.arc(lx, ly, fw * 0.14, 0, Math.PI * 2);
+            ctx.strokeStyle = PALETA.frio;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(lx + fw * 0.095, ly + fw * 0.095);
+            ctx.lineTo(lx + fw * 0.21, ly + fw * 0.21);
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // 17) RECOLECCION DE DATOS · Integracion y homologacion — una esfera
+    // central (el dataset unico) rodeada de fragmentos curvos (las fuentes
+    // heterogeneas) que cada cierto tiempo se separan bastante, se
+    // intercalan entre si (cada uno a su propio ritmo) y vuelven a cerrarse
+    // formando un anillo continuo alrededor de la esfera.
+    // ------------------------------------------------------------------
+    function fondoE2Integracion(ctx, w, h, t) {
+        ctx.clearRect(0, 0, w, h);
+        const cx = w * 0.76, cy = h * 0.54;
+        const rEsfera = Math.min(w, h) * 0.14;
+
+        const grad = ctx.createRadialGradient(
+            cx - rEsfera * 0.35, cy - rEsfera * 0.35, rEsfera * 0.1, cx, cy, rEsfera);
+        grad.addColorStop(0, 'rgba(255,255,255,.92)');
+        grad.addColorStop(0.55, PALETA.frio);
+        grad.addColorStop(1, 'rgba(12,40,58,.95)');
+        ctx.beginPath();
+        ctx.arc(cx, cy, rEsfera, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        const nFrag = 6;
+        const anilloRadio = rEsfera * 1.9;
+        const grosor = rEsfera * 0.4;
+        const gapAng = 0.16;
+        const segAng = (Math.PI * 2 / nFrag) - gapAng;
+
+        for (let i = 0; i < nFrag; i++) {
+            const faseSep = Math.sin(t * 0.5 + i * 1.3) * 0.5 + 0.5; // 0=cerrado junto a la esfera, 1=separado
+            const faseIntercala = Math.sin(t * 0.28 + i * 2.4) * 0.22; // reacomodo angular independiente
+            const radio = anilloRadio + faseSep * rEsfera * 1.6;
+            const angBase = (i / nFrag) * Math.PI * 2 + t * 0.05 + faseIntercala;
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, radio, angBase - segAng / 2, angBase + segAng / 2);
+            ctx.strokeStyle = i % 2 === 0 ? PALETA.ambar : PALETA.morado;
+            ctx.globalAlpha = 0.32 + 0.38 * (1 - faseSep);
+            ctx.lineWidth = grosor;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+    }
+
+    // ------------------------------------------------------------------
+    // 18) RECOLECCION DE DATOS · Plan de tratamiento — checklist que se
+    // desplaza sola: cada accion real del plan aparece difuminada, se
+    // enfoca al llegar a la linea de "chequeo" (donde se marca con un
+    // check) y sigue avanzando, en bucle continuo.
+    // ------------------------------------------------------------------
+    function fondoE2Plan(ctx, w, h, t) {
+        ctx.clearRect(0, 0, w, h);
+        const items = [
+            'Eliminacion de duplicados',
+            'Tratamiento de valores nulos',
+            'Correccion de tipos de datos',
+            'Estandarizacion de fechas y textos',
+            'Homologacion de categorias',
+            'Validacion de rangos',
+            'Tratamiento justificado de atipicos',
+        ];
+        const n = items.length;
+        const cx = w * 0.7;
+        const focoY = h * 0.5;
+        const filaH = Math.min(h * 0.15, 44);
+        const cicloTotal = filaH * n;
+        const scrollY = (t * 0.5 * filaH) % cicloTotal;
+
+        for (let k = 0; k < n; k++) {
+            let y = focoY + (k * filaH - scrollY);
+            while (y - focoY > cicloTotal / 2) y -= cicloTotal;
+            while (y - focoY < -cicloTotal / 2) y += cicloTotal;
+
+            const dist = Math.abs(y - focoY);
+            const foco = clamp01(1 - dist / (filaH * 1.5));
+            const desenfoque = Math.round((1 - foco) * 6);
+
+            ctx.save();
+            ctx.globalAlpha = 0.22 + foco * 0.7;
+            if ('filter' in ctx) ctx.filter = 'blur(' + desenfoque + 'px)';
+            ctx.font = (foco > 0.6 ? '600 ' : '400 ') + '13px "Inter", sans-serif';
+            ctx.fillStyle = foco > 0.75 ? '#ffffff' : 'rgba(255,255,255,.72)';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(items[k], cx - w * 0.14, y);
+            ctx.restore();
+
+            const cxCheck = cx - w * 0.22;
+            ctx.beginPath();
+            ctx.arc(cxCheck, y, 6, 0, Math.PI * 2);
+            ctx.strokeStyle = PALETA.ok;
+            ctx.globalAlpha = 0.3 + foco * 0.5;
+            ctx.lineWidth = 1.6;
+            ctx.stroke();
+            if (foco > 0.55) {
+                ctx.globalAlpha = foco;
+                ctx.beginPath();
+                ctx.moveTo(cxCheck - 2.6, y);
+                ctx.lineTo(cxCheck - 0.5, y + 2.6);
+                ctx.lineTo(cxCheck + 3, y - 3);
+                ctx.strokeStyle = PALETA.ok;
+                ctx.lineWidth = 1.8;
+                ctx.stroke();
+            }
+        }
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = 'rgba(61,220,151,.2)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(cx - w * 0.28, focoY);
+        ctx.lineTo(cx + w * 0.02, focoY);
+        ctx.stroke();
+    }
+
     const FONDOS = {
         problema: fondoProblema,
         necesidades: fondoNecesidades,
@@ -658,6 +847,9 @@
         e2_tratamiento: fondoE2Tratamiento,
         e2_comparacion: fondoE2Comparacion,
         e2_graficas: fondoE2Graficas,
+        e2_causas: fondoE2Causas,
+        e2_integracion: fondoE2Integracion,
+        e2_plan: fondoE2Plan,
     };
 
     document.addEventListener('DOMContentLoaded', () => {
