@@ -2,11 +2,21 @@
 {% block titulo %}2. Preguntas de investigacion · ClimaTec{% endblock %}
 {% block contenido %}
 
+<!-- Estas 4 capas son "position:fixed" a proposito (reaccionan al scroll de
+     TODA la pagina, no solo al alto del hero -- ver fondos.js). Van FUERA
+     de .page-hero a proposito: .page-hero tiene "overflow:hidden" (para
+     recortar el resplandor difuminado de su ::before) y eso, en la
+     practica de todos los navegadores, tambien recorta a sus hijos
+     "fixed" al tamano del propio hero en vez de dejarlos cubrir el
+     viewport completo. Sacandolas de adentro de .page-hero, el recorte
+     ya no aplica y las capas fixed cubren la pantalla completa como se
+     penso originalmente. -->
+<div class="fondo-foto-preguntas-base" aria-hidden="true"></div>
+<div class="fondo-foto-preguntas-cruce" aria-hidden="true"></div>
+<canvas class="fondo-preguntas-fijo" aria-hidden="true"></canvas>
+<div class="fondo-preguntas-veo" aria-hidden="true"></div>
+
 <div class="page-hero acento-warm animate-fade-down" data-fondo="preguntas">
-    <div class="fondo-foto-preguntas-base" aria-hidden="true"></div>
-    <div class="fondo-foto-preguntas-cruce" aria-hidden="true"></div>
-    <canvas class="fondo-preguntas-fijo" aria-hidden="true"></canvas>
-    <div class="fondo-preguntas-veo" aria-hidden="true"></div>
     <div class="icono-hero">🎯</div>
     <p class="eyebrow"><span class="paso">02</span> Definicion del problema</p>
     <h1>Pregunta principal y preguntas secundarias</h1>

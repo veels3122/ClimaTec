@@ -20,6 +20,36 @@
         blanco: 'rgba(255,255,255,',
     };
 
+    // El mapa de "Fuentes de datos" se dibuja DENTRO del propio canvas (no
+    // solo como imagen de fondo en CSS) porque los iconos de cada
+    // institucion se calculan por lat/lon real convertida a fraccion del
+    // mapa -- si el mapa se mostrara con "cover" en un .page-hero de otra
+    // proporcion, se recortaria y los iconos quedarian desalineados de su
+    // pais real. Dibujandolo aqui con la MISMA cuenta de "contain" que se
+    // usa para ubicar los iconos, la alineacion queda garantizada sin
+    // importar la proporcion de pantalla.
+    const mapaFuentes = new Image();
+    mapaFuentes.src = '/static/img/fondos/fuentes.jpg';
+    let mapaFuentesListo = false;
+    mapaFuentes.addEventListener('load', () => { mapaFuentesListo = true; });
+
+    function rectMapaFuentes(w, h) {
+        const proporcion = mapaFuentesListo
+            ? mapaFuentes.naturalWidth / mapaFuentes.naturalHeight
+            : 2000 / 989;
+        // "contain": el mapa completo siempre visible, sin recorte.
+        const escalaAncho = w / (proporcion * h);
+        let dw, dh;
+        if (escalaAncho >= 1) {
+            // el alto es el limitante: el mapa llena el alto completo
+            dh = h; dw = h * proporcion;
+        } else {
+            // el ancho es el limitante: el mapa llena el ancho completo
+            dw = w; dh = w / proporcion;
+        }
+        return { x: (w - dw) / 2, y: (h - dh) / 2, w: dw, h: dh };
+    }
+
     function motor(canvas, dibujar, { fija = false } = {}) {
         const ctx = canvas.getContext('2d');
         let w = 0, h = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -68,7 +98,10 @@
     // ------------------------------------------------------------------
     function fondoProblema(ctx, w, h, t) {
         ctx.clearRect(0, 0, w, h);
-        const cx = w * 0.82, cy = h * 0.62;
+        // Centro ajustado al foco de luz real de problema.jpg (medido por
+        // brillo sobre la foto: ~0.735w, 0.526h) -- antes quedaba mas
+        // abajo y a la derecha del resplandor real de la chimenea.
+        const cx = w * 0.74, cy = h * 0.53;
         const bandas = 7;
         for (let i = bandas; i >= 0; i--) {
             const fase = (t * 0.12 + i / bandas) % 1;
@@ -105,9 +138,16 @@
     // calcularProgresoScroll().
     // ------------------------------------------------------------------
     function fondoPreguntas(ctx, w, h, t, progreso) {
+        // OJO: antes esta funcion pintaba aqui un rectangulo OPACO
+        // ("#05070f" a pantalla completa) antes de dibujar los blobs. Este
+        // canvas vive en z-index:-3, ARRIBA de las fotos reales de El Nino/
+        // La Nina (z-index:-4, ver fondos.css) -- un relleno opaco tapaba
+        // por completo esas fotos, que quedaban 100% invisibles detras del
+        // canvas (por eso se veia "solo negro con manchas de color", el bug
+        // que reporto Mateo). Con clearRect (transparente) el canvas deja
+        // ver la foto real de fondo y solo se dibujan encima los blobs y
+        // particulas semitransparentes, como esta pensado.
         ctx.clearRect(0, 0, w, h);
-        ctx.fillStyle = '#05070f';
-        ctx.fillRect(0, 0, w, h);
 
         // Envolvente asimetrica: sube rapido, baja gradual (nunca de golpe).
         const p = progreso == null ? 0 : progreso;
@@ -172,7 +212,9 @@
     // ------------------------------------------------------------------
     function fondoNecesidades(ctx, w, h, t) {
         ctx.clearRect(0, 0, w, h);
-        const cx = w * 0.8, cy = h * 0.5;
+        // Centro ajustado al foco real de necesidades.jpg (medido por
+        // brillo: ~0.706w, 0.518h), donde estan las pantallas/consola.
+        const cx = w * 0.72, cy = h * 0.52;
         const etiquetas = ['Entidades', 'Variables', 'Periodo', 'Cobertura', 'Granularidad', 'Integracion'];
         const radio = Math.min(w, h) * 0.34;
         const nodos = etiquetas.map((txt, i) => {
@@ -214,13 +256,16 @@
     }
 
     // ------------------------------------------------------------------
-    // 4) FUENTES DE DATOS — mapa REAL (fuentes.jpg, ideal: NASA Black Marble
-    // equirectangular, ver LISTA-DE-IMAGENES.md) con un pin en la posicion
-    // geografica VERDADERA de cada institucion fuente, emitiendo un pulso
-    // periodico ("notificacion" de dato entrante) hacia un punto de
-    // consolidacion. Ya no se dibujan continentes esquematicos: la foto de
-    // fondo (fondo-foto-fuentes, ver fondos.css) ya muestra el mundo real,
-    // asi que este canvas solo pinta los pines/pulsos por ENCIMA de ella.
+    // 4) FUENTES DE DATOS — mapa REAL equirectangular (fuentes.jpg) con
+    // cada institucion representada por un ICONO propio (no un punto
+    // generico) en su posicion geografica verdadera, y Colombia marcada
+    // como la SEDE DEL PROYECTO: ya no convergen hacia un punto arbitrario
+    // en la mitad del mar, sino hacia Bogota, que es donde real y
+    // efectivamente se hace el analisis. De cada fuente externa (OWID,
+    // NOAA, UNFCCC) sale un flujo CONSTANTE de varias particulas (no una
+    // sola en loop) viajando hacia Colombia, como datos entrando sin
+    // parar. IDEAM y UNGRD ya estan en Colombia, asi que se dibujan como
+    // parte del propio nodo local, sin linea larga.
     //
     // Posiciones calculadas con proyeccion equirectangular a partir de
     // lat/lon reales (formula: x = (lon+180)/360, y = (90-lat)/180):
@@ -231,55 +276,264 @@
     //             poco de IDEAM para que los dos pines no se encimen)
     //   UNFCCC -> Bonn, Alemania          (50.73 N, 7.10)
     // ------------------------------------------------------------------
+    function dibujarIconoFuente(tipo, ctx, x, y, r, color) {
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = 1.3;
+        if (tipo === 'db') {
+            // OWID — base de datos: cilindro (dos elipses + laterales)
+            ctx.beginPath();
+            ctx.ellipse(x, y - r * 0.4, r * 0.62, r * 0.26, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x - r * 0.62, y - r * 0.4); ctx.lineTo(x - r * 0.62, y + r * 0.4);
+            ctx.moveTo(x + r * 0.62, y - r * 0.4); ctx.lineTo(x + r * 0.62, y + r * 0.4);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.ellipse(x, y + r * 0.4, r * 0.62, r * 0.26, 0, 0, Math.PI);
+            ctx.stroke();
+        } else if (tipo === 'satelite') {
+            // NOAA — plato satelital + mastil receptor
+            ctx.beginPath();
+            ctx.arc(x, y, r * 0.65, Math.PI * 1.1, Math.PI * 1.9);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y - r * 0.1); ctx.lineTo(x + r * 0.5, y - r * 0.78);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(x + r * 0.5, y - r * 0.78, 1.4, 0, Math.PI * 2);
+            ctx.fill();
+        } else if (tipo === 'documento') {
+            // UNFCCC — documento/acuerdo: hoja con lineas de texto
+            const rw = r * 1.05, rh = r * 1.25;
+            ctx.beginPath();
+            if (ctx.roundRect) ctx.roundRect(x - rw / 2, y - rh / 2, rw, rh, 2);
+            else ctx.rect(x - rw / 2, y - rh / 2, rw, rh);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x - rw * 0.28, y - rh * 0.12); ctx.lineTo(x + rw * 0.28, y - rh * 0.12);
+            ctx.moveTo(x - rw * 0.28, y + rh * 0.12); ctx.lineTo(x + rw * 0.1, y + rh * 0.12);
+            ctx.stroke();
+        } else if (tipo === 'estacion') {
+            // IDEAM — mini estacion meteorologica (mastil + anemometro)
+            ctx.beginPath();
+            ctx.moveTo(x, y + r * 0.7); ctx.lineTo(x, y - r * 0.3);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(x, y - r * 0.55, r * 0.3, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x - r * 0.45, y); ctx.lineTo(x + r * 0.45, y);
+            ctx.stroke();
+        } else if (tipo === 'escudo') {
+            // UNGRD — escudo (gestion de riesgo/emergencias)
+            ctx.beginPath();
+            ctx.moveTo(x, y - r * 0.78);
+            ctx.lineTo(x + r * 0.6, y - r * 0.36);
+            ctx.lineTo(x + r * 0.6, y + r * 0.22);
+            ctx.quadraticCurveTo(x + r * 0.6, y + r * 0.75, x, y + r * 0.92);
+            ctx.quadraticCurveTo(x - r * 0.6, y + r * 0.75, x - r * 0.6, y + r * 0.22);
+            ctx.lineTo(x - r * 0.6, y - r * 0.36);
+            ctx.closePath();
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+
+    function dibujarSedeColombia(ctx, x, y, r) {
+        // Marcador de la sede del proyecto: estrella de 5 puntas en color
+        // calido (contraste deliberado frente al verde de las fuentes
+        // externas), mas grande que cualquier otro icono del mapa.
+        ctx.save();
+        ctx.beginPath();
+        for (let i = 0; i < 10; i++) {
+            const ang = (i / 10) * Math.PI * 2 - Math.PI / 2;
+            const rr = i % 2 === 0 ? r : r * 0.45;
+            const px = x + Math.cos(ang) * rr, py = y + Math.sin(ang) * rr;
+            i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fillStyle = PALETA.calido;
+        ctx.globalAlpha = 0.92;
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,.85)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        ctx.restore();
+    }
+
+    // Cuanto se acerca el mapa respecto al "contain" base (mapa completo
+    // visible). Mateo pidio "un poquito mas de zoom" porque el mapa
+    // completo distorsionaba alguito el diseno y no se alcanzaban a ver
+    // bien los lugares de origen de los datos -- 1.16 = 16% mas grande.
+    const ZOOM_MAPA_FUENTES = 1.30;
+    // Punto de anclaje del zoom, en FRACCION DEL MAPA COMPLETO (0..1, las
+    // mismas fracciones lat/lon que usan los pines) -- es el centro de
+    // masa real de Colombia + las 5 fuentes (OWID/NOAA/UNFCCC/IDEAM/UNGRD),
+    // no el centro geometrico del mapa (que caeria en el golfo de Guinea,
+    // vacio). Anclando el zoom aqui, la region que realmente importa queda
+    // fija en pantalla mientras el resto del mapa crece alrededor -- nunca
+    // se sale del encuadre ni empuja los pines fuera de la pantalla.
+    const ANCLA_ZOOM_FUENTES = { x: 0.361, y: 0.359 };
+
     function fondoFuentes(ctx, w, h, t) {
         ctx.clearRect(0, 0, w, h);
 
-        const centro = { x: w * 0.5, y: h * 0.85 };
-        const fuentes = [
-            { x: 0.4965, y: 0.2125, nombre: 'OWID' },
-            { x: 0.2863, y: 0.2834, nombre: 'NOAA' },
-            { x: 0.5197, y: 0.2182, nombre: 'UNFCCC' },
-            { x: 0.2942, y: 0.4738, nombre: 'IDEAM' },
-            { x: 0.2986, y: 0.4806, nombre: 'UNGRD' },
+        // El mapa se dibuja aqui mismo (ver rectMapaFuentes) para que los
+        // iconos usen exactamente el mismo rectangulo/escala que la imagen
+        // -- asi coinciden con su pais real sin importar la proporcion de
+        // pantalla. Mientras el archivo no ha cargado, se deja el fondo
+        // heredado (degradado + fondo-foto-fuentes en CSS) sin dibujar mapa.
+        // rectMapaFuentes() da el "contain" base (mapa COMPLETO, sin
+        // recorte); a partir de ahi se aplica un zoom leve anclado en
+        // ANCLA_ZOOM_FUENTES. Como px()/py() (mas abajo) siguen siendo
+        // "mapa.x + fraccion*mapa.w", agrandar/mover este rectangulo NO
+        // desalinea ningun pin -- la formula es la misma, solo cambia la
+        // magnitud del rectangulo sobre el que se aplica.
+        const base = rectMapaFuentes(w, h);
+        const mapa = {
+            w: base.w * ZOOM_MAPA_FUENTES,
+            h: base.h * ZOOM_MAPA_FUENTES,
+        };
+        // Ancla: el punto ANCLA_ZOOM_FUENTES debe quedar en la MISMA
+        // posicion de pantalla antes y despues del zoom.
+        const anclaPantallaX = base.x + ANCLA_ZOOM_FUENTES.x * base.w;
+        const anclaPantallaY = base.y + ANCLA_ZOOM_FUENTES.y * base.h;
+        mapa.x = anclaPantallaX - ANCLA_ZOOM_FUENTES.x * mapa.w;
+        mapa.y = anclaPantallaY - ANCLA_ZOOM_FUENTES.y * mapa.h;
+
+        if (mapaFuentesListo) {
+            ctx.drawImage(mapaFuentes, mapa.x, mapa.y, mapa.w, mapa.h);
+            // Mismo tinte (color + opacidad + mezcla "multiply") que
+            // .fondo-foto-tinte usa para acento-ok en el resto del sitio,
+            // replicado aqui para que tambien cubra el mapa recien dibujado.
+            const tinte = ctx.createLinearGradient(mapa.x, mapa.y, mapa.x + mapa.w * 0.6, mapa.y + mapa.h);
+            tinte.addColorStop(0, 'rgba(61,220,151,.3)');
+            tinte.addColorStop(1, 'rgba(5,7,15,.85)');
+            ctx.save();
+            ctx.globalCompositeOperation = 'multiply';
+            ctx.globalAlpha = 0.55;
+            ctx.fillStyle = tinte;
+            ctx.fillRect(mapa.x, mapa.y, mapa.w, mapa.h);
+            ctx.restore();
+        }
+
+        // Conversion lat/lon -> posicion real DENTRO del rectangulo del
+        // mapa (no del canvas completo): px = mapa.x + fx*mapa.w, etc.
+        const px = (fx) => mapa.x + fx * mapa.w;
+        const py = (fy) => mapa.y + fy * mapa.h;
+
+        // Colombia = sede del proyecto. Todo converge aqui, no en un punto
+        // generico del oceano.
+        const colombia = { x: px(0.287), y: py(0.498) };
+
+        // OWID (Oxford) y UNFCCC (Bonn) quedan muy cerca entre si en el
+        // mapa real (~700km) -- sus etiquetas se separan a los lados
+        // (izquierda/derecha) en vez de las tres arriba centradas, para
+        // que no se encimen.
+        const fuentesExternas = [
+            { x: 0.4795, y: 0.2255, nombre: 'OWID', icono: 'db', etiqueta: 'izquierda' },
+            { x: 0.5058, y: 0.2262, nombre: 'UNFCCC', icono: 'documento', etiqueta: 'derecha' },
+            { x: 0.08, y: 0.39, nombre: 'NOAA GML', icono: 'satelite', etiqueta: 'arriba' },   
+            { x: 0.2988, y: 0.2874, nombre: 'NASA GISS', icono: 'satelite', etiqueta: 'arriba' },
+            { x: 0.2348, y: 0.2424, nombre: 'BANCO MUNDIAL', icono: 'documento', etiqueta: 'izquierda' },
+            { x: 0.2468, y: 0.3350, nombre: 'NASA POWER', icono: 'satelite', etiqueta: 'derecha' },
+            { x: 0.2038, y: 0.2984, nombre: 'NOAA NCEI', icono: 'db', etiqueta: 'abajo' },
         ];
-        fuentes.forEach((f, i) => {
-            const x = f.x * w, y = f.y * h;
+        // IDEAM y UNGRD estan a solo unos km entre si (ambas en Bogota), tan
+        // cerca del propio marcador de la sede que sus iconos quedarian
+        // tapados debajo de la estrella si se usara su lat/lon exacta --
+        // se separan un poco visualmente alrededor del hub (arriba-izq /
+        // abajo-izq), y sus etiquetas ademas se desfasan para no encimarse
+        // entre si ni con "COLOMBIA - sede del proyecto".
+        const fuentesLocales = [
+            { x: 0.284, y: 0.456, nombre: 'IDEAM', icono: 'estacion', dyEtiqueta: -13 },
+            { x: 0.288, y: 0.504, nombre: 'UNGRD', icono: 'escudo', dyEtiqueta: 9 },
+        ];
+
+        // Halo de la sede, pulsando por debajo de todo lo demas.
+        const radioHalo = (16 + Math.sin(t * 1.6) * 4) * 2.4;
+        const halo = ctx.createRadialGradient(colombia.x, colombia.y, 0, colombia.x, colombia.y, radioHalo);
+        halo.addColorStop(0, 'rgba(255,106,77,.32)');
+        halo.addColorStop(1, 'transparent');
+        ctx.fillStyle = halo;
+        ctx.beginPath();
+        ctx.arc(colombia.x, colombia.y, radioHalo, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Cada fuente externa manda un flujo CONSTANTE (3 particulas
+        // desfasadas, no una sola) de datos viajando hacia Colombia.
+        fuentesExternas.forEach((f, i) => {
+            const x = px(f.x), y = py(f.y);
             ctx.beginPath();
             ctx.moveTo(x, y);
-            ctx.lineTo(centro.x, centro.y);
-            ctx.strokeStyle = 'rgba(61,220,151,.14)';
+            ctx.lineTo(colombia.x, colombia.y);
+            ctx.strokeStyle = 'rgba(61,220,151,.16)';
             ctx.lineWidth = 1;
             ctx.stroke();
 
-            const fase = (t * 0.28 + i * 0.2) % 1;
-            const px = lerp(x, centro.x, fase);
-            const py = lerp(y, centro.y, fase);
-            ctx.beginPath();
-            ctx.arc(px, py, 2.4, 0, Math.PI * 2);
-            ctx.fillStyle = PALETA.ok;
-            ctx.fill();
+            const nParticulas = 3;
+            for (let p = 0; p < nParticulas; p++) {
+                const fase = (t * 0.22 + i * 0.15 + p / nParticulas) % 1;
+                const px = lerp(x, colombia.x, fase);
+                const py = lerp(y, colombia.y, fase);
+                ctx.beginPath();
+                ctx.arc(px, py, 2.2, 0, Math.PI * 2);
+                ctx.fillStyle = PALETA.ok;
+                ctx.globalAlpha = 0.85 - fase * 0.35;
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
 
-            const pulso = 5 + Math.sin(t * 2.4 + i) * 1.5;
+            const pulsoLocal = 6 + Math.sin(t * 2.4 + i) * 1.5;
             ctx.beginPath();
-            ctx.arc(x, y, pulso, 0, Math.PI * 2);
-            ctx.strokeStyle = 'rgba(73,199,224,.5)';
-            ctx.lineWidth = 1.4;
+            ctx.arc(x, y, pulsoLocal + 7, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(73,199,224,.4)';
+            ctx.lineWidth = 1.2;
             ctx.stroke();
-            ctx.beginPath();
-            ctx.arc(x, y, 3, 0, Math.PI * 2);
-            ctx.fillStyle = '#fff';
-            ctx.fill();
 
-            ctx.font = '10px "IBM Plex Mono", monospace';
+            dibujarIconoFuente(f.icono, ctx, x, y, 9, 'rgba(255,255,255,.92)');
+
+                       ctx.font = '10px "IBM Plex Mono", monospace';
             ctx.fillStyle = 'rgba(255,255,255,.6)';
-            ctx.textAlign = 'center';
-            ctx.fillText(f.nombre, x, y - pulso - 6);
+            if (f.etiqueta === 'izquierda') {
+                ctx.textAlign = 'right';
+                ctx.fillText(f.nombre, x - pulsoLocal - 10, y + 3);
+            } else if (f.etiqueta === 'derecha') {
+                ctx.textAlign = 'left';
+                ctx.fillText(f.nombre, x + pulsoLocal + 10, y + 3);
+            } else if (f.etiqueta === 'abajo') {
+                ctx.textAlign = 'center';
+                ctx.fillText(f.nombre, x, y + pulsoLocal + 16);
+            } else {
+                ctx.textAlign = 'center';
+                ctx.fillText(f.nombre, x, y - pulsoLocal - 12);
+            }
         });
 
-        ctx.beginPath();
-        ctx.arc(centro.x, centro.y, 6, 0, Math.PI * 2);
-        ctx.fillStyle = PALETA.calido;
-        ctx.fill();
+        // IDEAM y UNGRD ya estan en Colombia: solo su icono local, sin
+        // linea larga (irian de largo casi cero).
+        fuentesLocales.forEach((f) => {
+            const x = px(f.x), y = py(f.y);
+            dibujarIconoFuente(f.icono, ctx, x, y, 8, 'rgba(255,255,255,.9)');
+            ctx.font = '9px "IBM Plex Mono", monospace';
+            ctx.fillStyle = 'rgba(255,255,255,.55)';
+            ctx.textAlign = 'right';
+            ctx.fillText(f.nombre, x - 11, y + f.dyEtiqueta);
+        });
+
+        dibujarSedeColombia(ctx, colombia.x, colombia.y, 11 + Math.sin(t * 1.6) * 1.5);
+        // La etiqueta va a la DERECHA de la estrella (no centrada debajo):
+        // Colombia cae del lado izquierdo de cualquier mapa del mundo
+        // centrado en Greenwich, el mismo lado donde vive el texto de la
+        // pagina (titulo/parrafo) -- ponerla a la derecha la aleja de esa
+        // columna en vez de competir con el encabezado.
+        ctx.font = '600 11px "IBM Plex Mono", monospace';
+        ctx.fillStyle = 'rgba(255,180,84,.95)';
+        ctx.textAlign = 'left';
+        ctx.fillText('COLOMBIA · sede del proyecto', colombia.x + 20, colombia.y + 4);
     }
 
     // ------------------------------------------------------------------
@@ -319,10 +573,14 @@
             ['temperature_change', PALETA.calido], ['methane', PALETA.frio],
             ['nitrous_oxide', PALETA.ambar], ['nivel_geografico', PALETA.ok],
         ];
+        // La nube de terminos se concentra en la franja derecha donde estan
+        // los libros y el globo de conceptos de diccionario.jpg (foco real
+        // medido: ~0.71w, 0.53h) -- antes flotaba sobre el ancho completo,
+        // incluida la zona oscura izquierda donde vive el texto.
         terminos.forEach(([txt, color], i) => {
             const semilla = i * 91.7;
-            const x = (Math.sin(semilla * 0.7 + t * 0.05) * 0.5 + 0.5) * w;
-            const y = ((Math.cos(semilla * 0.9) * 0.5 + 0.5) * h + t * (6 + i * 1.3)) % h;
+            const x = w * 0.5 + (Math.sin(semilla * 0.7 + t * 0.05) * 0.5 + 0.5) * w * 0.48;
+            const y = ((Math.cos(semilla * 0.9) * 0.5 + 0.5) * h * 0.85 + t * (6 + i * 1.3)) % h;
             ctx.globalAlpha = 0.28;
             ctx.beginPath();
             ctx.arc(x, y, 3, 0, Math.PI * 2);
@@ -343,14 +601,20 @@
     // ------------------------------------------------------------------
     function fondoCalidad(ctx, w, h, t) {
         ctx.clearRect(0, 0, w, h);
-        const cols = 22, filas = 12;
-        const cw = w / cols, ch = h / filas;
-        const barridoX = (Math.sin(t * 0.5) * 0.5 + 0.5) * w;
+        // La grilla y el barrido quedan acotados a la franja donde estan
+        // el microscopio y los documentos en calidad.jpg (foco real medido:
+        // ~0.64w, 0.47h) -- antes barrian tambien la zona oscura izquierda,
+        // escaneando "el vacio".
+        const xIni = w * 0.3, xFin = w;
+        const anchoZona = xFin - xIni;
+        const cols = 16, filas = 12;
+        const cw = anchoZona / cols, ch = h / filas;
+        const barridoX = xIni + (Math.sin(t * 0.5) * 0.5 + 0.5) * anchoZona;
         for (let r = 0; r < filas; r++) {
             for (let c = 0; c < cols; c++) {
-                const x = c * cw, y = r * ch;
+                const x = xIni + c * cw, y = r * ch;
                 const dist = Math.abs((x + cw / 2) - barridoX);
-                const cerca = clamp01(1 - dist / (w * 0.08));
+                const cerca = clamp01(1 - dist / (anchoZona * 0.1));
                 const esFalla = ((r * 31 + c * 17) % 23) === 0;
                 ctx.globalAlpha = 0.05 + cerca * 0.18;
                 ctx.fillStyle = esFalla && cerca > 0.4 ? PALETA.calido : PALETA.frio;
@@ -865,7 +1129,11 @@
                 // usuario tiene "reduced motion" activado (ahi el canvas de
                 // particulas no anima, pero el cruce de fotos si sigue
                 // funcionando porque es solo una transicion de opacidad).
-                const cruce = hero.querySelector('.fondo-foto-preguntas-cruce');
+                // Estas capas viven FUERA de .page-hero a proposito (ver
+                // preguntas.html) para que "position:fixed" no quede
+                // recortado por el overflow:hidden del hero -- por eso se
+                // buscan en todo el documento, no dentro de "hero".
+                const cruce = document.querySelector('.fondo-foto-preguntas-cruce');
                 const actualizarCruce = () => {
                     if (cruce) cruce.style.opacity = String(calcularProgresoScroll());
                 };
@@ -873,7 +1141,7 @@
                 window.addEventListener('scroll', actualizarCruce, { passive: true });
                 window.addEventListener('resize', actualizarCruce);
 
-                const canvas = hero.querySelector('.fondo-preguntas-fijo');
+                const canvas = document.querySelector('.fondo-preguntas-fijo');
                 if (!canvas) return;
                 motor(canvas, (ctx, w, h, t) => fondoPreguntas(ctx, w, h, t, calcularProgresoScroll()), { fija: true });
                 return;

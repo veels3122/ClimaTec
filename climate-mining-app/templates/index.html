@@ -4,7 +4,11 @@
 
 <section class="hero" id="inicio-hero">
 
-    <div class="fondo-foto fondo-foto-inicio" aria-hidden="true"></div>
+    <div class="fondo-foto-inicio-poster" aria-hidden="true"></div>
+    <video class="fondo-video" autoplay muted loop playsinline preload="metadata"
+           poster="{{ url_for('static', filename='img/fondos/inicio.jpg') }}" aria-hidden="true">
+        <source src="{{ url_for('static', filename='video/inicio.mp4') }}" type="video/mp4">
+    </video>
 
     <div class="hero-fila">
         <div class="hero-copy">

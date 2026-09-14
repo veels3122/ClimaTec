@@ -45,11 +45,31 @@
 .page-hero.acento-amber .fondo-foto-tinte { background: linear-gradient(150deg, rgba(255,180,84,.32), rgba(5,7,15,.85)); }
 .page-hero.acento-ok .fondo-foto-tinte { background: linear-gradient(150deg, rgba(61,220,151,.3), rgba(5,7,15,.85)); }
 
-/* Inicio: la Tierra real (Blue Marble) de fondo, en vez del video de la
-   spec Apogee (no contamos con ese archivo real). */
-.fondo-foto-inicio {
+/* Inicio: VIDEO real de fondo (mar agitado + tormenta, idea original del
+   estilo "Apogee") en vez de foto fija. El video no lleva "Ken Burns"
+   propio (.fondo-foto) porque ya trae su propio movimiento -- usa la
+   misma capa/z-index que .fondo-foto para no alterar el apilamiento con
+   el tinte y el degradado de legibilidad que ya existian. */
+.fondo-video {
+    position: absolute;
+    inset: -2%;
+    z-index: -3;
+    width: 104%;
+    height: 104%;
+    object-fit: cover;
+    object-position: center;
+}
+/* Imagen fija (un fotograma real del propio video) para navegadores con
+   "reduced motion" y como poster/fallback del <video> mientras carga. */
+.fondo-foto-inicio-poster {
+    position: absolute; inset: -2%; z-index: -3;
     background-image: url('../img/fondos/inicio.jpg');
-    opacity: .9;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+@media (prefers-reduced-motion: reduce) {
+    .fondo-video { display: none; }
 }
 #inicio-hero .fondo-foto-tinte-auto {
     position: absolute; inset: -2%; z-index: -2;
@@ -59,7 +79,20 @@
 
 .fondo-foto-problema      { background-image: url('../img/fondos/problema.jpg'); }
 .fondo-foto-necesidades   { background-image: url('../img/fondos/necesidades.jpg'); }
-.fondo-foto-fuentes       { background-image: url('../img/fondos/fuentes.jpg'); }
+/* Fuentes de datos es un caso especial: el mapa es equirectangular real y
+   los iconos del canvas (fondoFuentes, en fondos.js) se calculan por
+   FRACCION de ancho/alto a partir de lat/lon reales. El .page-hero suele
+   ser mas panoramico que el mapa (2:1) por su alto segun contenido, y con
+   "cover" (el comportamiento normal de .fondo-foto) eso recorta franjas
+   arriba/abajo del mapa -- lo que corre las latitudes visibles y desalinea
+   los iconos de su pais real. Por eso aqui se fuerza "contain" (el mapa
+   completo siempre entero) en vez de "cover"; si quedan franjas arriba/
+   abajo son del mismo negro azulado del sitio, asi que no se notan. */
+.fondo-foto-fuentes {
+    background-image: url('../img/fondos/fuentes.jpg');
+    background-size: contain;
+    background-color: #05070f;
+}
 .fondo-foto-dataset       { background-image: url('../img/fondos/dataset.jpg'); }
 .fondo-foto-diccionario   { background-image: url('../img/fondos/diccionario.jpg'); }
 .fondo-foto-calidad       { background-image: url('../img/fondos/calidad.jpg'); }
