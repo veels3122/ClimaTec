@@ -91,6 +91,63 @@
     function clamp01(x) { return Math.max(0, Math.min(1, x)); }
     function easeInOutSine(t) { return -(Math.cos(Math.PI * t) - 1) / 2; }
 
+    // Generador pseudoaleatorio con semilla fija (mulberry32) -- necesario
+    // porque motor() vuelve a llamar a cada funcion de dibujo en cada frame
+    // sin guardar estado propio; con una semilla fija (p.ej. el numero de
+    // "paso" de una permutacion) se obtiene siempre la MISMA secuencia
+    // aleatoria mientras dura ese paso, y una distinta en el siguiente.
+    function rngSemilla(seed) {
+        let s = seed >>> 0;
+        return function () {
+            s = (s + 0x6D2B79F5) | 0;
+            let t = Math.imul(s ^ (s >>> 15), 1 | s);
+            t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+    }
+    // Permutacion aleatoria (Fisher-Yates) de [0..n-1], determinista segun "seed".
+    function permutacionSemilla(seed, n) {
+        const rnd = rngSemilla(seed);
+        const arr = Array.from({ length: n }, (_, i) => i);
+        for (let i = n - 1; i > 0; i--) {
+            const j = Math.floor(rnd() * (i + 1));
+            const tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+        }
+        return arr;
+    }
+    // Interpola entre dos colores hex ("#rrggbb") devolviendo un rgb() css.
+    function mezclarColor(hexA, hexB, t) {
+        const a = hexA.match(/\w\w/g).map((h) => parseInt(h, 16));
+        const b = hexB.match(/\w\w/g).map((h) => parseInt(h, 16));
+        const tt = clamp01(t);
+        const m = a.map((v, i) => Math.round(lerp(v, b[i], tt)));
+        return 'rgb(' + m[0] + ',' + m[1] + ',' + m[2] + ')';
+    }
+    // Dibuja una "capsula/pildora": lados rectos, puntas semicirculares
+    // (no un ovalo completo) -- centrada en (cx,cy), rotada "angulo" radianes,
+    // "largo" x "ancho" como dimensiones antes de rotar.
+    function dibujarPildora(ctx, cx, cy, largo, ancho, angulo, color, alpha) {
+        const r = ancho / 2;
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(angulo);
+        ctx.beginPath();
+        if (ctx.roundRect) {
+            ctx.roundRect(-largo / 2, -r, largo, ancho, r);
+        } else {
+            ctx.moveTo(-largo / 2 + r, -r);
+            ctx.lineTo(largo / 2 - r, -r);
+            ctx.arc(largo / 2 - r, 0, r, -Math.PI / 2, Math.PI / 2);
+            ctx.lineTo(-largo / 2 + r, r);
+            ctx.arc(-largo / 2 + r, 0, r, Math.PI / 2, -Math.PI / 2);
+            ctx.closePath();
+        }
+        ctx.fillStyle = color;
+        ctx.globalAlpha = alpha;
+        ctx.fill();
+        ctx.restore();
+    }
+
     // ------------------------------------------------------------------
     // 1) PROBLEMA Y CONTEXTO — bandas de calentamiento ("warming stripes")
     // que laten desde un nucleo, con particulas de CO2 subiendo. Referencia
@@ -665,8 +722,12 @@
     // ------------------------------------------------------------------
     function fondoE2Descripcion(ctx, w, h, t) {
         ctx.clearRect(0, 0, w, h);
-        const cx = w * 0.78, cy = h * 0.55;
-        const radios = [0.44, 0.29, 0.15].map((f) => Math.min(w, h) * f);
+        // Centro y radios calibrados con la foto real (e2_descripcion.jpg,
+        // proporcion 2752x1536): centro en fraccion de imagen (0.7097,0.4993),
+        // radios en fraccion del ANCHO de imagen (0.2011/0.1308/0.0740).
+        // K = alto/ancho de la foto = 1536/2752 = 0.55814.
+        const cx = w * 0.7097, cy = h / 2 + w * 0.55814 * (0.4993 - 0.5);
+        const radios = [0.2011, 0.1308, 0.074].map((f) => w * f);
         const colores = [PALETA.frio, PALETA.ambar, PALETA.calido];
         radios.forEach((r, i) => {
             ctx.beginPath();
@@ -699,29 +760,83 @@
     }
 
     // ------------------------------------------------------------------
-    // 10) RECOLECCION DE DATOS · Perfilamiento — columnas verticales (una
-    // por columna del dataset) con un barrido horizontal tipo "microscopio"
-    // que revela la altura (cardinalidad/nulos) de cada una al pasar.
+    // 10) RECOLECCION DE DATOS · Perfilamiento — varios paneles/dashboards
+    // (no uno solo) con datos erraticos. La animacion "revisa" un panel a
+    // la vez, en secuencia: un barrido en linea lo recorre y, al llegar al
+    // dato anomalo de ESE panel, lo enciende en ambar; unos segundos
+    // despues pasa al siguiente panel. (Pedido de Mateo — reemplaza la
+    // version anterior de columnas con barrido vertical.)
     // ------------------------------------------------------------------
     function fondoE2Perfilamiento(ctx, w, h, t) {
         ctx.clearRect(0, 0, w, h);
-        const cols = 12;
-        const cw = w / (cols + 2);
-        const barridoX = ((t * 0.16) % 1.3 - 0.15) * w;
-        for (let i = 0; i < cols; i++) {
-            const x = (i + 1) * cw;
-            const alturaBase = 0.2 + ((i * 53) % 100) / 130;
-            const dist = Math.abs(x - barridoX);
-            const cerca = clamp01(1 - dist / (w * 0.12));
-            const altura = h * alturaBase * (0.85 + 0.15 * cerca);
-            ctx.globalAlpha = 0.14 + cerca * 0.3;
-            ctx.fillStyle = i % 3 === 0 ? PALETA.frio : (i % 3 === 1 ? PALETA.ambar : PALETA.morado);
-            ctx.fillRect(x - cw * 0.28, h - altura, cw * 0.56, altura);
+        const nPaneles = 4;
+        const margen = w * 0.07;
+        const gap = w * 0.028;
+        const panelW = (w - margen * 2 - gap * (nPaneles - 1)) / nPaneles;
+        const panelH = h * 0.36;
+        const panelY = h * 0.5 - panelH / 2;
+
+        const durPanel = 3.4; // segundos que cada panel esta "activo"
+        const cicloTotal = durPanel * nPaneles;
+        const tc = t % cicloTotal;
+        const activo = Math.min(nPaneles - 1, Math.floor(tc / durPanel));
+        const progActivo = clamp01((tc % durPanel) / durPanel);
+
+        for (let i = 0; i < nPaneles; i++) {
+            const x = margen + i * (panelW + gap);
+            const esActivo = i === activo;
+
+            // Marco del panel
+            ctx.beginPath();
+            ctx.roundRect ? ctx.roundRect(x, panelY, panelW, panelH, 10) : ctx.rect(x, panelY, panelW, panelH);
+            ctx.fillStyle = 'rgba(73,199,224,.05)';
+            ctx.fill();
+            ctx.strokeStyle = esActivo ? 'rgba(73,199,224,.35)' : 'rgba(255,255,255,.08)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Barras erraticas dentro del panel (datos "sucios" del perfil)
+            const nBarras = 7;
+            const barW = panelW / (nBarras + 1.4);
+            // Columna con la anomalia de este panel (fija por panel, no cambia).
+            const colAnomalia = (i * 3 + 2) % nBarras;
+            for (let b = 0; b < nBarras; b++) {
+                const semilla = (i * 13 + b * 29) % 97;
+                const alturaBase = 0.18 + (semilla / 97) * 0.68;
+                const bx = x + panelW * 0.08 + b * barW;
+                const bh = panelH * 0.72 * alturaBase;
+                const esAnomalia = b === colAnomalia;
+
+                let brillo = 0;
+                if (esActivo) {
+                    const barridoX = x + panelW * progActivo;
+                    if (esAnomalia) {
+                        const dist = Math.abs(bx - barridoX);
+                        const cerca = clamp01(1 - dist / (panelW * 0.1));
+                        const yaPaso = barridoX > bx ? 1 : 0;
+                        brillo = clamp01(cerca * 0.9 + yaPaso * 0.45);
+                    }
+                }
+                ctx.fillStyle = esAnomalia ? PALETA.ambar : PALETA.frio;
+                ctx.globalAlpha = esAnomalia ? (0.16 + brillo * 0.75) : 0.16;
+                if (esAnomalia && brillo > 0.05) {
+                    ctx.shadowColor = PALETA.ambar;
+                    ctx.shadowBlur = 10 * brillo;
+                }
+                ctx.fillRect(bx, panelY + panelH * 0.86 - bh, barW * 0.6, bh);
+                ctx.shadowBlur = 0;
+            }
+            ctx.globalAlpha = 1;
+
+            // Linea de barrido, solo en el panel activo
+            if (esActivo) {
+                const barridoX = x + panelW * progActivo;
+                ctx.globalAlpha = 0.55;
+                ctx.fillStyle = 'rgba(255,255,255,.85)';
+                ctx.fillRect(barridoX - 1, panelY, 2, panelH);
+                ctx.globalAlpha = 1;
+            }
         }
-        ctx.globalAlpha = 0.5;
-        ctx.fillStyle = 'rgba(255,255,255,.85)';
-        ctx.fillRect(barridoX - 1, 0, 2, h);
-        ctx.globalAlpha = 1;
     }
 
     // ------------------------------------------------------------------
@@ -731,7 +846,10 @@
     // ------------------------------------------------------------------
     function fondoE2Dimensiones(ctx, w, h, t) {
         ctx.clearRect(0, 0, w, h);
-        const cx = w * 0.8, cy = h * 0.52, r = Math.min(w, h) * 0.32;
+        // Centro y radio calibrados con la foto real (e2_dimensiones.jpg):
+        // centro en fraccion de imagen (0.7362,0.5003), radio exterior en
+        // fraccion del ancho de imagen = 0.2369.
+        const cx = w * 0.7362, cy = h / 2 + w * 0.55814 * (0.5003 - 0.5), r = w * 0.2369;
         const ejes = 6;
         for (let anillo = 1; anillo <= 3; anillo++) {
             ctx.beginPath();
@@ -748,7 +866,9 @@
         ctx.beginPath();
         for (let i = 0; i <= ejes; i++) {
             const ang = (i / ejes) * Math.PI * 2 - Math.PI / 2;
-            const rr = r * (0.86 + 0.08 * Math.sin(t * 1.1 + i));
+            // Amplitud aumentada (pedido de Mateo): antes 0.86 +/- 0.08,
+            // ahora los vertices recorren mucho mas camino de ida y vuelta.
+            const rr = r * (0.72 + 0.24 * Math.sin(t * 1.1 + i));
             const x = cx + Math.cos(ang) * rr, y = cy + Math.sin(ang) * rr * 0.92;
             i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
             ctx.fillStyle = PALETA.ok;
@@ -756,7 +876,7 @@
             ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill();
             ctx.beginPath();
             const ang2 = (i / ejes) * Math.PI * 2 - Math.PI / 2;
-            const rr2 = r * (0.86 + 0.08 * Math.sin(t * 1.1 + i));
+            const rr2 = r * (0.72 + 0.24 * Math.sin(t * 1.1 + i));
             ctx.moveTo(cx + Math.cos(ang2) * rr2, cy + Math.sin(ang2) * rr2 * 0.92);
         }
         ctx.closePath();
@@ -770,25 +890,45 @@
     }
 
     // ------------------------------------------------------------------
-    // 12) RECOLECCION DE DATOS · Problemas identificados — barrido tipo
-    // radar/sonar que hace "sonar" los hallazgos del perfilamiento; el
-    // tamano/brillo de cada blip sigue su severidad (alta = mas cerca).
+    // 12) RECOLECCION DE DATOS · Problemas identificados — version
+    // combinada (pedido de Mateo el 14-sep-2026: le gusto la constelacion
+    // de nodos con destellos por severidad, pero el radar/sonar de anillos
+    // + barrido giratorio de la version original NO debia desaparecer).
+    // Se mantienen los anillos concentricos y el barrido girando; ahora ese
+    // barrido es lo que "enciende" el destello de cada hallazgo al pasar
+    // (en vez del ciclo por turnos), y se conserva la constelacion de
+    // nodos de fondo y el halo tenue permanente por severidad.
     // ------------------------------------------------------------------
     function fondoE2Problemas(ctx, w, h, t) {
         ctx.clearRect(0, 0, w, h);
-        const cx = w * 0.8, cy = h * 0.55, rMax = Math.min(w, h) * 0.46;
+        // Centro y radio calibrados con la foto real (e2_problemas.jpg):
+        // el cruce del radar esta en fraccion de imagen (0.714,0.5) y el
+        // anillo exterior visible en fraccion del ancho de imagen ~0.19.
+        const cx = w * 0.714, cy = h / 2, rMax = w * 0.19;
+
+        // Nodos de fondo: dispersos, casi invisibles, solo dan textura de "constelacion".
+        const nFondo = 42;
+        for (let i = 0; i < nFondo; i++) {
+            const semilla = i * 12.9898;
+            const x = cx + (Math.sin(semilla) * 0.5) * rMax * 2.1;
+            const y = cy + (Math.cos(semilla * 1.6) * 0.5) * rMax * 1.9;
+            if (x < 0 || x > w || y < 0 || y > h) continue;
+            ctx.beginPath();
+            ctx.arc(x, y, 1.3, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255,255,255,.16)';
+            ctx.fill();
+        }
+
+        // Anillos del radar (restaurados).
         for (let a = 1; a <= 3; a++) {
             ctx.beginPath();
-            ctx.arc(cx, cy, rMax * a / 3, 0, Math.PI * 2);
+            ctx.arc(cx, cy, (rMax * a) / 3, 0, Math.PI * 2);
             ctx.strokeStyle = 'rgba(255,180,84,.14)';
             ctx.lineWidth = 1;
             ctx.stroke();
         }
-        const blips = [
-            { ang: 0.4, rf: 0.35, sev: 1 }, { ang: 1.6, rf: 0.55, sev: 0.4 },
-            { ang: 2.6, rf: 0.85, sev: 0.6 }, { ang: 3.5, rf: 0.62, sev: 0.6 },
-            { ang: 4.4, rf: 0.9, sev: 0.3 }, { ang: 5.4, rf: 0.42, sev: 0.6 },
-        ];
+
+        // Barrido giratorio (restaurado): un sector que gira continuamente.
         const anguloBarrido = (t * 0.6) % (Math.PI * 2);
         ctx.save();
         ctx.beginPath();
@@ -798,25 +938,50 @@
         ctx.fillStyle = 'rgba(255,180,84,.08)';
         ctx.fill();
         ctx.restore();
-        blips.forEach((b) => {
-            const x = cx + Math.cos(b.ang) * rMax * b.rf;
-            const y = cy + Math.sin(b.ang) * rMax * b.rf * 0.9;
-            let diff = Math.abs(((anguloBarrido - b.ang) + Math.PI * 3) % (Math.PI * 2) - Math.PI);
+
+        // Hallazgos reales del perfilamiento, cada uno con su severidad (0..1).
+        const hallazgos = [
+            { ang: 0.4, rf: 0.35, sev: 1 }, { ang: 1.6, rf: 0.55, sev: 0.4 },
+            { ang: 2.6, rf: 0.85, sev: 0.6 }, { ang: 3.5, rf: 0.62, sev: 0.6 },
+            { ang: 4.4, rf: 0.9, sev: 0.3 }, { ang: 5.4, rf: 0.42, sev: 0.6 },
+        ];
+
+        hallazgos.forEach((hz) => {
+            const x = cx + Math.cos(hz.ang) * rMax * hz.rf;
+            const y = cy + Math.sin(hz.ang) * rMax * hz.rf * 0.9;
+
+            // Halo tenue permanente (siempre visible, proporcional a la severidad).
+            const haloBase = 0.14 + hz.sev * 0.16;
+            const radioBase = 2.6 + hz.sev * 3;
+
+            // Destello: lo dispara el barrido del radar al pasar cerca de
+            // este hallazgo (igual que la version original), con
+            // intensidad segun su severidad.
+            const diff = Math.abs(((anguloBarrido - hz.ang) + Math.PI * 3) % (Math.PI * 2) - Math.PI);
             const recienTocado = clamp01(1 - diff / 0.5);
-            const radio = 2.5 + b.sev * 3 + recienTocado * 4;
+            const destello = recienTocado * (0.55 + hz.sev * 0.45);
+
+            const radio = radioBase + destello * 5;
             ctx.beginPath();
             ctx.arc(x, y, radio, 0, Math.PI * 2);
-            ctx.fillStyle = PALETA.calido;
-            ctx.globalAlpha = 0.35 + b.sev * 0.3 + recienTocado * 0.35;
+            ctx.fillStyle = PALETA.ambar;
+            ctx.globalAlpha = clamp01(haloBase + destello);
+            if (destello > 0.05) {
+                ctx.shadowColor = PALETA.ambar;
+                ctx.shadowBlur = 16 * destello;
+            }
             ctx.fill();
+            ctx.shadowBlur = 0;
         });
         ctx.globalAlpha = 1;
     }
 
     // ------------------------------------------------------------------
-    // 13) RECOLECCION DE DATOS · Tratamiento — linea de ensamblaje: los
-    // puntos entran dispersos por la izquierda y salen alineados en una
-    // grilla ordenada por la derecha, pasando por "estaciones" de limpieza.
+    // 13) RECOLECCION DE DATOS · Tratamiento — un archivo entra crudo y
+    // desordenado por la izquierda, atraviesa las "estaciones" del proceso
+    // de limpieza y sale transformado, ordenado (una grilla limpia) por la
+    // derecha. (Pedido de Mateo — reemplaza la linea de ensamblaje
+    // generica anterior.)
     // ------------------------------------------------------------------
     function fondoE2Tratamiento(ctx, w, h, t) {
         ctx.clearRect(0, 0, w, h);
@@ -827,20 +992,70 @@
             ctx.lineWidth = 1;
             ctx.beginPath(); ctx.moveTo(x, h * 0.1); ctx.lineTo(x, h * 0.9); ctx.stroke();
         }
-        const n = 24;
-        for (let i = 0; i < n; i++) {
-            const fase = ((t * 0.09) + i / n) % 1;
-            const x = fase * w;
-            const filaObjetivo = i % 6;
-            const yObjetivo = h * (0.2 + filaObjetivo * 0.11);
-            const yCaotico = h * (0.15 + ((i * 37) % 100) / 130);
-            const orden = clamp01(fase * 1.15);
-            const y = lerp(yCaotico, yObjetivo, orden);
+
+        const cicloDur = 6.5; // segundos que tarda un recorrido completo
+        const fase = (t % cicloDur) / cicloDur; // 0=entra por la izquierda, 1=sale por la derecha
+        const x = lerp(w * 0.1, w * 0.9, fase);
+        const cy = h * 0.5;
+        // El desorden baja a medida que avanza (llega ordenado un poco antes del borde).
+        const orden = clamp01(fase * 1.08);
+        // Aparece/desaparece suave en los extremos del recorrido, para que el
+        // reinicio del ciclo (salta de x=0.9w a x=0.1w) no se note como un corte.
+        const alphaBorde = clamp01(Math.min(fase / 0.06, (1 - fase) / 0.06));
+
+        // Rastro de particulas dejadas atras, cada una "congelada" en el
+        // nivel de orden/color que tenia el archivo al pasar por ese punto.
+        const nRastro = 10;
+        for (let k = nRastro; k >= 1; k--) {
+            const faseK = fase - k * 0.018;
+            if (faseK < 0) continue;
+            const xk = lerp(w * 0.1, w * 0.9, faseK);
+            const ordenK = clamp01(faseK * 1.08);
+            const jitterK = (1 - ordenK) * 10;
+            const yk = cy + Math.sin(k * 12.4 + faseK * 30) * jitterK;
             ctx.beginPath();
-            ctx.arc(x, y, 2.4, 0, Math.PI * 2);
-            ctx.fillStyle = orden > 0.7 ? PALETA.ok : PALETA.frio;
-            ctx.globalAlpha = 0.5;
+            ctx.arc(xk, yk, 1.8, 0, Math.PI * 2);
+            ctx.fillStyle = mezclarColor('#49c7e0', '#3ddc97', ordenK);
+            ctx.globalAlpha = (1 - k / nRastro) * 0.32 * alphaBorde;
             ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+
+        // El "archivo": un bloque cuyas esquinas empiezan irregulares
+        // (crudo/caotico) y se enderezan en un rectangulo limpio (grilla
+        // ordenada) a medida que "orden" avanza.
+        const bw = w * 0.075, bh = h * 0.15;
+        const jitter = (1 - orden) * 13;
+        const esquinasBase = [
+            { dx: -bw / 2, dy: -bh / 2 }, { dx: bw / 2, dy: -bh / 2 },
+            { dx: bw / 2, dy: bh / 2 }, { dx: -bw / 2, dy: bh / 2 },
+        ];
+        ctx.beginPath();
+        esquinasBase.forEach((e, i) => {
+            const off = jitter * Math.sin(i * 7.7 + t * 2.3);
+            const px = x + e.dx + off, py = cy + e.dy + off * 0.7;
+            i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+        });
+        ctx.closePath();
+        ctx.fillStyle = mezclarColor('#49c7e0', '#3ddc97', orden);
+        ctx.globalAlpha = 0.6 * alphaBorde;
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,.35)';
+        ctx.lineWidth = 1;
+        ctx.globalAlpha = 0.4 * alphaBorde;
+        ctx.stroke();
+
+        // Lineas internas de "grilla" que aparecen a medida que se ordena
+        // (una hoja/registro legible, no una mancha).
+        const nLineas = Math.round(lerp(0, 4, orden));
+        ctx.strokeStyle = 'rgba(255,255,255,.4)';
+        ctx.globalAlpha = 0.45 * alphaBorde * orden;
+        for (let li = 1; li <= nLineas; li++) {
+            const ly = cy - bh / 2 + (bh * li) / (nLineas + 1);
+            ctx.beginPath();
+            ctx.moveTo(x - bw / 2 + bw * 0.12, ly);
+            ctx.lineTo(x + bw / 2 - bw * 0.12, ly);
+            ctx.stroke();
         }
         ctx.globalAlpha = 1;
     }
@@ -858,11 +1073,16 @@
             const semilla = i * 29.7;
             const xa = (Math.sin(semilla) * 0.5 + 0.5) * mid * 0.82;
             const ya = (Math.cos(semilla * 1.7) * 0.5 + 0.5) * h;
-            const jitterA = Math.sin(t * 1.4 + i) * 4;
+            // Mas "alocados" (pedido de Mateo): dos ondas de distinta
+            // velocidad combinadas, en X y en Y, con mayor amplitud que
+            // antes (antes solo oscilaban +/-4px en X).
+            const jitterAx = (Math.sin(t * 1.7 + i) + 0.5 * Math.sin(t * 3.6 + i * 1.9)) * 10;
+            const jitterAy = (Math.cos(t * 2.1 + i * 0.7) + 0.5 * Math.sin(t * 4.2 + i * 2.3)) * 10;
+            const parpadeo = 0.28 + 0.3 * Math.abs(Math.sin(t * 2.4 + i * 1.3));
             ctx.beginPath();
-            ctx.arc(xa + jitterA, ya, 2.2, 0, Math.PI * 2);
+            ctx.arc(xa + jitterAx, ya + jitterAy, 2.2, 0, Math.PI * 2);
             ctx.fillStyle = PALETA.calido;
-            ctx.globalAlpha = 0.4;
+            ctx.globalAlpha = parpadeo;
             ctx.fill();
 
             const cols = 6, filas = 5;
@@ -884,61 +1104,197 @@
     // ------------------------------------------------------------------
     // 15) RECOLECCION DE DATOS · Graficas e indicadores — tablero de barras
     // horizontales animadas, eco directo de los graficos reales de la
-    // pagina (por fuente, por indicador atipico).
+    // pagina (por fuente, por indicador atipico). Mejora confirmada con
+    // Mateo el 14-sep-2026: se agrega una linea de tendencia que conecta
+    // el extremo de cada barra, con un pulso ambar en el valor atipico.
     // ------------------------------------------------------------------
     function fondoE2Graficas(ctx, w, h, t) {
         ctx.clearRect(0, 0, w, h);
-        const filas = 6;
-        const alturaFila = h / (filas + 1);
+        // Geometria calibrada con la foto real (e2_graficas.jpg): son 10
+        // barras horizontales, no 6. Su pista va de x=0.448*ancho a
+        // x=0.961*ancho, y la primera fila esta centrada en la fraccion de
+        // ALTO de imagen 0.0768, con filas separadas cada 0.09376 (misma
+        // fraccion de alto de imagen). K = 1536/2752 = 0.55814 convierte
+        // esas fracciones de alto de imagen a coordenadas del canvas.
+        const K = 0.55814;
+        const filas = 10;
+        const y0Frac = 0.0768;
+        const spacingFrac = 0.09376;
+        const xIni = w * 0.448;
+        const xFin = w * 0.961;
+        const anchoTotal = xFin - xIni;
+        const alturaFila = w * 0.024;
+        const indiceAtipico = 4; // fila que se resalta como "valor atipico"
+        const puntos = [];
+
         for (let i = 0; i < filas; i++) {
-            const y = (i + 0.7) * alturaFila;
+            const filaFrac = y0Frac + i * spacingFrac;
+            const y = h / 2 + w * K * (filaFrac - 0.5);
             const base = 0.25 + ((i * 41) % 100) / 160;
             const pulso = base + 0.12 * Math.sin(t * 0.8 + i * 1.3);
-            const ancho = w * 0.62 * clamp01(pulso);
+            const ancho = anchoTotal * clamp01(pulso);
             ctx.globalAlpha = 0.5;
             ctx.fillStyle = i % 2 === 0 ? PALETA.frio : PALETA.ambar;
-            ctx.fillRect(w * 0.3, y, ancho, alturaFila * 0.4);
-            ctx.beginPath();
-            ctx.arc(w * 0.3 + ancho, y + alturaFila * 0.2, 3, 0, Math.PI * 2);
-            ctx.fillStyle = '#fff';
-            ctx.globalAlpha = 0.7;
-            ctx.fill();
+            ctx.fillRect(xIni, y - alturaFila / 2, ancho, alturaFila);
+            puntos.push({ x: xIni + ancho, y });
         }
+
+        // Linea de tendencia: conecta el extremo de cada barra.
+        ctx.beginPath();
+        puntos.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
+        ctx.strokeStyle = 'rgba(255,255,255,.4)';
+        ctx.lineWidth = 1.4;
+        ctx.globalAlpha = 0.55;
+        ctx.stroke();
+
+        puntos.forEach((p, i) => {
+            const esAtipico = i === indiceAtipico;
+            ctx.beginPath();
+            const radio = esAtipico ? 4 + 2 * Math.abs(Math.sin(t * 2)) : 3;
+            ctx.arc(p.x, p.y, radio, 0, Math.PI * 2);
+            ctx.fillStyle = esAtipico ? PALETA.ambar : '#fff';
+            ctx.globalAlpha = esAtipico ? 0.9 : 0.7;
+            if (esAtipico) {
+                ctx.shadowColor = PALETA.ambar;
+                ctx.shadowBlur = 10;
+            }
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        });
         ctx.globalAlpha = 1;
     }
 
     // ------------------------------------------------------------------
-    // 16) RECOLECCION DE DATOS · Analisis de causas — un agente (lupa)
-    // revisa una carpeta y saca una hoja para inspeccionarla: la hoja sale,
-    // se examina y vuelve a guardarse, en bucle. Metafora directa de
-    // "investigar la causa detras de cada hallazgo".
+    // 16) RECOLECCION DE DATOS · Analisis de causas — version combinada
+    // (pedido de Mateo el 14-sep-2026: le gusto la silueta investigadora
+    // con el panel y el haz de luz, pero la carpeta que saca una hoja y la
+    // inspecciona con lupa NO debia quitarse — van las dos juntas). La
+    // silueta+panel quedan a la izquierda del grupo y la carpeta+lupa a la
+    // derecha, en menor escala, cada una con su propio ciclo.
     // ------------------------------------------------------------------
     function fondoE2Causas(ctx, w, h, t) {
         ctx.clearRect(0, 0, w, h);
-        const cx = w * 0.78, cyFolder = h * 0.66;
-        const fw = Math.min(w, h) * 0.36, fh = fw * 0.7;
+        const escala = Math.min(w, h);
+        const cx = w * 0.56, groundY = h * 0.88;
 
-        // Ciclo: 0-0.5 la hoja sale y se inspecciona, 0.5-1 vuelve a guardarse.
+        // Silueta: cuerpo (capsula) + cabeza (circulo), solo un tono mas
+        // claro que el fondo con un filo frio tenue para que se distinga.
+        const headR = escala * 0.045;
+        const bodyW = headR * 2.5, bodyH = headR * 4.6;
+        const bodyTopY = groundY - bodyH;
+        const headCy = bodyTopY - headR * 0.85;
+
+        ctx.beginPath();
+        if (ctx.roundRect) {
+            ctx.roundRect(cx - bodyW / 2, bodyTopY, bodyW, bodyH, bodyW * 0.4);
+        } else {
+            ctx.rect(cx - bodyW / 2, bodyTopY, bodyW, bodyH);
+        }
+        ctx.fillStyle = 'rgba(9,13,24,.94)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(73,199,224,.22)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(cx, headCy, headR, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(9,13,24,.94)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(73,199,224,.22)';
+        ctx.stroke();
+
+        // Panel flotante frente a la silueta, con una leve inclinacion.
+        const panelW = escala * 0.24, panelH = panelW * 0.68;
+        const panelCx = cx + bodyW * 1.55, panelCy = headCy + headR * 0.9;
+        const inclinacion = -0.09;
+
+        ctx.save();
+        ctx.translate(panelCx, panelCy);
+        ctx.rotate(inclinacion);
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(-panelW / 2, -panelH / 2, panelW, panelH, 8);
+        else ctx.rect(-panelW / 2, -panelH / 2, panelW, panelH);
+        ctx.fillStyle = 'rgba(20,27,42,.6)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(73,199,224,.3)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Filas tenues (datos/texto insinuado, sin texto real)
+        ctx.strokeStyle = 'rgba(255,255,255,.14)';
+        for (let i = 0; i < 4; i++) {
+            const ly = -panelH * 0.28 + i * panelH * 0.2;
+            ctx.beginPath();
+            ctx.moveTo(-panelW * 0.34, ly);
+            ctx.lineTo(panelW * (i % 2 === 0 ? 0.34 : 0.12), ly);
+            ctx.stroke();
+        }
+
+        // Linea de "escaneo" que sube y baja dentro del panel.
+        const scanY = Math.sin(t * 0.9) * panelH * 0.32;
+        ctx.beginPath();
+        ctx.moveTo(-panelW / 2 + 4, scanY);
+        ctx.lineTo(panelW / 2 - 4, scanY);
+        ctx.strokeStyle = PALETA.ambar;
+        ctx.globalAlpha = 0.75;
+        ctx.shadowColor = PALETA.ambar;
+        ctx.shadowBlur = 8;
+        ctx.lineWidth = 1.6;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1;
+        ctx.restore();
+
+        // Haz de luz ambar desde la "cabeza" de la silueta hasta el panel,
+        // pulsando como si lo estuviera examinando activamente.
+        const pulso = 0.28 + 0.14 * Math.sin(t * 1.6);
+        const origen = { x: cx + headR * 0.6, y: headCy };
+        // Las 4 esquinas del panel ya rotado, para que el haz "abrace" el panel real.
+        const cosr = Math.cos(inclinacion), sinr = Math.sin(inclinacion);
+        const esquina = (ex, ey) => ({
+            x: panelCx + ex * cosr - ey * sinr,
+            y: panelCy + ex * sinr + ey * cosr,
+        });
+        const p1 = esquina(-panelW / 2, -panelH / 2);
+        const p2 = esquina(-panelW / 2, panelH / 2);
+
+        const grad = ctx.createLinearGradient(origen.x, origen.y, panelCx, panelCy);
+        grad.addColorStop(0, 'rgba(255,180,84,' + (pulso * 0.55) + ')');
+        grad.addColorStop(1, 'rgba(255,180,84,0)');
+        ctx.beginPath();
+        ctx.moveTo(origen.x, origen.y);
+        ctx.lineTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.closePath();
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        // ---- Carpeta + lupa (restaurada, en menor escala, a la derecha) ----
+        // La animacion original: una hoja sale de la carpeta, una lupa la
+        // inspecciona, y vuelve a guardarse — en bucle. Convive con la
+        // silueta+panel de arriba sin pisarla (grupo mas chico, mas a la
+        // derecha del encuadre).
+        const cxF = w * 0.9, cyFolder = h * 0.62;
+        const fw = escala * 0.2, fh = fw * 0.7;
+
         const ciclo = (t * 0.22) % 1;
         const salida = ciclo < 0.5 ? easeInOutSine(ciclo / 0.5) : easeInOutSine(1 - (ciclo - 0.5) / 0.5);
 
-        // Parte trasera de la carpeta (con pestana superior)
         ctx.fillStyle = 'rgba(255,180,84,.18)';
         ctx.beginPath();
-        ctx.moveTo(cx - fw / 2, cyFolder - fh * 0.12);
-        ctx.lineTo(cx - fw / 2 + fw * 0.2, cyFolder - fh * 0.34);
-        ctx.lineTo(cx - fw / 2 + fw * 0.52, cyFolder - fh * 0.34);
-        ctx.lineTo(cx - fw / 2 + fw * 0.62, cyFolder - fh * 0.12);
-        ctx.lineTo(cx + fw / 2, cyFolder - fh * 0.12);
-        ctx.lineTo(cx + fw / 2, cyFolder + fh * 0.55);
-        ctx.lineTo(cx - fw / 2, cyFolder + fh * 0.55);
+        ctx.moveTo(cxF - fw / 2, cyFolder - fh * 0.12);
+        ctx.lineTo(cxF - fw / 2 + fw * 0.2, cyFolder - fh * 0.34);
+        ctx.lineTo(cxF - fw / 2 + fw * 0.52, cyFolder - fh * 0.34);
+        ctx.lineTo(cxF - fw / 2 + fw * 0.62, cyFolder - fh * 0.12);
+        ctx.lineTo(cxF + fw / 2, cyFolder - fh * 0.12);
+        ctx.lineTo(cxF + fw / 2, cyFolder + fh * 0.55);
+        ctx.lineTo(cxF - fw / 2, cyFolder + fh * 0.55);
         ctx.closePath();
         ctx.fill();
 
-        // Hoja que sale/entra (detras del frente de la carpeta)
         const hojaY = lerp(cyFolder + fh * 0.18, cyFolder - fh * 0.95, salida);
         ctx.save();
-        ctx.translate(cx - fw * 0.04, hojaY);
+        ctx.translate(cxF - fw * 0.04, hojaY);
         ctx.rotate(lerp(0, -0.07, salida));
         ctx.fillStyle = 'rgba(255,255,255,.94)';
         ctx.fillRect(-fw * 0.3, -fh * 0.4, fw * 0.6, fh * 0.56);
@@ -953,21 +1309,19 @@
         }
         ctx.restore();
 
-        // Frente de la carpeta (tapa la mitad inferior de la hoja cuando esta guardada)
         ctx.fillStyle = 'rgba(255,180,84,.34)';
         ctx.beginPath();
-        ctx.moveTo(cx - fw / 2, cyFolder + fh * 0.55);
-        ctx.lineTo(cx - fw / 2, cyFolder);
-        ctx.lineTo(cx + fw / 2, cyFolder);
-        ctx.lineTo(cx + fw / 2, cyFolder + fh * 0.55);
+        ctx.moveTo(cxF - fw / 2, cyFolder + fh * 0.55);
+        ctx.lineTo(cxF - fw / 2, cyFolder);
+        ctx.lineTo(cxF + fw / 2, cyFolder);
+        ctx.lineTo(cxF + fw / 2, cyFolder + fh * 0.55);
         ctx.closePath();
         ctx.fill();
 
-        // Lupa del "agente" que inspecciona la hoja cuando ya salio lo suficiente
         if (salida > 0.3) {
-            const a = clamp01((salida - 0.3) / 0.35);
-            const lx = cx + fw * 0.4, ly = hojaY - fh * 0.04;
-            ctx.globalAlpha = a * 0.9;
+            const aLupa = clamp01((salida - 0.3) / 0.35);
+            const lx = cxF + fw * 0.4, ly = hojaY - fh * 0.04;
+            ctx.globalAlpha = aLupa * 0.9;
             ctx.beginPath();
             ctx.arc(lx, ly, fw * 0.14, 0, Math.PI * 2);
             ctx.strokeStyle = PALETA.frio;
@@ -982,17 +1336,112 @@
     }
 
     // ------------------------------------------------------------------
-    // 17) RECOLECCION DE DATOS · Integracion y homologacion — una esfera
-    // central (el dataset unico) rodeada de fragmentos curvos (las fuentes
-    // heterogeneas) que cada cierto tiempo se separan bastante, se
-    // intercalan entre si (cada uno a su propio ritmo) y vuelven a cerrarse
-    // formando un anillo continuo alrededor de la esfera.
+    // 17) RECOLECCION DE DATOS · Integracion y homologacion — reescrita
+    // desde cero (pedido de Mateo, especificacion detallada + confirmacion
+    // del 14-sep-2026). Ciclo completo:
+    //   1) FRAGMENTACION: las capsulas (piezas iguales, forma de pildora)
+    //      salen de la esfera de reposo hacia su radio de trabajo.
+    //   2) PERMUTACION: a ese radio, las capsulas intercambian posicion
+    //      ENTRE ELLAS de forma aleatoria (nunca queda un slot vacio) —
+    //      esto no es que el conjunto entero gire, cada pieza salta de
+    //      slot en slot.
+    //   3) REINTEGRACION: todas a la vez vuelven hacia la esfera y se
+    //      funden en ella, que mientras tanto CRECE hasta un tamano grande
+    //      fijo (confirmado con Mateo: no crece sin techo cada ciclo).
+    //   4) SOSTENIDA: la esfera se queda un momento en su tamano grande.
+    //   5) ENCOGIMIENTO: vuelve a su tamano de reposo, y ahi se repite el
+    //      ciclo (vuelve a fragmentarse).
     // ------------------------------------------------------------------
     function fondoE2Integracion(ctx, w, h, t) {
         ctx.clearRect(0, 0, w, h);
         const cx = w * 0.76, cy = h * 0.54;
-        const rEsfera = Math.min(w, h) * 0.14;
+        const r0 = Math.min(w, h) * 0.13;      // radio de reposo
+        const rBig = r0 * 1.55;                // radio "grande" fijo (no acumulativo)
+        const distTrabajo = r0 * 1.55;         // separacion de las capsulas al fragmentarse
+        const nFrag = 6;
 
+        const durFrag = 1.1, durPermuta = 3.2, durReintegra = 1.1, durHold = 0.9, durEncoge = 1.0;
+        const nPasos = 4; // numero de intercambios de posicion durante la permutacion
+        const b1 = durFrag, b2 = b1 + durPermuta, b3 = b2 + durReintegra, b4 = b3 + durHold;
+        const cicloTotal = b4 + durEncoge;
+        const tc = t % cicloTotal;
+
+        const angDeSlot = (slot) => (slot / nFrag) * Math.PI * 2 - Math.PI / 2;
+        // Diferencia angular mas corta entre dos angulos (para no "dar la vuelta larga").
+        const difAngular = (a, b) => {
+            let d = (b - a) % (Math.PI * 2);
+            if (d > Math.PI) d -= Math.PI * 2;
+            if (d < -Math.PI) d += Math.PI * 2;
+            return d;
+        };
+
+        let rEsfera = r0;
+        let dist = 0;                 // distancia actual de las capsulas respecto al radio r0
+        let alphaCapsulas = 0;        // 0 = invisibles (fundidas en la esfera)
+        let angulos = new Array(nFrag).fill(0).map((_, i) => angDeSlot(i));
+
+        if (tc < b1) {
+            // 1) FRAGMENTACION: salen desde la esfera (identidad de slots) hacia distTrabajo.
+            const local = easeInOutSine(clamp01(tc / durFrag));
+            dist = lerp(0, distTrabajo, local);
+            alphaCapsulas = local;
+            rEsfera = r0;
+        } else if (tc < b2) {
+            // 2) PERMUTACION: nPasos intercambios sucesivos, cada uno una permutacion
+            // nueva (semilla = numero de paso) interpolada desde la anterior.
+            const local2 = clamp01((tc - b1) / durPermuta);
+            const pasoF = local2 * nPasos;
+            const paso = Math.min(nPasos - 1, Math.floor(pasoF));
+            const pasoLocal = easeInOutSine(clamp01(pasoF - paso));
+            const permAnterior = paso === 0 ? angulos.map((_, i) => i) : permutacionSemilla(paso - 1, nFrag);
+            const permActual = permutacionSemilla(paso, nFrag);
+            angulos = angulos.map((_, i) => {
+                const angA = angDeSlot(permAnterior[i]);
+                const angB = angDeSlot(permActual[i]);
+                return angA + difAngular(angA, angB) * pasoLocal;
+            });
+            dist = distTrabajo;
+            alphaCapsulas = 1;
+            rEsfera = r0;
+        } else if (tc < b3) {
+            // 3) REINTEGRACION: vuelven todas a la vez hacia la esfera, que crece.
+            const local3 = easeInOutSine(clamp01((tc - b2) / durReintegra));
+            const permFinal = permutacionSemilla(nPasos - 1, nFrag);
+            angulos = angulos.map((_, i) => angDeSlot(permFinal[i]));
+            dist = lerp(distTrabajo, 0, local3);
+            alphaCapsulas = clamp01(1 - local3 * 1.15); // se van fundiendo justo antes de llegar
+            rEsfera = lerp(r0, rBig, local3);
+        } else if (tc < b4) {
+            // 4) SOSTENIDA: esfera grande, capsulas fundidas (invisibles).
+            rEsfera = rBig;
+            dist = 0;
+            alphaCapsulas = 0;
+        } else {
+            // 5) ENCOGIMIENTO: vuelve a su tamano de reposo.
+            const local5 = easeInOutSine(clamp01((tc - b4) / durEncoge));
+            rEsfera = lerp(rBig, r0, local5);
+            dist = 0;
+            alphaCapsulas = 0;
+        }
+
+        // Capsulas (se dibujan DEBAJO de la esfera para que al fundirse
+        // parezca que "entran" en ella, no que la tapan por encima).
+        if (alphaCapsulas > 0.01) {
+            const radioTotal = r0 + dist;
+            const anchoAngular = ((Math.PI * 2) / nFrag) * 0.76;
+            const largo = 2 * radioTotal * Math.sin(anchoAngular / 2);
+            const ancho = r0 * 0.5;
+            for (let i = 0; i < nFrag; i++) {
+                const ang = angulos[i];
+                const px = cx + Math.cos(ang) * radioTotal;
+                const py = cy + Math.sin(ang) * radioTotal * 0.92;
+                const color = i % 2 === 0 ? PALETA.ambar : PALETA.morado;
+                dibujarPildora(ctx, px, py, largo, ancho, ang + Math.PI / 2, color, alphaCapsulas * 0.88);
+            }
+        }
+        ctx.globalAlpha = 1;
+
+        // Esfera central (el dataset unico ya homologado).
         const grad = ctx.createRadialGradient(
             cx - rEsfera * 0.35, cy - rEsfera * 0.35, rEsfera * 0.1, cx, cy, rEsfera);
         grad.addColorStop(0, 'rgba(255,255,255,.92)');
@@ -1002,28 +1451,6 @@
         ctx.arc(cx, cy, rEsfera, 0, Math.PI * 2);
         ctx.fillStyle = grad;
         ctx.fill();
-
-        const nFrag = 6;
-        const anilloRadio = rEsfera * 1.9;
-        const grosor = rEsfera * 0.4;
-        const gapAng = 0.16;
-        const segAng = (Math.PI * 2 / nFrag) - gapAng;
-
-        for (let i = 0; i < nFrag; i++) {
-            const faseSep = Math.sin(t * 0.5 + i * 1.3) * 0.5 + 0.5; // 0=cerrado junto a la esfera, 1=separado
-            const faseIntercala = Math.sin(t * 0.28 + i * 2.4) * 0.22; // reacomodo angular independiente
-            const radio = anilloRadio + faseSep * rEsfera * 1.6;
-            const angBase = (i / nFrag) * Math.PI * 2 + t * 0.05 + faseIntercala;
-
-            ctx.beginPath();
-            ctx.arc(cx, cy, radio, angBase - segAng / 2, angBase + segAng / 2);
-            ctx.strokeStyle = i % 2 === 0 ? PALETA.ambar : PALETA.morado;
-            ctx.globalAlpha = 0.32 + 0.38 * (1 - faseSep);
-            ctx.lineWidth = grosor;
-            ctx.lineCap = 'round';
-            ctx.stroke();
-        }
-        ctx.globalAlpha = 1;
     }
 
     // ------------------------------------------------------------------
@@ -1044,9 +1471,15 @@
             'Tratamiento justificado de atipicos',
         ];
         const n = items.length;
-        const cx = w * 0.7;
-        const focoY = h * 0.5;
-        const filaH = Math.min(h * 0.15, 44);
+        // Panel calibrado con la foto real (e2_plan.jpg): la tarjeta/panel
+        // difuminado esta centrado en fraccion de imagen (0.7375,0.5135)
+        // con medio-ancho 0.1825 (fraccion del ancho de imagen). El
+        // desplazamiento vertical del centro real (0.5135 vs 0.5) es minimo
+        // asi que se aproxima a h/2.
+        const cx = w * 0.7375;
+        const halfAncho = w * 0.1825;
+        const focoY = h / 2 + w * 0.0075;
+        const filaH = Math.min(h * 0.15, 40);
         const cicloTotal = filaH * n;
         const scrollY = (t * 0.5 * filaH) % cicloTotal;
 
@@ -1066,10 +1499,10 @@
             ctx.fillStyle = foco > 0.75 ? '#ffffff' : 'rgba(255,255,255,.72)';
             ctx.textAlign = 'left';
             ctx.textBaseline = 'middle';
-            ctx.fillText(items[k], cx - w * 0.14, y);
+            ctx.fillText(items[k], cx - halfAncho * 0.55, y);
             ctx.restore();
 
-            const cxCheck = cx - w * 0.22;
+            const cxCheck = cx - halfAncho * 0.85;
             ctx.beginPath();
             ctx.arc(cxCheck, y, 6, 0, Math.PI * 2);
             ctx.strokeStyle = PALETA.ok;
@@ -1091,8 +1524,8 @@
         ctx.strokeStyle = 'rgba(61,220,151,.2)';
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(cx - w * 0.28, focoY);
-        ctx.lineTo(cx + w * 0.02, focoY);
+        ctx.moveTo(cx - halfAncho * 0.95, focoY);
+        ctx.lineTo(cx + halfAncho * 0.85, focoY);
         ctx.stroke();
     }
 

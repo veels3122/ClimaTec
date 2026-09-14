@@ -98,6 +98,25 @@
 .fondo-foto-calidad       { background-image: url('../img/fondos/calidad.jpg'); }
 .fondo-foto-limitaciones  { background-image: url('../img/fondos/limitaciones.jpg'); }
 
+/* ==========================================================================
+   FOTOS REALES — Etapa 2 ("Recoleccion de Datos"). Mismo patron que las
+   de arriba: .fondo-foto (Ken Burns) + .fondo-foto-tinte, una clase
+   .fondo-foto-e2_<clave> por seccion que solo pone el background-image.
+   Mientras static/img/fondos/e2_<clave>.jpg no exista, no pinta nada y
+   se ve el degradado de respaldo — no rompe nada ir agregando estas
+   clases antes de que las 10 fotos esten listas.
+   ========================================================================== */
+.fondo-foto-e2_descripcion   { background-image: url('../img/fondos/e2_descripcion.jpg'); }
+.fondo-foto-e2_perfilamiento { background-image: url('../img/fondos/e2_perfilamiento.jpg'); }
+.fondo-foto-e2_dimensiones   { background-image: url('../img/fondos/e2_dimensiones.jpg'); }
+.fondo-foto-e2_problemas     { background-image: url('../img/fondos/e2_problemas.jpg'); }
+.fondo-foto-e2_tratamiento   { background-image: url('../img/fondos/e2_tratamiento.jpg'); }
+.fondo-foto-e2_comparacion   { background-image: url('../img/fondos/e2_comparacion.jpg'); }
+.fondo-foto-e2_graficas      { background-image: url('../img/fondos/e2_graficas.jpg'); }
+.fondo-foto-e2_causas        { background-image: url('../img/fondos/e2_causas.jpg'); }
+.fondo-foto-e2_integracion   { background-image: url('../img/fondos/e2_integracion.jpg'); }
+.fondo-foto-e2_plan          { background-image: url('../img/fondos/e2_plan.jpg'); }
+
 /* "Preguntas" usa DOS fotos reales (El Nino / La Nina) que se van
    cruzando (crossfade) segun el scroll de toda la pagina — ver fondos.js,
    funcion fondoPreguntas() / calcularProgresoScroll(). Ambas son
