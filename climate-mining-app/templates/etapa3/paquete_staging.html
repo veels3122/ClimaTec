@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block titulo %}Etapa 3 · Paquete SSIS y Staging · ClimaTec{% endblock %}
+{% block contenido %}
+
+<div class="page-hero acento-cold animate-fade-down">
+    <div class="fondo-foto-tinte" aria-hidden="true"></div>
+    <canvas class="fondo-seccion" aria-hidden="true"></canvas>
+    <p class="eyebrow"><span class="paso">Etapa 3 · 02</span> ETL en SSIS</p>
+    <h1>Paquete SSIS y Staging</h1>
+    <p class="lede">Estructura del paquete <span class="mono">.dtsx</span>: administradores de conexion,
+    area de staging y flujo de control que orquesta la carga.</p>
+</div>
+
+<h2>Administradores de conexion</h2>
+<div class="tabla-wrap">
+    <table>
+        <thead><tr><th>Conexion</th><th>Tipo</th><th>Origen / Destino</th></tr></thead>
+        <tbody>
+            <tr><td>CM_Origen_CSV</td><td>Flat File</td><td><span class="mono">clima_consolidado.csv</span> (UTF-8, separador coma)</td></tr>
+            <tr><td>CM_SQL_ClimaTec</td><td>OLE DB</td><td>SQL Server · base <span class="mono">ClimaTec_DW</span></td></tr>
+        </tbody>
+    </table>
+</div>
+
+<h2>Area de staging</h2>
+<p>Los datos crudos aterrizan primero en tablas de staging sin transformar, para desacoplar la
+extraccion de la transformacion y permitir reprocesos.</p>
+<div class="tabla-wrap">
+    <table>
+        <thead><tr><th>Tabla</th><th>Rol</th><th>Contenido</th></tr></thead>
+        <tbody>
+            <tr><td><span class="mono">stg_clima</span></td><td>Staging</td><td>Copia cruda del CSV consolidado</td></tr>
+            <tr><td><span class="mono">dw_clima_hechos</span></td><td>Destino</td><td>Datos limpios y validados (tabla de hechos)</td></tr>
+            <tr><td><span class="mono">err_clima</span></td><td>Errores</td><td>Filas rechazadas con su motivo</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<h2>Flujo de control (Control Flow)</h2>
+<div class="tabla-wrap">
+    <table>
+        <thead><tr><th>#</th><th>Tarea</th><th>Descripcion</th></tr></thead>
+        <tbody>
+            <tr><td>1</td><td>Execute SQL — TRUNCATE staging</td><td>Limpia <span class="mono">stg_clima</span> antes de cargar</td></tr>
+            <tr><td>2</td><td>Data Flow — Carga cruda</td><td>CSV → <span class="mono">stg_clima</span></td></tr>
+            <tr><td>3</td><td>Data Flow — Transformacion</td><td>Staging → destino con limpieza y validacion</td></tr>
+            <tr><td>4</td><td>Execute SQL — Indicadores</td><td>Calcula metricas de calidad de la carga</td></tr>
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

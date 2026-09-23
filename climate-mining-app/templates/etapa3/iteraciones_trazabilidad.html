@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block titulo %}Etapa 3 · Iteraciones y Trazabilidad · ClimaTec{% endblock %}
+{% block contenido %}
+
+<div class="page-hero acento-cold animate-fade-down">
+    <div class="fondo-foto-tinte" aria-hidden="true"></div>
+    <canvas class="fondo-seccion" aria-hidden="true"></canvas>
+    <p class="eyebrow"><span class="paso">Etapa 3 · 05</span> ETL en SSIS</p>
+    <h1>Iteraciones y Trazabilidad</h1>
+    <p class="lede">Registro de las ejecuciones del paquete y de los mecanismos que permiten seguir
+    cada fila desde el origen hasta el destino.</p>
+</div>
+
+<h2>Trazabilidad</h2>
+<div class="tabla-wrap">
+    <table>
+        <thead><tr><th>Mecanismo</th><th>Para que sirve</th></tr></thead>
+        <tbody>
+            <tr><td>Columnas de auditoria</td><td><code>fecha_carga</code>, <code>paquete</code>, <code>ejecucion_id</code> en cada fila</td></tr>
+            <tr><td>Row Count</td><td>Cuenta filas leidas, cargadas y rechazadas</td></tr>
+            <tr><td>SSIS Logging</td><td>Bitacora de eventos (OnError, OnTaskFailed) del paquete</td></tr>
+            <tr><td>Tabla de errores</td><td><span class="mono">err_clima</span> conserva las filas rechazadas y su motivo</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<h2>Iteraciones del ETL</h2>
+<p>El ETL se ejecuta de forma iterativa: cada corrida ajusta reglas y vuelve a procesar sin perder
+el historico de ejecuciones.</p>
+<div class="tabla-wrap">
+    <table>
+        <thead><tr><th>Iteracion</th><th>Ajuste principal</th><th>Resultado</th></tr></thead>
+        <tbody>
+            <tr><td>1</td><td>Carga cruda y tipado base</td><td>Staging cargado</td></tr>
+            <tr><td>2</td><td>Reglas de dominio y duplicados</td><td>Rechazos aislados en <span class="mono">err_clima</span></td></tr>
+            <tr><td>3</td><td>Homologacion y marcado de atipicos</td><td>Tabla de hechos lista para publicar</td></tr>
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block titulo %}Etapa 3 · Componentes de Transformacion · ClimaTec{% endblock %}
+{% block contenido %}
+
+<div class="page-hero acento-ok animate-fade-down">
+    <div class="fondo-foto-tinte" aria-hidden="true"></div>
+    <canvas class="fondo-seccion" aria-hidden="true"></canvas>
+    <p class="eyebrow"><span class="paso">Etapa 3 · 03</span> ETL en SSIS</p>
+    <h1>Componentes de Transformacion</h1>
+    <p class="lede">Transformaciones del Data Flow que convierten los datos de staging en la tabla
+    de hechos limpia, en el orden en que se aplican.</p>
+</div>
+
+<h2>Data Flow — transformaciones</h2>
+<div class="tabla-wrap">
+    <table>
+        <thead><tr><th>#</th><th>Componente</th><th>Uso en ClimaTec</th></tr></thead>
+        <tbody>
+            <tr><td>1</td><td>Source (OLE DB)</td><td>Lee <span class="mono">stg_clima</span></td></tr>
+            <tr><td>2</td><td>Data Conversion</td><td>Tipa <code>anio</code>, <code>mes</code>, <code>valor</code>, <code>fecha</code></td></tr>
+            <tr><td>3</td><td>Derived Column</td><td>TRIM/UPPER de texto; bandera <code>atipico</code>; <code>valor_z</code></td></tr>
+            <tr><td>4</td><td>Conditional Split</td><td>Separa validos de fuera de dominio</td></tr>
+            <tr><td>5</td><td>Sort / Aggregate</td><td>Elimina duplicados por clave logica</td></tr>
+            <tr><td>6</td><td>Lookup</td><td>Homologa nivel/indicador contra catalogos</td></tr>
+            <tr><td>7</td><td>Union All</td><td>Reune ramas depuradas antes del destino</td></tr>
+            <tr><td>8</td><td>Destination (OLE DB)</td><td>Inserta en <span class="mono">dw_clima_hechos</span></td></tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="nota" style="margin-top:1.4rem;">
+    El orden respeta las reglas del Punto 1: primero se tipa, luego se estandariza, se valida el
+    dominio, se eliminan duplicados y se homologan categorias antes de la carga final.
+</div>
+
+{% endblock %}

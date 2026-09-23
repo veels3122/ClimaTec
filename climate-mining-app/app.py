@@ -789,6 +789,57 @@ def e2_plan():
                            plan=plan_tratamiento(), rep=REPORTE_E2)
 
 
+# ===========================================================================
+# Etapa 3 - ETL en SSIS (8 apartados)
+#   1. Diagnostico y Reglas de Tratamiento
+#   2. Paquete SSIS y Staging
+#   3. Componentes de Transformacion
+#   4. Limpieza de Datos y Excepciones
+#   5. Iteraciones y Trazabilidad
+#   6. Evaluacion de Calidad e Indicadores
+#   7. Publicacion en App Flask
+#   8. Video Colaborativo
+# ===========================================================================
+@app.route("/etapa-3/diagnostico-reglas")
+def e3_diagnostico():
+    return render_template("etapa3/diagnostico_reglas.html", proyecto=PROYECTO)
+
+
+@app.route("/etapa-3/paquete-staging")
+def e3_paquete():
+    return render_template("etapa3/paquete_staging.html", proyecto=PROYECTO)
+
+
+@app.route("/etapa-3/componentes-transformacion")
+def e3_componentes():
+    return render_template("etapa3/componentes_transformacion.html", proyecto=PROYECTO)
+
+
+@app.route("/etapa-3/limpieza-excepciones")
+def e3_limpieza():
+    return render_template("etapa3/limpieza_excepciones.html", proyecto=PROYECTO)
+
+
+@app.route("/etapa-3/iteraciones-trazabilidad")
+def e3_iteraciones():
+    return render_template("etapa3/iteraciones_trazabilidad.html", proyecto=PROYECTO)
+
+
+@app.route("/etapa-3/calidad-indicadores")
+def e3_calidad():
+    return render_template("etapa3/calidad_indicadores.html", proyecto=PROYECTO)
+
+
+@app.route("/etapa-3/publicacion-flask")
+def e3_publicacion():
+    return render_template("etapa3/publicacion_flask.html", proyecto=PROYECTO)
+
+
+@app.route("/etapa-3/video-colaborativo")
+def e3_video():
+    return render_template("etapa3/video_colaborativo.html", proyecto=PROYECTO)
+
+
 # Compatibilidad con rutas antiguas (evita 404 en enlaces previos).
 @app.route("/problema")
 def problema():
