@@ -41,6 +41,18 @@
     ] %}
     {% set endpoints_etapa2 = secciones_etapa2 | map(attribute='endpoint') | list %}
 
+    {% set secciones_etapa3 = [
+        {'num': 1, 'titulo': 'Diagnostico y Reglas de Tratamiento', 'endpoint': 'e3_diagnostico'},
+        {'num': 2, 'titulo': 'Paquete SSIS y Staging', 'endpoint': 'e3_paquete'},
+        {'num': 3, 'titulo': 'Componentes de Transformacion', 'endpoint': 'e3_componentes'},
+        {'num': 4, 'titulo': 'Limpieza de Datos y Excepciones', 'endpoint': 'e3_limpieza'},
+        {'num': 5, 'titulo': 'Iteraciones y Trazabilidad', 'endpoint': 'e3_iteraciones'},
+        {'num': 6, 'titulo': 'Evaluacion de Calidad e Indicadores', 'endpoint': 'e3_calidad'},
+        {'num': 7, 'titulo': 'Publicacion en App Flask', 'endpoint': 'e3_publicacion'},
+        {'num': 8, 'titulo': 'Video Colaborativo', 'endpoint': 'e3_video'},
+    ] %}
+    {% set endpoints_etapa3 = secciones_etapa3 | map(attribute='endpoint') | list %}
+
     <header class="topbar">
         <div class="contenedor topbar-inner">
             <a class="marca" href="{{ url_for('index') }}">
@@ -68,6 +80,9 @@
                     Recoleccion de Datos <span class="caret">&#9662;</span>
                 </button>
                 {% endblock %}
+                <button type="button" class="nav-pill-link ruleta-disparador{{ ' activo' if request.endpoint in endpoints_etapa3 }}" data-etapa="etl" aria-haspopup="dialog" aria-expanded="false">
+                    ETL (SSIS) <span class="caret">&#9662;</span>
+                </button>
                 <a href="{{ url_for('dataset_etapa1') }}" class="nav-pill-link{{ ' activo' if request.endpoint == 'dataset_etapa1' }}">Dataset</a>
                 <a href="{{ url_for('fuentes_datos') }}" class="nav-pill-link{{ ' activo' if request.endpoint == 'fuentes_datos' }}">Fuentes</a>
             </nav>
@@ -97,6 +112,9 @@
                 </button>
                 <button type="button" class="ruleta-disparador" data-etapa="recoleccion" aria-haspopup="dialog" aria-expanded="false">
                     Recoleccion de Datos <span class="caret">&#9662;</span>
+                </button>
+                <button type="button" class="ruleta-disparador" data-etapa="etl" aria-haspopup="dialog" aria-expanded="false">
+                    ETL (SSIS) <span class="caret">&#9662;</span>
                 </button>
                 <a href="{{ url_for('dataset_etapa1') }}">Dataset</a>
                 <a href="{{ url_for('fuentes_datos') }}">Fuentes</a>
@@ -137,10 +155,14 @@
         {% for s in secciones_etapa2 %}{"num": {{ s.num }}, "titulo": {{ s.titulo|tojson }}, "href": {{ url_for(s.endpoint)|tojson }}, "activo": {{ (request.endpoint == s.endpoint)|tojson }}}{{ ',' if not loop.last }}
         {% endfor %}
     ]}</script>
+    <script type="application/json" id="ruleta-secciones-etl-data">{"titulo": "ETL (SSIS)", "secciones": [
+        {% for s in secciones_etapa3 %}{"num": {{ s.num }}, "titulo": {{ s.titulo|tojson }}, "href": {{ url_for(s.endpoint)|tojson }}, "activo": {{ (request.endpoint == s.endpoint)|tojson }}}{{ ',' if not loop.last }}
+        {% endfor %}
+    ]}</script>
     <script type="application/json" id="ruleta-etapas-data">[
         {"num": 1, "titulo": "Definicion", "disponible": true, "clave": "definicion"},
         {"num": 2, "titulo": "Recoleccion de Datos", "disponible": true, "clave": "recoleccion"},
-        {"num": 3, "titulo": "Analisis", "disponible": false},
+        {"num": 3, "titulo": "ETL (SSIS)", "disponible": true, "clave": "etl"},
         {"num": 4, "titulo": "Verificacion", "disponible": false},
         {"num": 5, "titulo": "Publicacion", "disponible": false}
     ]</script>

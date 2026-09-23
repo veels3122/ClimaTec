@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block titulo %}Etapa 3 · Limpieza de Datos y Excepciones · ClimaTec{% endblock %}
+{% block contenido %}
+
+<div class="page-hero acento-warm animate-fade-down">
+    <div class="fondo-foto-tinte" aria-hidden="true"></div>
+    <canvas class="fondo-seccion" aria-hidden="true"></canvas>
+    <p class="eyebrow"><span class="paso">Etapa 3 · 04</span> ETL en SSIS</p>
+    <h1>Limpieza de Datos y Excepciones</h1>
+    <p class="lede">Reglas de limpieza aplicadas en el flujo y manejo de las filas que no cumplen,
+    redirigidas a una tabla de errores para su revision.</p>
+</div>
+
+<h2>Limpieza aplicada</h2>
+<div class="tabla-wrap">
+    <table>
+        <thead><tr><th>Regla</th><th>Accion</th></tr></thead>
+        <tbody>
+            <tr><td>Tipos</td><td><code>mes</code>/<code>anio</code> a entero, <code>valor</code> a decimal, <code>fecha</code> a fecha</td></tr>
+            <tr><td>Texto</td><td>TRIM en entidad/indicador/unidad; <code>iso_code</code> en mayusculas</td></tr>
+            <tr><td>Duplicados</td><td>Se descartan exactos y por clave logica</td></tr>
+            <tr><td>Dominio</td><td><code>anio</code> en 2020-2026; sin negativos donde no aplica</td></tr>
+            <tr><td>Atipicos</td><td>Se marcan (bandera <code>atipico</code>), no se eliminan</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<h2>Manejo de excepciones</h2>
+<p>Cada componente que puede fallar tiene su <strong>error output</strong> configurado en
+<em>Redirect Row</em>: la fila no detiene el paquete, se envia a <span class="mono">err_clima</span>
+con la columna y el motivo del rechazo.</p>
+<div class="tabla-wrap">
+    <table>
+        <thead><tr><th>Origen del error</th><th>Motivo</th><th>Destino</th></tr></thead>
+        <tbody>
+            <tr><td>Data Conversion</td><td>Valor no convertible (texto en numerico)</td><td><span class="mono">err_clima</span></td></tr>
+            <tr><td>Conditional Split</td><td>Fuera de dominio (anio o negativo)</td><td><span class="mono">err_clima</span></td></tr>
+            <tr><td>Lookup</td><td>Categoria sin homologacion</td><td><span class="mono">err_clima</span></td></tr>
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
