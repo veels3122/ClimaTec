@@ -7,34 +7,50 @@
     <canvas class="fondo-seccion" aria-hidden="true"></canvas>
     <p class="eyebrow"><span class="paso">Etapa 3 · 01</span> ETL en SSIS</p>
     <h1>Diagnostico y Reglas de Tratamiento</h1>
-    <p class="lede">Se retoman los hallazgos del perfilamiento (Etapa 2) y se formalizan como
-    reglas de tratamiento ejecutables dentro del paquete ETL de SSIS, cada una asociada al
-    componente que la aplica.</p>
+    <p class="lede">Se revisa el diagnostico de calidad de la Etapa 2 y, para cada problema, se define
+    el <strong>campo afectado</strong>, la <strong>accion</strong> a realizar y su
+    <strong>justificacion</strong>. Estas reglas son la especificacion del paquete ETL en SSIS.</p>
 </div>
 
-<h2>Diagnostico de entrada</h2>
-<p>El insumo del ETL es el dataset consolidado <span class="mono">clima_consolidado.csv</span>
-(tabla de hechos, formato largo). Los puntos a controlar detectados en la Etapa 2 son la base
-del diseno del flujo.</p>
+{% if info and info.rep %}
+<h2>Diagnostico de la Etapa 2 (resumen)</h2>
+<div class="grid grid-3 animate-fade-up" style="margin:1.2rem 0; animation-delay:120ms;">
+    <div class="panel stat cold"><div class="valor">{{ info.rep.comp_efec_desp }}%</div><div class="etiqueta">completitud efectiva (excluye nulos por diseno)</div></div>
+    <div class="panel stat warm"><div class="valor">{{ info.rep.n_atipicos }}</div><div class="etiqueta">observaciones atipicas ({{ info.rep.pct_atipicos }}%)</div></div>
+    <div class="panel stat"><div class="valor">{{ info.rep.dup_exactos + info.rep.dup_clave }}</div><div class="etiqueta">duplicados · {{ info.rep.invalidos }} fuera de dominio</div></div>
+</div>
+{% endif %}
 
 <h2>Reglas de tratamiento</h2>
+<p>Cada regla enlaza un hallazgo del diagnostico con el campo que corrige, la accion concreta del ETL
+y el motivo por el que se aplica.</p>
 <div class="tabla-wrap">
     <table>
-        <thead><tr><th>Situacion detectada</th><th>Regla de tratamiento</th><th>Componente SSIS</th></tr></thead>
+        <thead>
+            <tr>
+                <th>Problema</th>
+                <th>Campo afectado</th>
+                <th>Accion a realizar</th>
+                <th>Justificacion</th>
+            </tr>
+        </thead>
         <tbody>
-            <tr><td><code>mes</code> como decimal</td><td>Convertir a entero; nulo permitido en series anuales</td><td>Data Conversion / Derived Column</td></tr>
-            <tr><td>Tipos mixtos en <code>anio</code>, <code>valor</code></td><td>Forzar entero / decimal; descartar no numericos</td><td>Data Conversion (error output)</td></tr>
-            <tr><td>Texto con espacios / mayusculas ISO</td><td>TRIM y UPPER en <code>iso_code</code>, TRIM en textos</td><td>Derived Column</td></tr>
-            <tr><td>Duplicados por clave logica</td><td>Eliminar duplicados exactos y por clave</td><td>Sort (remove duplicates) / Aggregate</td></tr>
-            <tr><td>Valores fuera de dominio</td><td>anio en 2020-2026; no negativos donde no aplica</td><td>Conditional Split</td></tr>
-            <tr><td>Observaciones atipicas</td><td>Marcar (no eliminar) por regla IQR</td><td>Derived Column / Script</td></tr>
+            {% for r in info.reglas %}
+            <tr>
+                <td><strong>{{ r.problema }}</strong>{% if r.hallazgo %}<br><span class="mono" style="font-size:.78rem;color:var(--cold);">{{ r.hallazgo }}</span>{% endif %}</td>
+                <td class="mono">{{ r.campo }}</td>
+                <td>{{ r.accion }}</td>
+                <td style="color:var(--ink-soft);">{{ r.justificacion }}</td>
+            </tr>
+            {% endfor %}
         </tbody>
     </table>
 </div>
 
 <div class="nota" style="margin-top:1.4rem;">
-    Estas reglas son la especificacion funcional del paquete SSIS; los apartados siguientes las
-    materializan en el flujo de control, el flujo de datos y el manejo de excepciones.
+    Estas reglas se materializan en los apartados siguientes: el <strong>Paquete SSIS y Staging</strong>
+    (Punto 2) las orquesta, los <strong>Componentes de Transformacion</strong> (Punto 3) las aplican y la
+    <strong>Limpieza de Datos y Excepciones</strong> (Punto 4) gestiona las filas que no cumplen.
 </div>
 
 {% endblock %}

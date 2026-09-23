@@ -800,9 +800,84 @@ def e2_plan():
 #   7. Publicacion en App Flask
 #   8. Video Colaborativo
 # ===========================================================================
+def reglas_tratamiento():
+    """Punto 1: revisa el diagnostico de calidad de la Etapa 2 (REPORTE_E2) y
+    define, por cada problema, el campo afectado, la accion y su justificacion.
+    Las cantidades se toman del diagnostico real para que la regla coincida con
+    lo que contiene el dataset."""
+    r = REPORTE_E2 or {}
+    dups = r.get("dup_exactos", 0) + r.get("dup_clave", 0)
+    invalidos = r.get("invalidos", 0)
+    atip = r.get("n_atipicos", 0)
+    pct_atip = r.get("pct_atipicos", 0)
+    n_ind = r.get("n_indicadores_e2") or (DF["indicador"].nunique() if DF is not None else 24)
+    n_uni = int(DF["unidad"].nunique()) if DF is not None else 11
+
+    reglas = [
+        {
+            "problema": "La columna 'mes' se cargaba como decimal",
+            "campo": "mes",
+            "hallazgo": "tipo decimal (float)",
+            "accion": "Convertir a entero (admite vacio); se conserva vacio en las series anuales.",
+            "justificacion": "Conviven series anuales y mensuales; un tipo decimal impide agrupar y comparar correctamente por mes.",
+        },
+        {
+            "problema": "Tipos de dato no homogeneos",
+            "campo": "anio, valor, fecha",
+            "hallazgo": "requiere tipado explicito",
+            "accion": "Forzar anio a entero, valor a decimal y fecha a tipo fecha; las filas no convertibles se redirigen a err_clima.",
+            "justificacion": "Garantiza operaciones numericas y de fecha correctas y evita cargar registros corruptos.",
+        },
+        {
+            "problema": "Nulos estructurales",
+            "campo": "iso_code, mes",
+            "hallazgo": "vacios por diseno",
+            "accion": "Documentar como vacios estructurales; NO imputar.",
+            "justificacion": "Los agregados globales/regionales no tienen ISO y las series anuales no tienen mes; imputarlos introduciria datos falsos.",
+        },
+        {
+            "problema": "Texto sin estandarizar",
+            "campo": "entidad, indicador, unidad, iso_code",
+            "hallazgo": "posibles espacios / mayusculas",
+            "accion": "Aplicar TRIM y normalizar; iso_code en mayusculas.",
+            "justificacion": "Evita categorias duplicadas por espacios o mayusculas y asegura homologaciones y uniones correctas.",
+        },
+        {
+            "problema": "Duplicados",
+            "campo": "clave logica (fuente + nivel_geografico + entidad + anio + mes + indicador)",
+            "hallazgo": "{} detectados".format(dups),
+            "accion": "Eliminar duplicados exactos y por clave logica.",
+            "justificacion": "Mantiene la unicidad de cada observacion; regla preventiva ante recargas del paquete.",
+        },
+        {
+            "problema": "Valores fuera de dominio",
+            "campo": "anio, valor",
+            "hallazgo": "{} invalidos".format(invalidos),
+            "accion": "Validar anio en 2020-2026 y descartar negativos donde no aplica; se conservan negativos legitimos (anomalias y variaciones).",
+            "justificacion": "Asegura la validez del dominio sin eliminar valores que si pueden ser negativos.",
+        },
+        {
+            "problema": "Observaciones atipicas",
+            "campo": "valor (nueva columna atipico)",
+            "hallazgo": "{} marcadas ({}%)".format(atip, pct_atip),
+            "accion": "Marcar por regla 1.5*IQR dentro de cada indicador; NO eliminar.",
+            "justificacion": "Muchos extremos son reales (agregado mundial, grandes emisores); eliminarlos sesgaria el analisis.",
+        },
+        {
+            "problema": "Escalas y unidades heterogeneas",
+            "campo": "indicador, unidad, valor (nueva columna valor_z)",
+            "hallazgo": "{} indicadores / {} unidades".format(n_ind, n_uni),
+            "accion": "Homologar una unidad por indicador y agregar z-score por indicador.",
+            "justificacion": "Los indicadores de distinta escala no son comparables directamente; el z-score los normaliza para el analisis.",
+        },
+    ]
+    return {"rep": r, "reglas": reglas}
+
+
 @app.route("/etapa-3/diagnostico-reglas")
 def e3_diagnostico():
-    return render_template("etapa3/diagnostico_reglas.html", proyecto=PROYECTO)
+    return render_template("etapa3/diagnostico_reglas.html", proyecto=PROYECTO,
+                           info=reglas_tratamiento())
 
 
 @app.route("/etapa-3/paquete-staging")
