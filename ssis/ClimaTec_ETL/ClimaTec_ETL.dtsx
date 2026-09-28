@@ -7,12 +7,12 @@
   DTS:CreatorName="MATEOMELG\matis"
   DTS:DTSID="{64AD4142-AD30-478A-848F-9D27CDB07278}"
   DTS:ExecutableType="Microsoft.Package"
-  DTS:LastModifiedProductVersion="16.0.5685.0"
+  DTS:LastModifiedProductVersion="17.0.1008.3"
   DTS:LocaleID="1033"
   DTS:ObjectName="Package"
   DTS:PackageType="5"
-  DTS:VersionBuild="16"
-  DTS:VersionGUID="{9730456B-E90B-4B4B-B339-77365DB0541A}">
+  DTS:VersionBuild="32"
+  DTS:VersionGUID="{55E6125F-4848-4EA9-88AD-E2CD52FDE521}">
   <DTS:Property
     DTS:Name="PackageFormatVersion">8</DTS:Property>
   <DTS:ConnectionManagers>
@@ -27,7 +27,7 @@
         <DTS:ConnectionManager
           DTS:ConnectRetryCount="1"
           DTS:ConnectRetryInterval="5"
-          DTS:ConnectionString="Data Source=MATEOMELG;Initial Catalog=ClimaTec_ETL;Provider=MSOLEDBSQL.1;Integrated Security=SSPI;Application Name=SSIS-Package-{94706D49-B748-476A-8F5B-6250143D9EAA}MATEOMELG.ClimaTec_ETL;Auto Translate=False;" />
+          DTS:ConnectionString="Data Source=localhost;Initial Catalog=ClimaTec_ETL;Provider=MSOLEDBSQL19.1;Integrated Security=SSPI;Application Name=SSIS-Package-{94706D49-B748-476A-8F5B-6250143D9EAA}ClimaTec;Trust Server Certificate=True;" />
       </DTS:ObjectData>
     </DTS:ConnectionManager>
     <DTS:ConnectionManager
@@ -46,7 +46,7 @@
           DTS:RowDelimiter=""
           DTS:TextQualifier="_x003C_none_x003E_"
           DTS:CodePage="65001"
-          DTS:ConnectionString="C:\Users\matis\OneDrive - UNIVERSIDAD DE CUNDINAMARCA\Documentos\GitHub\Clima_Tec2\climate-mining-app\data\raw\clima_consolidado.csv">
+          DTS:ConnectionString="C:\Users\andre\source\repos\ClimaTec\climate-mining-app\data\raw\clima_consolidado.csv">
           <DTS:FlatFileColumns>
             <DTS:FlatFileColumn
               DTS:ColumnType="Delimited"
@@ -158,6 +158,18 @@
               DTS:CreationName="" />
           </DTS:FlatFileColumns>
         </DTS:ConnectionManager>
+      </DTS:ObjectData>
+    </DTS:ConnectionManager>
+    <DTS:ConnectionManager
+      DTS:refId="Package.ConnectionManagers[localhost.ClimaTec_ETL]"
+      DTS:CreationName="OLEDB"
+      DTS:DTSID="{7825BCF5-166B-4CCA-84A3-9082A170900F}"
+      DTS:ObjectName="localhost.ClimaTec_ETL">
+      <DTS:ObjectData>
+        <DTS:ConnectionManager
+          DTS:ConnectRetryCount="1"
+          DTS:ConnectRetryInterval="5"
+          DTS:ConnectionString="Data Source=localhost;User ID=;Initial Catalog=ClimaTec_ETL;Provider=MSOLEDBSQL19.1;Persist Security Info=False;Integrated Security=SSPI;Initial File Name=;Server SPN=;Authentication=;Access Token=;Host Name In Certificate=;Server Certificate=;Application Name=SSIS-Package-{7825BCF5-166B-4CCA-84A3-9082A170900F}localhost.ClimaTec_ETL;Auto Translate=False;" />
       </DTS:ObjectData>
     </DTS:ConnectionManager>
   </DTS:ConnectionManagers>
@@ -357,283 +369,6 @@
                   refId="Package\2 Extraccion a staging\Contar recibidas.Outputs[Row Count Output 1]"
                   name="Row Count Output 1"
                   synchronousInputId="Package\2 Extraccion a staging\Contar recibidas.Inputs[Row Count Input 1]">
-                  <externalMetadataColumns />
-                </output>
-              </outputs>
-            </component>
-            <component
-              refId="Package\2 Extraccion a staging\Guardar en stg_clima"
-              componentClassID="Microsoft.OLEDBDestination"
-              contactInfo="OLE DB Destination;Microsoft Corporation; Microsoft SQL Server; (C) Microsoft Corporation; All Rights Reserved; http://www.microsoft.com/sql/support;4"
-              description="OLE DB Destination"
-              name="Guardar en stg_clima"
-              usesDispositions="true"
-              version="4">
-              <properties>
-                <property
-                  dataType="System.Int32"
-                  description="The number of seconds before a command times out.  A value of 0 indicates an infinite time-out."
-                  name="CommandTimeout">0</property>
-                <property
-                  dataType="System.String"
-                  description="Specifies the name of the database object used to open a rowset."
-                  name="OpenRowset">[dbo].[stg_clima]</property>
-                <property
-                  dataType="System.String"
-                  description="Specifies the variable that contains the name of the database object used to open a rowset."
-                  name="OpenRowsetVariable"></property>
-                <property
-                  dataType="System.String"
-                  description="The SQL command to be executed."
-                  name="SqlCommand"
-                  UITypeEditor="Microsoft.DataTransformationServices.Controls.ModalMultilineStringEditor"></property>
-                <property
-                  dataType="System.Int32"
-                  description="Specifies the column code page to use when code page information is unavailable from the data source."
-                  name="DefaultCodePage">1252</property>
-                <property
-                  dataType="System.Boolean"
-                  description="Forces the use of the DefaultCodePage property value when describing character data."
-                  name="AlwaysUseDefaultCodePage">false</property>
-                <property
-                  dataType="System.Int32"
-                  description="Specifies the mode used to access the database."
-                  name="AccessMode"
-                  typeConverter="AccessMode">3</property>
-                <property
-                  dataType="System.Boolean"
-                  description="Indicates whether the values supplied for identity columns will be copied to the destination. If false, values for identity columns will be auto-generated at the destination. Applies only if fast load is turned on."
-                  name="FastLoadKeepIdentity">false</property>
-                <property
-                  dataType="System.Boolean"
-                  description="Indicates whether the columns containing null will have null inserted in the destination. If false, columns containing null will have their default values inserted at the destination. Applies only if fast load is turned on."
-                  name="FastLoadKeepNulls">false</property>
-                <property
-                  dataType="System.String"
-                  description="Specifies options to be used with fast load.  Applies only if fast load is turned on."
-                  name="FastLoadOptions">TABLOCK,CHECK_CONSTRAINTS</property>
-                <property
-                  dataType="System.Int32"
-                  description="Specifies when commits are issued during data insertion.  A value of 0 specifies that one commit will be issued at the end of data insertion.  Applies only if fast load is turned on."
-                  name="FastLoadMaxInsertCommitSize">2147483647</property>
-              </properties>
-              <connections>
-                <connection
-                  refId="Package\2 Extraccion a staging\Guardar en stg_clima.Connections[OleDbConnection]"
-                  connectionManagerID="Package.ConnectionManagers[ClimaTec]"
-                  connectionManagerRefId="Package.ConnectionManagers[ClimaTec]"
-                  description="The OLE DB runtime connection used to access the database."
-                  name="OleDbConnection" />
-              </connections>
-              <inputs>
-                <input
-                  refId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input]"
-                  errorOrTruncationOperation="Insert"
-                  errorRowDisposition="FailComponent"
-                  hasSideEffects="true"
-                  name="OLE DB Destination Input">
-                  <inputColumns>
-                    <inputColumn
-                      refId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].Columns[fuente]"
-                      cachedDataType="wstr"
-                      cachedLength="255"
-                      cachedName="fuente"
-                      externalMetadataColumnId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].ExternalColumns[fuente]"
-                      lineageId="Package\2 Extraccion a staging\Leer CSV.Outputs[Flat File Source Output].Columns[fuente]" />
-                    <inputColumn
-                      refId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].Columns[fuente_tipo]"
-                      cachedDataType="wstr"
-                      cachedLength="255"
-                      cachedName="fuente_tipo"
-                      externalMetadataColumnId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].ExternalColumns[fuente_tipo]"
-                      lineageId="Package\2 Extraccion a staging\Leer CSV.Outputs[Flat File Source Output].Columns[fuente_tipo]" />
-                    <inputColumn
-                      refId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].Columns[nivel_geografico]"
-                      cachedDataType="wstr"
-                      cachedLength="255"
-                      cachedName="nivel_geografico"
-                      externalMetadataColumnId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].ExternalColumns[nivel_geografico]"
-                      lineageId="Package\2 Extraccion a staging\Leer CSV.Outputs[Flat File Source Output].Columns[nivel_geografico]" />
-                    <inputColumn
-                      refId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].Columns[entidad]"
-                      cachedDataType="wstr"
-                      cachedLength="255"
-                      cachedName="entidad"
-                      externalMetadataColumnId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].ExternalColumns[entidad]"
-                      lineageId="Package\2 Extraccion a staging\Leer CSV.Outputs[Flat File Source Output].Columns[entidad]" />
-                    <inputColumn
-                      refId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].Columns[iso_code]"
-                      cachedDataType="wstr"
-                      cachedLength="255"
-                      cachedName="iso_code"
-                      externalMetadataColumnId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].ExternalColumns[iso_code]"
-                      lineageId="Package\2 Extraccion a staging\Leer CSV.Outputs[Flat File Source Output].Columns[iso_code]" />
-                    <inputColumn
-                      refId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].Columns[anio]"
-                      cachedDataType="wstr"
-                      cachedLength="255"
-                      cachedName="anio"
-                      externalMetadataColumnId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].ExternalColumns[anio]"
-                      lineageId="Package\2 Extraccion a staging\Leer CSV.Outputs[Flat File Source Output].Columns[anio]" />
-                    <inputColumn
-                      refId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].Columns[mes]"
-                      cachedDataType="wstr"
-                      cachedLength="255"
-                      cachedName="mes"
-                      externalMetadataColumnId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].ExternalColumns[mes]"
-                      lineageId="Package\2 Extraccion a staging\Leer CSV.Outputs[Flat File Source Output].Columns[mes]" />
-                    <inputColumn
-                      refId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].Columns[periodicidad]"
-                      cachedDataType="wstr"
-                      cachedLength="255"
-                      cachedName="periodicidad"
-                      externalMetadataColumnId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].ExternalColumns[periodicidad]"
-                      lineageId="Package\2 Extraccion a staging\Leer CSV.Outputs[Flat File Source Output].Columns[periodicidad]" />
-                    <inputColumn
-                      refId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].Columns[indicador]"
-                      cachedDataType="wstr"
-                      cachedLength="255"
-                      cachedName="indicador"
-                      externalMetadataColumnId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].ExternalColumns[indicador]"
-                      lineageId="Package\2 Extraccion a staging\Leer CSV.Outputs[Flat File Source Output].Columns[indicador]" />
-                    <inputColumn
-                      refId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].Columns[valor]"
-                      cachedDataType="wstr"
-                      cachedLength="255"
-                      cachedName="valor"
-                      externalMetadataColumnId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].ExternalColumns[valor]"
-                      lineageId="Package\2 Extraccion a staging\Leer CSV.Outputs[Flat File Source Output].Columns[valor]" />
-                    <inputColumn
-                      refId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].Columns[unidad]"
-                      cachedDataType="wstr"
-                      cachedLength="255"
-                      cachedName="unidad"
-                      externalMetadataColumnId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].ExternalColumns[unidad]"
-                      lineageId="Package\2 Extraccion a staging\Leer CSV.Outputs[Flat File Source Output].Columns[unidad]" />
-                    <inputColumn
-                      refId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].Columns[fecha]"
-                      cachedDataType="wstr"
-                      cachedLength="255"
-                      cachedName="fecha"
-                      externalMetadataColumnId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].ExternalColumns[fecha]"
-                      lineageId="Package\2 Extraccion a staging\Leer CSV.Outputs[Flat File Source Output].Columns[fecha]" />
-                    <inputColumn
-                      refId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].Columns[IdLote]"
-                      cachedDataType="i4"
-                      cachedName="IdLote"
-                      externalMetadataColumnId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].ExternalColumns[IdLote]"
-                      lineageId="Package\2 Extraccion a staging\Agregar lote y archivo.Outputs[Derived Column Output].Columns[IdLote]" />
-                    <inputColumn
-                      refId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].Columns[archivo_origen]"
-                      cachedDataType="wstr"
-                      cachedLength="260"
-                      cachedName="archivo_origen"
-                      externalMetadataColumnId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].ExternalColumns[archivo_origen]"
-                      lineageId="Package\2 Extraccion a staging\Agregar lote y archivo.Outputs[Derived Column Output].Columns[archivo_origen]" />
-                  </inputColumns>
-                  <externalMetadataColumns
-                    isUsed="True">
-                    <externalMetadataColumn
-                      refId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].ExternalColumns[IdStg]"
-                      dataType="i8"
-                      name="IdStg" />
-                    <externalMetadataColumn
-                      refId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].ExternalColumns[IdLote]"
-                      dataType="i4"
-                      name="IdLote" />
-                    <externalMetadataColumn
-                      refId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].ExternalColumns[archivo_origen]"
-                      dataType="wstr"
-                      length="260"
-                      name="archivo_origen" />
-                    <externalMetadataColumn
-                      refId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].ExternalColumns[fecha_carga]"
-                      dataType="dbTimeStamp2"
-                      name="fecha_carga" />
-                    <externalMetadataColumn
-                      refId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].ExternalColumns[fuente]"
-                      dataType="wstr"
-                      length="255"
-                      name="fuente" />
-                    <externalMetadataColumn
-                      refId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].ExternalColumns[fuente_tipo]"
-                      dataType="wstr"
-                      length="100"
-                      name="fuente_tipo" />
-                    <externalMetadataColumn
-                      refId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].ExternalColumns[nivel_geografico]"
-                      dataType="wstr"
-                      length="100"
-                      name="nivel_geografico" />
-                    <externalMetadataColumn
-                      refId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].ExternalColumns[entidad]"
-                      dataType="wstr"
-                      length="255"
-                      name="entidad" />
-                    <externalMetadataColumn
-                      refId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].ExternalColumns[iso_code]"
-                      dataType="wstr"
-                      length="50"
-                      name="iso_code" />
-                    <externalMetadataColumn
-                      refId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].ExternalColumns[anio]"
-                      dataType="wstr"
-                      length="50"
-                      name="anio" />
-                    <externalMetadataColumn
-                      refId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].ExternalColumns[mes]"
-                      dataType="wstr"
-                      length="50"
-                      name="mes" />
-                    <externalMetadataColumn
-                      refId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].ExternalColumns[periodicidad]"
-                      dataType="wstr"
-                      length="100"
-                      name="periodicidad" />
-                    <externalMetadataColumn
-                      refId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].ExternalColumns[indicador]"
-                      dataType="wstr"
-                      length="255"
-                      name="indicador" />
-                    <externalMetadataColumn
-                      refId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].ExternalColumns[valor]"
-                      dataType="wstr"
-                      length="100"
-                      name="valor" />
-                    <externalMetadataColumn
-                      refId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].ExternalColumns[unidad]"
-                      dataType="wstr"
-                      length="100"
-                      name="unidad" />
-                    <externalMetadataColumn
-                      refId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input].ExternalColumns[fecha]"
-                      dataType="wstr"
-                      length="50"
-                      name="fecha" />
-                  </externalMetadataColumns>
-                </input>
-              </inputs>
-              <outputs>
-                <output
-                  refId="Package\2 Extraccion a staging\Guardar en stg_clima.Outputs[OLE DB Destination Error Output]"
-                  exclusionGroup="1"
-                  isErrorOut="true"
-                  name="OLE DB Destination Error Output"
-                  synchronousInputId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input]">
-                  <outputColumns>
-                    <outputColumn
-                      refId="Package\2 Extraccion a staging\Guardar en stg_clima.Outputs[OLE DB Destination Error Output].Columns[ErrorCode]"
-                      dataType="i4"
-                      lineageId="Package\2 Extraccion a staging\Guardar en stg_clima.Outputs[OLE DB Destination Error Output].Columns[ErrorCode]"
-                      name="ErrorCode"
-                      specialFlags="1" />
-                    <outputColumn
-                      refId="Package\2 Extraccion a staging\Guardar en stg_clima.Outputs[OLE DB Destination Error Output].Columns[ErrorColumn]"
-                      dataType="i4"
-                      lineageId="Package\2 Extraccion a staging\Guardar en stg_clima.Outputs[OLE DB Destination Error Output].Columns[ErrorColumn]"
-                      name="ErrorColumn"
-                      specialFlags="2" />
-                  </outputColumns>
                   <externalMetadataColumns />
                 </output>
               </outputs>
@@ -1015,6 +750,283 @@
                 </output>
               </outputs>
             </component>
+            <component
+              refId="Package\2 Extraccion a staging\stg_clima"
+              componentClassID="Microsoft.OLEDBDestination"
+              contactInfo="Destino de OLE DB;Microsoft Corporation; Microsoft SQL Server; (C) Microsoft Corporation; Todos los derechos reservados; http://www.microsoft.com/sql/support;4"
+              description="Destino de OLE DB"
+              name="stg_clima"
+              usesDispositions="true"
+              version="4">
+              <properties>
+                <property
+                  dataType="System.Int32"
+                  description="Número de segundos antes de que se agote el tiempo de espera de un comando. Un valor de 0 indica un tiempo de espera infinito."
+                  name="CommandTimeout">0</property>
+                <property
+                  dataType="System.String"
+                  description="Especifica el nombre del objeto de base de datos usado para abrir un conjunto de filas."
+                  name="OpenRowset">[dbo].[stg_clima]</property>
+                <property
+                  dataType="System.String"
+                  description="Especifica la variable que contiene el nombre del objeto de base de datos usado para abrir un conjunto de filas."
+                  name="OpenRowsetVariable"></property>
+                <property
+                  dataType="System.String"
+                  description="Comando SQL para ejecutar."
+                  name="SqlCommand"
+                  UITypeEditor="Microsoft.DataTransformationServices.Controls.ModalMultilineStringEditor, Microsoft.DataTransformationServices.Controls, Version=17.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91"></property>
+                <property
+                  dataType="System.Int32"
+                  description="Especifica la página de códigos de columna para utilizar cuando la información de página de códigos no está disponible en el origen de datos."
+                  name="DefaultCodePage">1252</property>
+                <property
+                  dataType="System.Boolean"
+                  description="Fuerza el uso del valor de la propiedad DefaultCodePage al describir datos de caracteres."
+                  name="AlwaysUseDefaultCodePage">false</property>
+                <property
+                  dataType="System.Int32"
+                  description="Especifica el modo utilizado para obtener acceso a la base de datos."
+                  name="AccessMode"
+                  typeConverter="AccessMode">3</property>
+                <property
+                  dataType="System.Boolean"
+                  description="Indica si los valores proporcionados para columnas de identidad se van a copiar al destino. Si es False, los valores de las columnas de identidad se generan automáticamente en el destino. Solo se aplica si está activada la carga rápida."
+                  name="FastLoadKeepIdentity">false</property>
+                <property
+                  dataType="System.Boolean"
+                  description="Indica si las columnas que contienen NULL tendrán NULL insertado en el destino. Si es False, las columnas que contienen NULL tendrán sus valores predeterminados insertados en el destino. Solo se aplica si está activada la carga rápida."
+                  name="FastLoadKeepNulls">false</property>
+                <property
+                  dataType="System.String"
+                  description="Especifica opciones para usar con la carga rápida. Solo se aplica si está activada la carga rápida."
+                  name="FastLoadOptions">TABLOCK,CHECK_CONSTRAINTS</property>
+                <property
+                  dataType="System.Int32"
+                  description="Especifica cuándo se emiten confirmaciones durante la inserción de datos. El valor 0 especifica que se emitirá una confirmación al final de la inserción de datos. Solo se aplica si está activada la carga rápida."
+                  name="FastLoadMaxInsertCommitSize">2147483647</property>
+              </properties>
+              <connections>
+                <connection
+                  refId="Package\2 Extraccion a staging\stg_clima.Connections[OleDbConnection]"
+                  connectionManagerID="Package.ConnectionManagers[ClimaTec]"
+                  connectionManagerRefId="Package.ConnectionManagers[ClimaTec]"
+                  description="La conexión de tiempo de ejecución OLE DB usada para obtener acceso a la base de datos."
+                  name="OleDbConnection" />
+              </connections>
+              <inputs>
+                <input
+                  refId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB]"
+                  errorOrTruncationOperation="Insertar"
+                  errorRowDisposition="FailComponent"
+                  hasSideEffects="true"
+                  name="Entrada de destino de OLE DB">
+                  <inputColumns>
+                    <inputColumn
+                      refId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].Columns[fuente]"
+                      cachedDataType="wstr"
+                      cachedLength="255"
+                      cachedName="fuente"
+                      externalMetadataColumnId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].ExternalColumns[fuente]"
+                      lineageId="Package\2 Extraccion a staging\Leer CSV.Outputs[Flat File Source Output].Columns[fuente]" />
+                    <inputColumn
+                      refId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].Columns[fuente_tipo]"
+                      cachedDataType="wstr"
+                      cachedLength="255"
+                      cachedName="fuente_tipo"
+                      externalMetadataColumnId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].ExternalColumns[fuente_tipo]"
+                      lineageId="Package\2 Extraccion a staging\Leer CSV.Outputs[Flat File Source Output].Columns[fuente_tipo]" />
+                    <inputColumn
+                      refId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].Columns[nivel_geografico]"
+                      cachedDataType="wstr"
+                      cachedLength="255"
+                      cachedName="nivel_geografico"
+                      externalMetadataColumnId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].ExternalColumns[nivel_geografico]"
+                      lineageId="Package\2 Extraccion a staging\Leer CSV.Outputs[Flat File Source Output].Columns[nivel_geografico]" />
+                    <inputColumn
+                      refId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].Columns[entidad]"
+                      cachedDataType="wstr"
+                      cachedLength="255"
+                      cachedName="entidad"
+                      externalMetadataColumnId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].ExternalColumns[entidad]"
+                      lineageId="Package\2 Extraccion a staging\Leer CSV.Outputs[Flat File Source Output].Columns[entidad]" />
+                    <inputColumn
+                      refId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].Columns[iso_code]"
+                      cachedDataType="wstr"
+                      cachedLength="255"
+                      cachedName="iso_code"
+                      externalMetadataColumnId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].ExternalColumns[iso_code]"
+                      lineageId="Package\2 Extraccion a staging\Leer CSV.Outputs[Flat File Source Output].Columns[iso_code]" />
+                    <inputColumn
+                      refId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].Columns[anio]"
+                      cachedDataType="wstr"
+                      cachedLength="255"
+                      cachedName="anio"
+                      externalMetadataColumnId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].ExternalColumns[anio]"
+                      lineageId="Package\2 Extraccion a staging\Leer CSV.Outputs[Flat File Source Output].Columns[anio]" />
+                    <inputColumn
+                      refId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].Columns[mes]"
+                      cachedDataType="wstr"
+                      cachedLength="255"
+                      cachedName="mes"
+                      externalMetadataColumnId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].ExternalColumns[mes]"
+                      lineageId="Package\2 Extraccion a staging\Leer CSV.Outputs[Flat File Source Output].Columns[mes]" />
+                    <inputColumn
+                      refId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].Columns[periodicidad]"
+                      cachedDataType="wstr"
+                      cachedLength="255"
+                      cachedName="periodicidad"
+                      externalMetadataColumnId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].ExternalColumns[periodicidad]"
+                      lineageId="Package\2 Extraccion a staging\Leer CSV.Outputs[Flat File Source Output].Columns[periodicidad]" />
+                    <inputColumn
+                      refId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].Columns[indicador]"
+                      cachedDataType="wstr"
+                      cachedLength="255"
+                      cachedName="indicador"
+                      externalMetadataColumnId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].ExternalColumns[indicador]"
+                      lineageId="Package\2 Extraccion a staging\Leer CSV.Outputs[Flat File Source Output].Columns[indicador]" />
+                    <inputColumn
+                      refId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].Columns[valor]"
+                      cachedDataType="wstr"
+                      cachedLength="255"
+                      cachedName="valor"
+                      externalMetadataColumnId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].ExternalColumns[valor]"
+                      lineageId="Package\2 Extraccion a staging\Leer CSV.Outputs[Flat File Source Output].Columns[valor]" />
+                    <inputColumn
+                      refId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].Columns[unidad]"
+                      cachedDataType="wstr"
+                      cachedLength="255"
+                      cachedName="unidad"
+                      externalMetadataColumnId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].ExternalColumns[unidad]"
+                      lineageId="Package\2 Extraccion a staging\Leer CSV.Outputs[Flat File Source Output].Columns[unidad]" />
+                    <inputColumn
+                      refId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].Columns[fecha]"
+                      cachedDataType="wstr"
+                      cachedLength="255"
+                      cachedName="fecha"
+                      externalMetadataColumnId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].ExternalColumns[fecha]"
+                      lineageId="Package\2 Extraccion a staging\Leer CSV.Outputs[Flat File Source Output].Columns[fecha]" />
+                    <inputColumn
+                      refId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].Columns[IdLote]"
+                      cachedDataType="i4"
+                      cachedName="IdLote"
+                      externalMetadataColumnId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].ExternalColumns[IdLote]"
+                      lineageId="Package\2 Extraccion a staging\Agregar lote y archivo.Outputs[Derived Column Output].Columns[IdLote]" />
+                    <inputColumn
+                      refId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].Columns[archivo_origen]"
+                      cachedDataType="wstr"
+                      cachedLength="260"
+                      cachedName="archivo_origen"
+                      externalMetadataColumnId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].ExternalColumns[archivo_origen]"
+                      lineageId="Package\2 Extraccion a staging\Agregar lote y archivo.Outputs[Derived Column Output].Columns[archivo_origen]" />
+                  </inputColumns>
+                  <externalMetadataColumns
+                    isUsed="True">
+                    <externalMetadataColumn
+                      refId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].ExternalColumns[IdStg]"
+                      dataType="i8"
+                      name="IdStg" />
+                    <externalMetadataColumn
+                      refId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].ExternalColumns[IdLote]"
+                      dataType="i4"
+                      name="IdLote" />
+                    <externalMetadataColumn
+                      refId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].ExternalColumns[archivo_origen]"
+                      dataType="wstr"
+                      length="260"
+                      name="archivo_origen" />
+                    <externalMetadataColumn
+                      refId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].ExternalColumns[fecha_carga]"
+                      dataType="dbTimeStamp2"
+                      name="fecha_carga" />
+                    <externalMetadataColumn
+                      refId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].ExternalColumns[fuente]"
+                      dataType="wstr"
+                      length="255"
+                      name="fuente" />
+                    <externalMetadataColumn
+                      refId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].ExternalColumns[fuente_tipo]"
+                      dataType="wstr"
+                      length="100"
+                      name="fuente_tipo" />
+                    <externalMetadataColumn
+                      refId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].ExternalColumns[nivel_geografico]"
+                      dataType="wstr"
+                      length="100"
+                      name="nivel_geografico" />
+                    <externalMetadataColumn
+                      refId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].ExternalColumns[entidad]"
+                      dataType="wstr"
+                      length="255"
+                      name="entidad" />
+                    <externalMetadataColumn
+                      refId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].ExternalColumns[iso_code]"
+                      dataType="wstr"
+                      length="50"
+                      name="iso_code" />
+                    <externalMetadataColumn
+                      refId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].ExternalColumns[anio]"
+                      dataType="wstr"
+                      length="50"
+                      name="anio" />
+                    <externalMetadataColumn
+                      refId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].ExternalColumns[mes]"
+                      dataType="wstr"
+                      length="50"
+                      name="mes" />
+                    <externalMetadataColumn
+                      refId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].ExternalColumns[periodicidad]"
+                      dataType="wstr"
+                      length="100"
+                      name="periodicidad" />
+                    <externalMetadataColumn
+                      refId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].ExternalColumns[indicador]"
+                      dataType="wstr"
+                      length="255"
+                      name="indicador" />
+                    <externalMetadataColumn
+                      refId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].ExternalColumns[valor]"
+                      dataType="wstr"
+                      length="100"
+                      name="valor" />
+                    <externalMetadataColumn
+                      refId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].ExternalColumns[unidad]"
+                      dataType="wstr"
+                      length="100"
+                      name="unidad" />
+                    <externalMetadataColumn
+                      refId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB].ExternalColumns[fecha]"
+                      dataType="wstr"
+                      length="50"
+                      name="fecha" />
+                  </externalMetadataColumns>
+                </input>
+              </inputs>
+              <outputs>
+                <output
+                  refId="Package\2 Extraccion a staging\stg_clima.Outputs[Salida de error de destino de OLE DB]"
+                  exclusionGroup="1"
+                  isErrorOut="true"
+                  name="Salida de error de destino de OLE DB"
+                  synchronousInputId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB]">
+                  <outputColumns>
+                    <outputColumn
+                      refId="Package\2 Extraccion a staging\stg_clima.Outputs[Salida de error de destino de OLE DB].Columns[ErrorCode]"
+                      dataType="i4"
+                      lineageId="Package\2 Extraccion a staging\stg_clima.Outputs[Salida de error de destino de OLE DB].Columns[ErrorCode]"
+                      name="ErrorCode"
+                      specialFlags="1" />
+                    <outputColumn
+                      refId="Package\2 Extraccion a staging\stg_clima.Outputs[Salida de error de destino de OLE DB].Columns[ErrorColumn]"
+                      dataType="i4"
+                      lineageId="Package\2 Extraccion a staging\stg_clima.Outputs[Salida de error de destino de OLE DB].Columns[ErrorColumn]"
+                      name="ErrorColumn"
+                      specialFlags="2" />
+                  </outputColumns>
+                  <externalMetadataColumns />
+                </output>
+              </outputs>
+            </component>
           </components>
           <paths>
             <path
@@ -1029,7 +1041,7 @@
               startId="Package\2 Extraccion a staging\Leer CSV.Outputs[Flat File Source Output]" />
             <path
               refId="Package\2 Extraccion a staging.Paths[Row Count Output 1]"
-              endId="Package\2 Extraccion a staging\Guardar en stg_clima.Inputs[OLE DB Destination Input]"
+              endId="Package\2 Extraccion a staging\stg_clima.Inputs[Entrada de destino de OLE DB]"
               name="Row Count Output 1"
               startId="Package\2 Extraccion a staging\Contar recibidas.Outputs[Row Count Output 1]" />
           </paths>
@@ -1048,7 +1060,1080 @@
       <DTS:Variables />
       <DTS:ObjectData>
         <pipeline
-          version="1" />
+          version="1">
+          <components>
+            <component
+              refId="Package\3 Limpieza\Columna derivada"
+              componentClassID="Microsoft.DerivedColumn"
+              contactInfo="Columna derivada;Microsoft Corporation; Microsoft SQL Server; (C) Microsoft Corporation; Todos los derechos reservados; http://www.microsoft.com/sql/support;0"
+              description="Crea nuevos valores de columna aplicando expresiones a las columnas de entrada de la transformación. Crea nuevas columnas o sobrescribe las columnas existentes. Por ejemplo, se concatenan los valores de las columnas 'nombre' y 'apellidos' para crear una columna 'nombre completo'."
+              name="Columna derivada"
+              usesDispositions="true">
+              <inputs>
+                <input
+                  refId="Package\3 Limpieza\Columna derivada.Inputs[Entrada de columna derivada]"
+                  description="Entrada en la transformación Columna derivada"
+                  name="Entrada de columna derivada">
+                  <inputColumns>
+                    <inputColumn
+                      refId="Package\3 Limpieza\Columna derivada.Inputs[Entrada de columna derivada].Columns[fuente]"
+                      cachedDataType="wstr"
+                      cachedLength="255"
+                      cachedName="fuente"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[fuente]" />
+                    <inputColumn
+                      refId="Package\3 Limpieza\Columna derivada.Inputs[Entrada de columna derivada].Columns[entidad]"
+                      cachedDataType="wstr"
+                      cachedLength="255"
+                      cachedName="entidad"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[entidad]" />
+                    <inputColumn
+                      refId="Package\3 Limpieza\Columna derivada.Inputs[Entrada de columna derivada].Columns[indicador]"
+                      cachedDataType="wstr"
+                      cachedLength="255"
+                      cachedName="indicador"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[indicador]" />
+                    <inputColumn
+                      refId="Package\3 Limpieza\Columna derivada.Inputs[Entrada de columna derivada].Columns[valor]"
+                      cachedDataType="wstr"
+                      cachedLength="100"
+                      cachedName="valor"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[valor]" />
+                    <inputColumn
+                      refId="Package\3 Limpieza\Columna derivada.Inputs[Entrada de columna derivada].Columns[iso_code]"
+                      cachedDataType="wstr"
+                      cachedLength="50"
+                      cachedName="iso_code"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[iso_code]" />
+                  </inputColumns>
+                  <externalMetadataColumns />
+                </input>
+              </inputs>
+              <outputs>
+                <output
+                  refId="Package\3 Limpieza\Columna derivada.Outputs[Salida de columna derivada]"
+                  description="Salida predeterminada de la transformación Columna derivada"
+                  exclusionGroup="1"
+                  name="Salida de columna derivada"
+                  synchronousInputId="Package\3 Limpieza\Columna derivada.Inputs[Entrada de columna derivada]">
+                  <outputColumns>
+                    <outputColumn
+                      refId="Package\3 Limpieza\Columna derivada.Outputs[Salida de columna derivada].Columns[fuente_clean]"
+                      dataType="wstr"
+                      errorOrTruncationOperation="Cálculo"
+                      errorRowDisposition="FailComponent"
+                      length="255"
+                      lineageId="Package\3 Limpieza\Columna derivada.Outputs[Salida de columna derivada].Columns[fuente_clean]"
+                      name="fuente_clean"
+                      truncationRowDisposition="FailComponent">
+                      <properties>
+                        <property
+                          containsID="true"
+                          dataType="System.String"
+                          description="Expresión de columna derivada"
+                          name="Expression">[TRIM]([UPPER](#{Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[fuente]}))</property>
+                        <property
+                          containsID="true"
+                          dataType="System.String"
+                          description="Expresión descriptiva de columna derivada"
+                          expressionType="Notify"
+                          name="FriendlyExpression">TRIM(UPPER(fuente))</property>
+                      </properties>
+                    </outputColumn>
+                    <outputColumn
+                      refId="Package\3 Limpieza\Columna derivada.Outputs[Salida de columna derivada].Columns[entidad_clean]"
+                      dataType="wstr"
+                      errorOrTruncationOperation="Cálculo"
+                      errorRowDisposition="FailComponent"
+                      length="255"
+                      lineageId="Package\3 Limpieza\Columna derivada.Outputs[Salida de columna derivada].Columns[entidad_clean]"
+                      name="entidad_clean"
+                      truncationRowDisposition="FailComponent">
+                      <properties>
+                        <property
+                          containsID="true"
+                          dataType="System.String"
+                          description="Expresión de columna derivada"
+                          name="Expression">[TRIM]([UPPER](#{Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[entidad]}))</property>
+                        <property
+                          containsID="true"
+                          dataType="System.String"
+                          description="Expresión descriptiva de columna derivada"
+                          expressionType="Notify"
+                          name="FriendlyExpression">TRIM(UPPER(entidad))</property>
+                      </properties>
+                    </outputColumn>
+                    <outputColumn
+                      refId="Package\3 Limpieza\Columna derivada.Outputs[Salida de columna derivada].Columns[indicador_clean]"
+                      dataType="wstr"
+                      errorOrTruncationOperation="Cálculo"
+                      errorRowDisposition="FailComponent"
+                      length="255"
+                      lineageId="Package\3 Limpieza\Columna derivada.Outputs[Salida de columna derivada].Columns[indicador_clean]"
+                      name="indicador_clean"
+                      truncationRowDisposition="FailComponent">
+                      <properties>
+                        <property
+                          containsID="true"
+                          dataType="System.String"
+                          description="Expresión de columna derivada"
+                          name="Expression">[TRIM]([UPPER](#{Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[indicador]}))</property>
+                        <property
+                          containsID="true"
+                          dataType="System.String"
+                          description="Expresión descriptiva de columna derivada"
+                          expressionType="Notify"
+                          name="FriendlyExpression">TRIM(UPPER(indicador))</property>
+                      </properties>
+                    </outputColumn>
+                    <outputColumn
+                      refId="Package\3 Limpieza\Columna derivada.Outputs[Salida de columna derivada].Columns[valor_clean]"
+                      dataType="wstr"
+                      errorOrTruncationOperation="Cálculo"
+                      errorRowDisposition="FailComponent"
+                      length="100"
+                      lineageId="Package\3 Limpieza\Columna derivada.Outputs[Salida de columna derivada].Columns[valor_clean]"
+                      name="valor_clean"
+                      truncationRowDisposition="FailComponent">
+                      <properties>
+                        <property
+                          containsID="true"
+                          dataType="System.String"
+                          description="Expresión de columna derivada"
+                          name="Expression">[ISNULL](#{Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[valor]}) ? "0" : #{Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[valor]}</property>
+                        <property
+                          containsID="true"
+                          dataType="System.String"
+                          description="Expresión descriptiva de columna derivada"
+                          expressionType="Notify"
+                          name="FriendlyExpression">ISNULL(valor) ? "0" : valor</property>
+                      </properties>
+                    </outputColumn>
+                    <outputColumn
+                      refId="Package\3 Limpieza\Columna derivada.Outputs[Salida de columna derivada].Columns[iso_code_clean]"
+                      codePage="1252"
+                      dataType="str"
+                      errorOrTruncationOperation="Cálculo"
+                      errorRowDisposition="FailComponent"
+                      length="10"
+                      lineageId="Package\3 Limpieza\Columna derivada.Outputs[Salida de columna derivada].Columns[iso_code_clean]"
+                      name="iso_code_clean"
+                      truncationRowDisposition="FailComponent">
+                      <properties>
+                        <property
+                          containsID="true"
+                          dataType="System.String"
+                          description="Expresión de columna derivada"
+                          name="Expression">(DT_STR,10,1252)[UPPER]([TRIM](#{Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[iso_code]}))</property>
+                        <property
+                          containsID="true"
+                          dataType="System.String"
+                          description="Expresión descriptiva de columna derivada"
+                          expressionType="Notify"
+                          name="FriendlyExpression">(DT_STR,10,1252)UPPER(TRIM(iso_code))</property>
+                      </properties>
+                    </outputColumn>
+                  </outputColumns>
+                  <externalMetadataColumns />
+                </output>
+                <output
+                  refId="Package\3 Limpieza\Columna derivada.Outputs[Salida de error de columna derivada]"
+                  description="Salida de error de la transformación Columna derivada"
+                  exclusionGroup="1"
+                  isErrorOut="true"
+                  name="Salida de error de columna derivada"
+                  synchronousInputId="Package\3 Limpieza\Columna derivada.Inputs[Entrada de columna derivada]">
+                  <outputColumns>
+                    <outputColumn
+                      refId="Package\3 Limpieza\Columna derivada.Outputs[Salida de error de columna derivada].Columns[ErrorCode]"
+                      dataType="i4"
+                      lineageId="Package\3 Limpieza\Columna derivada.Outputs[Salida de error de columna derivada].Columns[ErrorCode]"
+                      name="ErrorCode"
+                      specialFlags="1" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\Columna derivada.Outputs[Salida de error de columna derivada].Columns[ErrorColumn]"
+                      dataType="i4"
+                      lineageId="Package\3 Limpieza\Columna derivada.Outputs[Salida de error de columna derivada].Columns[ErrorColumn]"
+                      name="ErrorColumn"
+                      specialFlags="2" />
+                  </outputColumns>
+                  <externalMetadataColumns />
+                </output>
+              </outputs>
+            </component>
+            <component
+              refId="Package\3 Limpieza\Conversión de datos"
+              componentClassID="Microsoft.DataConvert"
+              contactInfo="Conversión de datos;Microsoft Corporation; Microsoft SQL Server; (C) Microsoft Corporation; Todos los derechos reservados; http://www.microsoft.com/sql/support;0"
+              description="Conversión de datos"
+              name="Conversión de datos"
+              usesDispositions="true">
+              <inputs>
+                <input
+                  refId="Package\3 Limpieza\Conversión de datos.Inputs[Entrada de conversión de datos]"
+                  name="Entrada de conversión de datos">
+                  <inputColumns>
+                    <inputColumn
+                      refId="Package\3 Limpieza\Conversión de datos.Inputs[Entrada de conversión de datos].Columns[anio]"
+                      cachedDataType="wstr"
+                      cachedLength="50"
+                      cachedName="anio"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[anio]" />
+                    <inputColumn
+                      refId="Package\3 Limpieza\Conversión de datos.Inputs[Entrada de conversión de datos].Columns[valor]"
+                      cachedDataType="wstr"
+                      cachedLength="100"
+                      cachedName="valor"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[valor]" />
+                    <inputColumn
+                      refId="Package\3 Limpieza\Conversión de datos.Inputs[Entrada de conversión de datos].Columns[fecha]"
+                      cachedDataType="wstr"
+                      cachedLength="50"
+                      cachedName="fecha"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[fecha]" />
+                    <inputColumn
+                      refId="Package\3 Limpieza\Conversión de datos.Inputs[Entrada de conversión de datos].Columns[mes]"
+                      cachedDataType="wstr"
+                      cachedLength="50"
+                      cachedName="mes"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[mes]" />
+                  </inputColumns>
+                  <externalMetadataColumns />
+                </input>
+              </inputs>
+              <outputs>
+                <output
+                  refId="Package\3 Limpieza\Conversión de datos.Outputs[Salida de conversión de datos]"
+                  exclusionGroup="1"
+                  name="Salida de conversión de datos"
+                  synchronousInputId="Package\3 Limpieza\Conversión de datos.Inputs[Entrada de conversión de datos]">
+                  <outputColumns>
+                    <outputColumn
+                      refId="Package\3 Limpieza\Conversión de datos.Outputs[Salida de conversión de datos].Columns[Copy of anio]"
+                      dataType="wstr"
+                      errorOrTruncationOperation="Conversión"
+                      errorRowDisposition="FailComponent"
+                      length="50"
+                      lineageId="Package\3 Limpieza\Conversión de datos.Outputs[Salida de conversión de datos].Columns[Copy of anio]"
+                      name="Copy of anio"
+                      truncationRowDisposition="FailComponent">
+                      <properties>
+                        <property
+                          containsID="true"
+                          dataType="System.Int32"
+                          description="Especifica la columna de entrada usada como origen de datos para la conversión."
+                          name="SourceInputColumnLineageID">#{Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[anio]}</property>
+                        <property
+                          dataType="System.Boolean"
+                          description="Indica si la columna usa las rutinas de análisis más rápidas independientes de la configuración regional."
+                          name="FastParse">false</property>
+                      </properties>
+                    </outputColumn>
+                    <outputColumn
+                      refId="Package\3 Limpieza\Conversión de datos.Outputs[Salida de conversión de datos].Columns[Copy of valor]"
+                      dataType="wstr"
+                      errorOrTruncationOperation="Conversión"
+                      errorRowDisposition="FailComponent"
+                      length="100"
+                      lineageId="Package\3 Limpieza\Conversión de datos.Outputs[Salida de conversión de datos].Columns[Copy of valor]"
+                      name="Copy of valor"
+                      truncationRowDisposition="FailComponent">
+                      <properties>
+                        <property
+                          containsID="true"
+                          dataType="System.Int32"
+                          description="Especifica la columna de entrada usada como origen de datos para la conversión."
+                          name="SourceInputColumnLineageID">#{Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[valor]}</property>
+                        <property
+                          dataType="System.Boolean"
+                          description="Indica si la columna usa las rutinas de análisis más rápidas independientes de la configuración regional."
+                          name="FastParse">false</property>
+                      </properties>
+                    </outputColumn>
+                    <outputColumn
+                      refId="Package\3 Limpieza\Conversión de datos.Outputs[Salida de conversión de datos].Columns[Copy of fecha]"
+                      dataType="wstr"
+                      errorOrTruncationOperation="Conversión"
+                      errorRowDisposition="FailComponent"
+                      length="50"
+                      lineageId="Package\3 Limpieza\Conversión de datos.Outputs[Salida de conversión de datos].Columns[Copy of fecha]"
+                      name="Copy of fecha"
+                      truncationRowDisposition="FailComponent">
+                      <properties>
+                        <property
+                          containsID="true"
+                          dataType="System.Int32"
+                          description="Especifica la columna de entrada usada como origen de datos para la conversión."
+                          name="SourceInputColumnLineageID">#{Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[fecha]}</property>
+                        <property
+                          dataType="System.Boolean"
+                          description="Indica si la columna usa las rutinas de análisis más rápidas independientes de la configuración regional."
+                          name="FastParse">false</property>
+                      </properties>
+                    </outputColumn>
+                    <outputColumn
+                      refId="Package\3 Limpieza\Conversión de datos.Outputs[Salida de conversión de datos].Columns[Copy of mes]"
+                      dataType="wstr"
+                      errorOrTruncationOperation="Conversión"
+                      errorRowDisposition="FailComponent"
+                      length="50"
+                      lineageId="Package\3 Limpieza\Conversión de datos.Outputs[Salida de conversión de datos].Columns[Copy of mes]"
+                      name="Copy of mes"
+                      truncationRowDisposition="FailComponent">
+                      <properties>
+                        <property
+                          containsID="true"
+                          dataType="System.Int32"
+                          description="Especifica la columna de entrada usada como origen de datos para la conversión."
+                          name="SourceInputColumnLineageID">#{Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[mes]}</property>
+                        <property
+                          dataType="System.Boolean"
+                          description="Indica si la columna usa las rutinas de análisis más rápidas independientes de la configuración regional."
+                          name="FastParse">false</property>
+                      </properties>
+                    </outputColumn>
+                  </outputColumns>
+                  <externalMetadataColumns />
+                </output>
+                <output
+                  refId="Package\3 Limpieza\Conversión de datos.Outputs[Salida de error de conversión de datos]"
+                  exclusionGroup="1"
+                  isErrorOut="true"
+                  name="Salida de error de conversión de datos"
+                  synchronousInputId="Package\3 Limpieza\Conversión de datos.Inputs[Entrada de conversión de datos]">
+                  <outputColumns>
+                    <outputColumn
+                      refId="Package\3 Limpieza\Conversión de datos.Outputs[Salida de error de conversión de datos].Columns[ErrorCode]"
+                      dataType="i4"
+                      lineageId="Package\3 Limpieza\Conversión de datos.Outputs[Salida de error de conversión de datos].Columns[ErrorCode]"
+                      name="ErrorCode"
+                      specialFlags="1" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\Conversión de datos.Outputs[Salida de error de conversión de datos].Columns[ErrorColumn]"
+                      dataType="i4"
+                      lineageId="Package\3 Limpieza\Conversión de datos.Outputs[Salida de error de conversión de datos].Columns[ErrorColumn]"
+                      name="ErrorColumn"
+                      specialFlags="2" />
+                  </outputColumns>
+                  <externalMetadataColumns />
+                </output>
+              </outputs>
+            </component>
+            <component
+              refId="Package\3 Limpieza\stg_clima"
+              componentClassID="Microsoft.OLEDBSource"
+              contactInfo="Origen de OLE DB;Microsoft Corporation; Microsoft SQL Server; (C) Microsoft Corporation; Todos los derechos reservados; http://www.microsoft.com/sql/support;7"
+              description="Origen de OLE DB"
+              name="stg_clima"
+              usesDispositions="true"
+              version="7">
+              <properties>
+                <property
+                  dataType="System.Int32"
+                  description="Número de segundos antes de que se agote el tiempo de espera de un comando. Un valor de 0 indica un tiempo de espera infinito."
+                  name="CommandTimeout">0</property>
+                <property
+                  dataType="System.String"
+                  description="Especifica el nombre del objeto de base de datos usado para abrir un conjunto de filas."
+                  name="OpenRowset">[dbo].[stg_clima]</property>
+                <property
+                  dataType="System.String"
+                  description="Especifica la variable que contiene el nombre del objeto de base de datos usado para abrir un conjunto de filas."
+                  name="OpenRowsetVariable"></property>
+                <property
+                  dataType="System.String"
+                  description="Comando SQL para ejecutar."
+                  name="SqlCommand"
+                  UITypeEditor="Microsoft.DataTransformationServices.Controls.ModalMultilineStringEditor, Microsoft.DataTransformationServices.Controls, Version=17.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91">SELECT * FROM dbo.stg_clima WHERE IdLote = ?</property>
+                <property
+                  dataType="System.String"
+                  description="Variable que contiene el comando SQL para ejecutar."
+                  name="SqlCommandVariable"></property>
+                <property
+                  dataType="System.Int32"
+                  description="Especifica la página de códigos de columna para utilizar cuando la información de página de códigos no está disponible en el origen de datos."
+                  name="DefaultCodePage">1252</property>
+                <property
+                  dataType="System.Boolean"
+                  description="Fuerza el uso del valor de la propiedad DefaultCodePage al describir datos de caracteres."
+                  name="AlwaysUseDefaultCodePage">false</property>
+                <property
+                  dataType="System.Int32"
+                  description="Especifica el modo utilizado para obtener acceso a la base de datos."
+                  name="AccessMode"
+                  typeConverter="AccessMode">2</property>
+                <property
+                  dataType="System.String"
+                  description="Asignaciones entre los parámetros del comando SQL y las variables."
+                  name="ParameterMapping">"Parámetro0:Input",{6D7B1197-031A-4A0A-A82F-D29545FA3199};</property>
+              </properties>
+              <connections>
+                <connection
+                  refId="Package\3 Limpieza\stg_clima.Connections[OleDbConnection]"
+                  connectionManagerID="Package.ConnectionManagers[ClimaTec]"
+                  connectionManagerRefId="Package.ConnectionManagers[ClimaTec]"
+                  description="La conexión de tiempo de ejecución OLE DB usada para obtener acceso a la base de datos."
+                  name="OleDbConnection" />
+              </connections>
+              <outputs>
+                <output
+                  refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB]"
+                  name="Salida de origen de OLE DB">
+                  <outputColumns>
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[IdStg]"
+                      dataType="i8"
+                      errorOrTruncationOperation="Conversión"
+                      errorRowDisposition="FailComponent"
+                      externalMetadataColumnId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].ExternalColumns[IdStg]"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[IdStg]"
+                      name="IdStg"
+                      truncationRowDisposition="FailComponent" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[IdLote]"
+                      dataType="i4"
+                      errorOrTruncationOperation="Conversión"
+                      errorRowDisposition="FailComponent"
+                      externalMetadataColumnId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].ExternalColumns[IdLote]"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[IdLote]"
+                      name="IdLote"
+                      truncationRowDisposition="FailComponent" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[archivo_origen]"
+                      dataType="wstr"
+                      errorOrTruncationOperation="Conversión"
+                      errorRowDisposition="FailComponent"
+                      externalMetadataColumnId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].ExternalColumns[archivo_origen]"
+                      length="260"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[archivo_origen]"
+                      name="archivo_origen"
+                      truncationRowDisposition="FailComponent" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[fecha_carga]"
+                      dataType="dbTimeStamp2"
+                      errorOrTruncationOperation="Conversión"
+                      errorRowDisposition="FailComponent"
+                      externalMetadataColumnId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].ExternalColumns[fecha_carga]"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[fecha_carga]"
+                      name="fecha_carga"
+                      truncationRowDisposition="FailComponent" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[fuente]"
+                      dataType="wstr"
+                      errorOrTruncationOperation="Conversión"
+                      errorRowDisposition="FailComponent"
+                      externalMetadataColumnId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].ExternalColumns[fuente]"
+                      length="255"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[fuente]"
+                      name="fuente"
+                      truncationRowDisposition="FailComponent" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[fuente_tipo]"
+                      dataType="wstr"
+                      errorOrTruncationOperation="Conversión"
+                      errorRowDisposition="FailComponent"
+                      externalMetadataColumnId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].ExternalColumns[fuente_tipo]"
+                      length="100"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[fuente_tipo]"
+                      name="fuente_tipo"
+                      truncationRowDisposition="FailComponent" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[nivel_geografico]"
+                      dataType="wstr"
+                      errorOrTruncationOperation="Conversión"
+                      errorRowDisposition="FailComponent"
+                      externalMetadataColumnId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].ExternalColumns[nivel_geografico]"
+                      length="100"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[nivel_geografico]"
+                      name="nivel_geografico"
+                      truncationRowDisposition="FailComponent" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[entidad]"
+                      dataType="wstr"
+                      errorOrTruncationOperation="Conversión"
+                      errorRowDisposition="FailComponent"
+                      externalMetadataColumnId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].ExternalColumns[entidad]"
+                      length="255"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[entidad]"
+                      name="entidad"
+                      truncationRowDisposition="FailComponent" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[iso_code]"
+                      dataType="wstr"
+                      errorOrTruncationOperation="Conversión"
+                      errorRowDisposition="FailComponent"
+                      externalMetadataColumnId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].ExternalColumns[iso_code]"
+                      length="50"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[iso_code]"
+                      name="iso_code"
+                      truncationRowDisposition="FailComponent" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[anio]"
+                      dataType="wstr"
+                      errorOrTruncationOperation="Conversión"
+                      errorRowDisposition="FailComponent"
+                      externalMetadataColumnId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].ExternalColumns[anio]"
+                      length="50"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[anio]"
+                      name="anio"
+                      truncationRowDisposition="FailComponent" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[mes]"
+                      dataType="wstr"
+                      errorOrTruncationOperation="Conversión"
+                      errorRowDisposition="FailComponent"
+                      externalMetadataColumnId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].ExternalColumns[mes]"
+                      length="50"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[mes]"
+                      name="mes"
+                      truncationRowDisposition="FailComponent" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[periodicidad]"
+                      dataType="wstr"
+                      errorOrTruncationOperation="Conversión"
+                      errorRowDisposition="FailComponent"
+                      externalMetadataColumnId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].ExternalColumns[periodicidad]"
+                      length="100"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[periodicidad]"
+                      name="periodicidad"
+                      truncationRowDisposition="FailComponent" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[indicador]"
+                      dataType="wstr"
+                      errorOrTruncationOperation="Conversión"
+                      errorRowDisposition="FailComponent"
+                      externalMetadataColumnId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].ExternalColumns[indicador]"
+                      length="255"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[indicador]"
+                      name="indicador"
+                      truncationRowDisposition="FailComponent" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[valor]"
+                      dataType="wstr"
+                      errorOrTruncationOperation="Conversión"
+                      errorRowDisposition="FailComponent"
+                      externalMetadataColumnId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].ExternalColumns[valor]"
+                      length="100"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[valor]"
+                      name="valor"
+                      truncationRowDisposition="FailComponent" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[unidad]"
+                      dataType="wstr"
+                      errorOrTruncationOperation="Conversión"
+                      errorRowDisposition="FailComponent"
+                      externalMetadataColumnId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].ExternalColumns[unidad]"
+                      length="100"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[unidad]"
+                      name="unidad"
+                      truncationRowDisposition="FailComponent" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[fecha]"
+                      dataType="wstr"
+                      errorOrTruncationOperation="Conversión"
+                      errorRowDisposition="FailComponent"
+                      externalMetadataColumnId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].ExternalColumns[fecha]"
+                      length="50"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[fecha]"
+                      name="fecha"
+                      truncationRowDisposition="FailComponent" />
+                  </outputColumns>
+                  <externalMetadataColumns
+                    isUsed="True">
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].ExternalColumns[IdStg]"
+                      dataType="i8"
+                      name="IdStg" />
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].ExternalColumns[IdLote]"
+                      dataType="i4"
+                      name="IdLote" />
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].ExternalColumns[archivo_origen]"
+                      dataType="wstr"
+                      length="260"
+                      name="archivo_origen" />
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].ExternalColumns[fecha_carga]"
+                      dataType="dbTimeStamp2"
+                      name="fecha_carga" />
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].ExternalColumns[fuente]"
+                      dataType="wstr"
+                      length="255"
+                      name="fuente" />
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].ExternalColumns[fuente_tipo]"
+                      dataType="wstr"
+                      length="100"
+                      name="fuente_tipo" />
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].ExternalColumns[nivel_geografico]"
+                      dataType="wstr"
+                      length="100"
+                      name="nivel_geografico" />
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].ExternalColumns[entidad]"
+                      dataType="wstr"
+                      length="255"
+                      name="entidad" />
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].ExternalColumns[iso_code]"
+                      dataType="wstr"
+                      length="50"
+                      name="iso_code" />
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].ExternalColumns[anio]"
+                      dataType="wstr"
+                      length="50"
+                      name="anio" />
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].ExternalColumns[mes]"
+                      dataType="wstr"
+                      length="50"
+                      name="mes" />
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].ExternalColumns[periodicidad]"
+                      dataType="wstr"
+                      length="100"
+                      name="periodicidad" />
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].ExternalColumns[indicador]"
+                      dataType="wstr"
+                      length="255"
+                      name="indicador" />
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].ExternalColumns[valor]"
+                      dataType="wstr"
+                      length="100"
+                      name="valor" />
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].ExternalColumns[unidad]"
+                      dataType="wstr"
+                      length="100"
+                      name="unidad" />
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].ExternalColumns[fecha]"
+                      dataType="wstr"
+                      length="50"
+                      name="fecha" />
+                  </externalMetadataColumns>
+                </output>
+                <output
+                  refId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB]"
+                  isErrorOut="true"
+                  name="Salida de error de origen de OLE DB">
+                  <outputColumns>
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[IdStg]"
+                      dataType="i8"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[IdStg]"
+                      name="IdStg" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[IdLote]"
+                      dataType="i4"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[IdLote]"
+                      name="IdLote" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[archivo_origen]"
+                      dataType="wstr"
+                      length="260"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[archivo_origen]"
+                      name="archivo_origen" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[fecha_carga]"
+                      dataType="dbTimeStamp2"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[fecha_carga]"
+                      name="fecha_carga" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[fuente]"
+                      dataType="wstr"
+                      length="255"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[fuente]"
+                      name="fuente" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[fuente_tipo]"
+                      dataType="wstr"
+                      length="100"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[fuente_tipo]"
+                      name="fuente_tipo" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[nivel_geografico]"
+                      dataType="wstr"
+                      length="100"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[nivel_geografico]"
+                      name="nivel_geografico" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[entidad]"
+                      dataType="wstr"
+                      length="255"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[entidad]"
+                      name="entidad" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[iso_code]"
+                      dataType="wstr"
+                      length="50"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[iso_code]"
+                      name="iso_code" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[anio]"
+                      dataType="wstr"
+                      length="50"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[anio]"
+                      name="anio" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[mes]"
+                      dataType="wstr"
+                      length="50"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[mes]"
+                      name="mes" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[periodicidad]"
+                      dataType="wstr"
+                      length="100"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[periodicidad]"
+                      name="periodicidad" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[indicador]"
+                      dataType="wstr"
+                      length="255"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[indicador]"
+                      name="indicador" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[valor]"
+                      dataType="wstr"
+                      length="100"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[valor]"
+                      name="valor" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[unidad]"
+                      dataType="wstr"
+                      length="100"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[unidad]"
+                      name="unidad" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[fecha]"
+                      dataType="wstr"
+                      length="50"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[fecha]"
+                      name="fecha" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[ErrorCode]"
+                      dataType="i4"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[ErrorCode]"
+                      name="ErrorCode"
+                      specialFlags="1" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[ErrorColumn]"
+                      dataType="i4"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de error de origen de OLE DB].Columns[ErrorColumn]"
+                      name="ErrorColumn"
+                      specialFlags="2" />
+                  </outputColumns>
+                  <externalMetadataColumns />
+                </output>
+              </outputs>
+            </component>
+            <component
+              refId="Package\3 Limpieza\stg_clima_limpio"
+              componentClassID="Microsoft.OLEDBDestination"
+              contactInfo="Destino de OLE DB;Microsoft Corporation; Microsoft SQL Server; (C) Microsoft Corporation; Todos los derechos reservados; http://www.microsoft.com/sql/support;4"
+              description="Destino de OLE DB"
+              name="stg_clima_limpio"
+              usesDispositions="true"
+              version="4">
+              <properties>
+                <property
+                  dataType="System.Int32"
+                  description="Número de segundos antes de que se agote el tiempo de espera de un comando. Un valor de 0 indica un tiempo de espera infinito."
+                  name="CommandTimeout">0</property>
+                <property
+                  dataType="System.String"
+                  description="Especifica el nombre del objeto de base de datos usado para abrir un conjunto de filas."
+                  name="OpenRowset">[dbo].[clima_limpio]</property>
+                <property
+                  dataType="System.String"
+                  description="Especifica la variable que contiene el nombre del objeto de base de datos usado para abrir un conjunto de filas."
+                  name="OpenRowsetVariable"></property>
+                <property
+                  dataType="System.String"
+                  description="Comando SQL para ejecutar."
+                  name="SqlCommand"
+                  UITypeEditor="Microsoft.DataTransformationServices.Controls.ModalMultilineStringEditor, Microsoft.DataTransformationServices.Controls, Version=17.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91"></property>
+                <property
+                  dataType="System.Int32"
+                  description="Especifica la página de códigos de columna para utilizar cuando la información de página de códigos no está disponible en el origen de datos."
+                  name="DefaultCodePage">1252</property>
+                <property
+                  dataType="System.Boolean"
+                  description="Fuerza el uso del valor de la propiedad DefaultCodePage al describir datos de caracteres."
+                  name="AlwaysUseDefaultCodePage">false</property>
+                <property
+                  dataType="System.Int32"
+                  description="Especifica el modo utilizado para obtener acceso a la base de datos."
+                  name="AccessMode"
+                  typeConverter="AccessMode">3</property>
+                <property
+                  dataType="System.Boolean"
+                  description="Indica si los valores proporcionados para columnas de identidad se van a copiar al destino. Si es False, los valores de las columnas de identidad se generan automáticamente en el destino. Solo se aplica si está activada la carga rápida."
+                  name="FastLoadKeepIdentity">false</property>
+                <property
+                  dataType="System.Boolean"
+                  description="Indica si las columnas que contienen NULL tendrán NULL insertado en el destino. Si es False, las columnas que contienen NULL tendrán sus valores predeterminados insertados en el destino. Solo se aplica si está activada la carga rápida."
+                  name="FastLoadKeepNulls">false</property>
+                <property
+                  dataType="System.String"
+                  description="Especifica opciones para usar con la carga rápida. Solo se aplica si está activada la carga rápida."
+                  name="FastLoadOptions">TABLOCK,CHECK_CONSTRAINTS</property>
+                <property
+                  dataType="System.Int32"
+                  description="Especifica cuándo se emiten confirmaciones durante la inserción de datos. El valor 0 especifica que se emitirá una confirmación al final de la inserción de datos. Solo se aplica si está activada la carga rápida."
+                  name="FastLoadMaxInsertCommitSize">2147483647</property>
+              </properties>
+              <connections>
+                <connection
+                  refId="Package\3 Limpieza\stg_clima_limpio.Connections[OleDbConnection]"
+                  connectionManagerID="Package.ConnectionManagers[ClimaTec]"
+                  connectionManagerRefId="Package.ConnectionManagers[ClimaTec]"
+                  description="La conexión de tiempo de ejecución OLE DB usada para obtener acceso a la base de datos."
+                  name="OleDbConnection" />
+              </connections>
+              <inputs>
+                <input
+                  refId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB]"
+                  errorOrTruncationOperation="Insertar"
+                  errorRowDisposition="FailComponent"
+                  hasSideEffects="true"
+                  name="Entrada de destino de OLE DB">
+                  <inputColumns>
+                    <inputColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].Columns[IdStg]"
+                      cachedDataType="i8"
+                      cachedName="IdStg"
+                      externalMetadataColumnId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].ExternalColumns[IdStg]"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[IdStg]" />
+                    <inputColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].Columns[IdLote]"
+                      cachedDataType="i4"
+                      cachedName="IdLote"
+                      externalMetadataColumnId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].ExternalColumns[IdLote]"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[IdLote]" />
+                    <inputColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].Columns[fuente_tipo]"
+                      cachedDataType="wstr"
+                      cachedLength="100"
+                      cachedName="fuente_tipo"
+                      externalMetadataColumnId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].ExternalColumns[fuente_tipo]"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[fuente_tipo]" />
+                    <inputColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].Columns[nivel_geografico]"
+                      cachedDataType="wstr"
+                      cachedLength="100"
+                      cachedName="nivel_geografico"
+                      externalMetadataColumnId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].ExternalColumns[nivel_geografico]"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[nivel_geografico]" />
+                    <inputColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].Columns[anio]"
+                      cachedDataType="wstr"
+                      cachedLength="50"
+                      cachedName="anio"
+                      externalMetadataColumnId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].ExternalColumns[anio]"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[anio]" />
+                    <inputColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].Columns[mes]"
+                      cachedDataType="wstr"
+                      cachedLength="50"
+                      cachedName="mes"
+                      externalMetadataColumnId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].ExternalColumns[mes]"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[mes]" />
+                    <inputColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].Columns[periodicidad]"
+                      cachedDataType="wstr"
+                      cachedLength="100"
+                      cachedName="periodicidad"
+                      externalMetadataColumnId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].ExternalColumns[periodicidad]"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[periodicidad]" />
+                    <inputColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].Columns[unidad]"
+                      cachedDataType="wstr"
+                      cachedLength="100"
+                      cachedName="unidad"
+                      externalMetadataColumnId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].ExternalColumns[unidad]"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[unidad]" />
+                    <inputColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].Columns[fecha]"
+                      cachedDataType="wstr"
+                      cachedLength="50"
+                      cachedName="fecha"
+                      externalMetadataColumnId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].ExternalColumns[fecha]"
+                      lineageId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB].Columns[fecha]" />
+                    <inputColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].Columns[fuente_clean]"
+                      cachedDataType="wstr"
+                      cachedLength="255"
+                      cachedName="fuente_clean"
+                      externalMetadataColumnId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].ExternalColumns[fuente]"
+                      lineageId="Package\3 Limpieza\Columna derivada.Outputs[Salida de columna derivada].Columns[fuente_clean]" />
+                    <inputColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].Columns[entidad_clean]"
+                      cachedDataType="wstr"
+                      cachedLength="255"
+                      cachedName="entidad_clean"
+                      externalMetadataColumnId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].ExternalColumns[entidad]"
+                      lineageId="Package\3 Limpieza\Columna derivada.Outputs[Salida de columna derivada].Columns[entidad_clean]" />
+                    <inputColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].Columns[indicador_clean]"
+                      cachedDataType="wstr"
+                      cachedLength="255"
+                      cachedName="indicador_clean"
+                      externalMetadataColumnId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].ExternalColumns[indicador]"
+                      lineageId="Package\3 Limpieza\Columna derivada.Outputs[Salida de columna derivada].Columns[indicador_clean]" />
+                    <inputColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].Columns[valor_clean]"
+                      cachedDataType="wstr"
+                      cachedLength="100"
+                      cachedName="valor_clean"
+                      externalMetadataColumnId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].ExternalColumns[valor]"
+                      lineageId="Package\3 Limpieza\Columna derivada.Outputs[Salida de columna derivada].Columns[valor_clean]" />
+                    <inputColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].Columns[iso_code_clean]"
+                      cachedCodepage="1252"
+                      cachedDataType="str"
+                      cachedLength="10"
+                      cachedName="iso_code_clean"
+                      externalMetadataColumnId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].ExternalColumns[iso_code]"
+                      lineageId="Package\3 Limpieza\Columna derivada.Outputs[Salida de columna derivada].Columns[iso_code_clean]" />
+                  </inputColumns>
+                  <externalMetadataColumns
+                    isUsed="True">
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].ExternalColumns[IdLimpio]"
+                      dataType="i8"
+                      name="IdLimpio" />
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].ExternalColumns[IdLote]"
+                      dataType="i4"
+                      name="IdLote" />
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].ExternalColumns[IdStg]"
+                      dataType="i8"
+                      name="IdStg" />
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].ExternalColumns[fuente]"
+                      dataType="wstr"
+                      length="150"
+                      name="fuente" />
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].ExternalColumns[fuente_tipo]"
+                      dataType="wstr"
+                      length="20"
+                      name="fuente_tipo" />
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].ExternalColumns[nivel_geografico]"
+                      dataType="wstr"
+                      length="20"
+                      name="nivel_geografico" />
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].ExternalColumns[entidad]"
+                      dataType="wstr"
+                      length="100"
+                      name="entidad" />
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].ExternalColumns[iso_code]"
+                      codePage="1252"
+                      dataType="str"
+                      length="3"
+                      name="iso_code" />
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].ExternalColumns[anio]"
+                      dataType="i2"
+                      name="anio" />
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].ExternalColumns[mes]"
+                      dataType="ui1"
+                      name="mes" />
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].ExternalColumns[periodicidad]"
+                      dataType="wstr"
+                      length="20"
+                      name="periodicidad" />
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].ExternalColumns[indicador]"
+                      dataType="wstr"
+                      length="100"
+                      name="indicador" />
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].ExternalColumns[valor]"
+                      dataType="numeric"
+                      name="valor"
+                      precision="18"
+                      scale="4" />
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].ExternalColumns[unidad]"
+                      dataType="wstr"
+                      length="50"
+                      name="unidad" />
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].ExternalColumns[fecha]"
+                      dataType="dbDate"
+                      name="fecha" />
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].ExternalColumns[atipico]"
+                      dataType="bool"
+                      name="atipico" />
+                    <externalMetadataColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB].ExternalColumns[valor_z]"
+                      dataType="numeric"
+                      name="valor_z"
+                      precision="10"
+                      scale="4" />
+                  </externalMetadataColumns>
+                </input>
+              </inputs>
+              <outputs>
+                <output
+                  refId="Package\3 Limpieza\stg_clima_limpio.Outputs[Salida de error de destino de OLE DB]"
+                  exclusionGroup="1"
+                  isErrorOut="true"
+                  name="Salida de error de destino de OLE DB"
+                  synchronousInputId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB]">
+                  <outputColumns>
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Outputs[Salida de error de destino de OLE DB].Columns[ErrorCode]"
+                      dataType="i4"
+                      lineageId="Package\3 Limpieza\stg_clima_limpio.Outputs[Salida de error de destino de OLE DB].Columns[ErrorCode]"
+                      name="ErrorCode"
+                      specialFlags="1" />
+                    <outputColumn
+                      refId="Package\3 Limpieza\stg_clima_limpio.Outputs[Salida de error de destino de OLE DB].Columns[ErrorColumn]"
+                      dataType="i4"
+                      lineageId="Package\3 Limpieza\stg_clima_limpio.Outputs[Salida de error de destino de OLE DB].Columns[ErrorColumn]"
+                      name="ErrorColumn"
+                      specialFlags="2" />
+                  </outputColumns>
+                  <externalMetadataColumns />
+                </output>
+              </outputs>
+            </component>
+          </components>
+          <paths>
+            <path
+              refId="Package\3 Limpieza.Paths[Salida de columna derivada]"
+              endId="Package\3 Limpieza\stg_clima_limpio.Inputs[Entrada de destino de OLE DB]"
+              name="Salida de columna derivada"
+              startId="Package\3 Limpieza\Columna derivada.Outputs[Salida de columna derivada]" />
+            <path
+              refId="Package\3 Limpieza.Paths[Salida de conversión de datos]"
+              endId="Package\3 Limpieza\Columna derivada.Inputs[Entrada de columna derivada]"
+              name="Salida de conversión de datos"
+              startId="Package\3 Limpieza\Conversión de datos.Outputs[Salida de conversión de datos]" />
+            <path
+              refId="Package\3 Limpieza.Paths[Salida de origen de OLE DB]"
+              endId="Package\3 Limpieza\Conversión de datos.Inputs[Entrada de conversión de datos]"
+              name="Salida de origen de OLE DB"
+              startId="Package\3 Limpieza\stg_clima.Outputs[Salida de origen de OLE DB]" />
+          </paths>
+        </pipeline>
       </DTS:ObjectData>
     </DTS:Executable>
     <DTS:Executable
@@ -1135,25 +2220,37 @@
       DTS:To="Package\5 Cerrar lote" />
   </DTS:PrecedenceConstraints>
   <DTS:DesignTimeProperties><![CDATA[<?xml version="1.0"?>
-<!--This CDATA section contains the layout information of the package. The section includes information such as (x,y) coordinates, width, and height.-->
-<!--If you manually edit this section and make a mistake, you can delete it. -->
-<!--The package will still be able to load normally but the previous layout information will be lost and the designer will automatically re-arrange the elements on the design surface.-->
+<!--Esta sección CDATA contiene la información de diseño del paquete. Esta sección incluye información como, por ejemplo, las coordenadas (x,y), el ancho y el alto.-->
+<!--Si edita manualmente esta sección y comete un error, puede eliminarlo. -->
+<!--El paquete podrá cargarse normalmente, pero se perderá la información de diseño anterior y el diseñador reorganizará los elementos automáticamente en la superficie de diseño.-->
 <Objects
   Version="8">
-  <!--Each node below will contain properties that do not affect runtime behavior.-->
+  <!--Cada uno de los nodos siguientes contiene propiedades que no afectan al comportamiento en tiempo de ejecución.-->
   <Package
     design-time-name="Package">
     <LayoutInfo>
       <GraphLayout
         Capacity="16" xmlns="clr-namespace:Microsoft.SqlServer.IntegrationServices.Designer.Model.Serialization;assembly=Microsoft.SqlServer.IntegrationServices.Graph" xmlns:mssgle="clr-namespace:Microsoft.SqlServer.Graph.LayoutEngine;assembly=Microsoft.SqlServer.Graph" xmlns:assembly="http://schemas.microsoft.com/winfx/2006/xaml">
         <NodeLayout
-          Size="132,41.6"
+          Size="132,42"
           Id="Package\1 Abrir Lote"
           TopLeft="99.1666612484391,94.4666660097573" />
         <NodeLayout
-          Size="180.8,41.6"
+          Size="181,42"
           Id="Package\2 Extraccion a staging"
           TopLeft="215.83332154072,193.266665322714" />
+        <NodeLayout
+          Size="129,42"
+          Id="Package\3 Limpieza"
+          TopLeft="368.333313208488,281.666664707992" />
+        <NodeLayout
+          Size="145,42"
+          Id="Package\4 Verificar lote"
+          TopLeft="547.49997008592,343.999997975032" />
+        <NodeLayout
+          Size="136,42"
+          Id="Package\5 Cerrar lote"
+          TopLeft="634.166632017329,407.066664798392" />
         <EdgeLayout
           Id="Package.PrecedenceConstraints[Constraint]"
           TopLeft="165.166661248439,136.066666009757">
@@ -1188,10 +2285,6 @@
             <EdgeLabelCollection />
           </EdgeLayout.Labels>
         </EdgeLayout>
-        <NodeLayout
-          Size="128.8,41.6"
-          Id="Package\3 Limpieza"
-          TopLeft="368.333313208488,281.666664707992" />
         <EdgeLayout
           Id="Package.PrecedenceConstraints[Constraint 1]"
           TopLeft="306.23332154072,234.866665322714">
@@ -1226,10 +2319,6 @@
             <EdgeLabelCollection />
           </EdgeLayout.Labels>
         </EdgeLayout>
-        <NodeLayout
-          Size="144.8,41.6"
-          Id="Package\4 Verificar lote"
-          TopLeft="547.49997008592,343.999997975032" />
         <EdgeLayout
           Id="Package.PrecedenceConstraints[Constraint 2]"
           TopLeft="497.133313208488,302.466664707992">
@@ -1264,10 +2353,6 @@
             <EdgeLabelCollection />
           </EdgeLayout.Labels>
         </EdgeLayout>
-        <NodeLayout
-          Size="136,41.6"
-          Id="Package\5 Cerrar lote"
-          TopLeft="634.166632017329,407.066664798392" />
         <EdgeLayout
           Id="Package.PrecedenceConstraints[Constraint 3]"
           TopLeft="692.29997008592,364.799997975032">
@@ -1305,13 +2390,55 @@
       <GraphLayout
         Capacity="8" xmlns="clr-namespace:Microsoft.SqlServer.IntegrationServices.Designer.Model.Serialization;assembly=Microsoft.SqlServer.IntegrationServices.Graph" xmlns:mssgle="clr-namespace:Microsoft.SqlServer.Graph.LayoutEngine;assembly=Microsoft.SqlServer.Graph" xmlns:assembly="http://schemas.microsoft.com/winfx/2006/xaml">
         <NodeLayout
-          Size="123.2,41.6"
+          Size="123,42"
           Id="Package\2 Extraccion a staging\Leer CSV"
           TopLeft="181.666656740838,38.1333330681589" />
         <NodeLayout
-          Size="179.2,41.6"
+          Size="126,42"
+          Id="Package\2 Extraccion a staging\stg_clima"
+          TopLeft="205,253" />
+        <NodeLayout
+          Size="179,42"
           Id="Package\2 Extraccion a staging\Agregar lote y archivo"
           TopLeft="135.833325911727,162.933332200315" />
+        <NodeLayout
+          Size="154,42"
+          Id="Package\2 Extraccion a staging\Contar recibidas"
+          TopLeft="461.666641442313,187.199998698235" />
+        <EdgeLayout
+          Id="Package\2 Extraccion a staging.Paths[Row Count Output 1]"
+          TopLeft="538.666641442313,229.199998698235">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="-270.666641442313,23.800001301765"
+              Start="0,0"
+              End="-270.666641442313,16.300001301765">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="0,7.9000006508825" />
+                  <mssgle:CubicBezierSegment
+                    Point1="0,7.9000006508825"
+                    Point2="0,11.9000006508825"
+                    Point3="-4,11.9000006508825" />
+                  <mssgle:LineSegment
+                    End="-266.666641442313,11.9000006508825" />
+                  <mssgle:CubicBezierSegment
+                    Point1="-266.666641442313,11.9000006508825"
+                    Point2="-270.666641442313,11.9000006508825"
+                    Point3="-270.666641442313,15.9000006508825" />
+                  <mssgle:LineSegment
+                    End="-270.666641442313,16.300001301765" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <EdgeLabelCollection />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
         <EdgeLayout
           Id="Package\2 Extraccion a staging.Paths[Flat File Source Output]"
           TopLeft="243.266656740838,79.7333330681589">
@@ -1346,10 +2473,6 @@
             <EdgeLabelCollection />
           </EdgeLayout.Labels>
         </EdgeLayout>
-        <NodeLayout
-          Size="154.4,41.6"
-          Id="Package\2 Extraccion a staging\Contar recibidas"
-          TopLeft="461.666641442313,187.199998698235" />
         <EdgeLayout
           Id="Package\2 Extraccion a staging.Paths[Derived Column Output]"
           TopLeft="315.033325911728,183.733332200315">
@@ -1384,36 +2507,137 @@
             <EdgeLabelCollection />
           </EdgeLayout.Labels>
         </EdgeLayout>
+      </GraphLayout>
+    </LayoutInfo>
+  </TaskHost>
+  <PipelineComponentMetadata
+    design-time-name="Package\2 Extraccion a staging\stg_clima">
+    <Properties>
+      <Property>
+        <Name>DataSourceViewID</Name>
+      </Property>
+      <Property>
+        <Name>TableInfoObjectType</Name>
+        <Value
+          type="q2:string">Table</Value>
+      </Property>
+    </Properties>
+  </PipelineComponentMetadata>
+  <TaskHost
+    design-time-name="Package\3 Limpieza">
+    <LayoutInfo>
+      <GraphLayout
+        Capacity="8" xmlns="clr-namespace:Microsoft.SqlServer.IntegrationServices.Designer.Model.Serialization;assembly=Microsoft.SqlServer.IntegrationServices.Graph" xmlns:mssgle="clr-namespace:Microsoft.SqlServer.Graph.LayoutEngine;assembly=Microsoft.SqlServer.Graph" xmlns:assembly="http://schemas.microsoft.com/winfx/2006/xaml">
         <NodeLayout
-          Size="177.6,41.6"
-          Id="Package\2 Extraccion a staging\Guardar en stg_clima"
-          TopLeft="739.166626280382,214.933331838714" />
+          Size="126,42"
+          Id="Package\3 Limpieza\stg_clima"
+          TopLeft="61,42" />
+        <NodeLayout
+          Size="180,42"
+          Id="Package\3 Limpieza\Conversión de datos"
+          TopLeft="127,121" />
         <EdgeLayout
-          Id="Package\2 Extraccion a staging.Paths[Row Count Output 1]"
-          TopLeft="616.066641442313,207.999998698235">
+          Id="Package\3 Limpieza.Paths[Salida de origen de OLE DB]"
+          TopLeft="124,84">
           <EdgeLayout.Curve>
             <mssgle:Curve
               StartConnector="{assembly:Null}"
-              EndConnector="123.099984838069,27.7333331404792"
+              EndConnector="93,37"
               Start="0,0"
-              End="115.599984838069,27.7333331404792">
+              End="93,29.5">
               <mssgle:Curve.Segments>
                 <mssgle:SegmentCollection
                   Capacity="5">
                   <mssgle:LineSegment
-                    End="57.5499924190345,0" />
+                    End="0,14.5" />
                   <mssgle:CubicBezierSegment
-                    Point1="57.5499924190345,0"
-                    Point2="61.5499924190345,0"
-                    Point3="61.5499924190345,4" />
+                    Point1="0,14.5"
+                    Point2="0,18.5"
+                    Point3="4,18.5" />
                   <mssgle:LineSegment
-                    End="61.5499924190345,23.7333331404792" />
+                    End="89,18.5" />
                   <mssgle:CubicBezierSegment
-                    Point1="61.5499924190345,23.7333331404792"
-                    Point2="61.5499924190345,27.7333331404792"
-                    Point3="65.5499924190345,27.7333331404792" />
+                    Point1="89,18.5"
+                    Point2="93,18.5"
+                    Point3="93,22.5" />
                   <mssgle:LineSegment
-                    End="115.599984838069,27.7333331404792" />
+                    End="93,29.5" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <EdgeLabelCollection />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+        <NodeLayout
+          Size="168,42"
+          Id="Package\3 Limpieza\Columna derivada"
+          TopLeft="163,203" />
+        <EdgeLayout
+          Id="Package\3 Limpieza.Paths[Salida de conversión de datos]"
+          TopLeft="217,163">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="30,40"
+              Start="0,0"
+              End="30,32.5">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="0,16" />
+                  <mssgle:CubicBezierSegment
+                    Point1="0,16"
+                    Point2="0,20"
+                    Point3="4,20" />
+                  <mssgle:LineSegment
+                    End="26,20" />
+                  <mssgle:CubicBezierSegment
+                    Point1="26,20"
+                    Point2="30,20"
+                    Point3="30,24" />
+                  <mssgle:LineSegment
+                    End="30,32.5" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <EdgeLabelCollection />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+        <NodeLayout
+          Size="161,42"
+          Id="Package\3 Limpieza\stg_clima_limpio"
+          TopLeft="179,282" />
+        <EdgeLayout
+          Id="Package\3 Limpieza.Paths[Salida de columna derivada]"
+          TopLeft="247,245">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="12.5,37"
+              Start="0,0"
+              End="12.5,29.5">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="0,14.5" />
+                  <mssgle:CubicBezierSegment
+                    Point1="0,14.5"
+                    Point2="0,18.5"
+                    Point3="4,18.5" />
+                  <mssgle:LineSegment
+                    End="8.5,18.5" />
+                  <mssgle:CubicBezierSegment
+                    Point1="8.5,18.5"
+                    Point2="12.5,18.5"
+                    Point3="12.5,22.5" />
+                  <mssgle:LineSegment
+                    End="12.5,29.5" />
                 </mssgle:SegmentCollection>
               </mssgle:Curve.Segments>
             </mssgle:Curve>
@@ -1426,7 +2650,20 @@
     </LayoutInfo>
   </TaskHost>
   <PipelineComponentMetadata
-    design-time-name="Package\2 Extraccion a staging\Guardar en stg_clima">
+    design-time-name="Package\3 Limpieza\stg_clima">
+    <Properties>
+      <Property>
+        <Name>DataSourceViewID</Name>
+      </Property>
+      <Property>
+        <Name>TableInfoObjectType</Name>
+        <Value
+          type="q2:string">Table</Value>
+      </Property>
+    </Properties>
+  </PipelineComponentMetadata>
+  <PipelineComponentMetadata
+    design-time-name="Package\3 Limpieza\stg_clima_limpio">
     <Properties>
       <Property>
         <Name>DataSourceViewID</Name>
