@@ -10,6 +10,11 @@
 IF DB_ID(N'ClimaTec_ETL') IS NULL
     CREATE DATABASE ClimaTec_ETL;
 GO
+-- Lecturas sin bloqueo: "3 Limpieza" lee clima_limpio (vista vw_stg_limpieza)
+-- mientras el destino clima_limpio inserta con Table lock. Sin esto el Data Flow
+-- se queda detenido (ajuste 3 de ITERACIONES.md).
+ALTER DATABASE ClimaTec_ETL SET READ_COMMITTED_SNAPSHOT ON WITH ROLLBACK IMMEDIATE;
+GO
 USE ClimaTec_ETL;
 GO
 
