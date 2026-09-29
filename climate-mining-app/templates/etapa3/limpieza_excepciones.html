@@ -7,37 +7,68 @@
     <canvas class="fondo-seccion" aria-hidden="true"></canvas>
     <p class="eyebrow"><span class="paso">Etapa 3 · 04</span> ETL en SSIS</p>
     <h1>Limpieza de Datos y Excepciones</h1>
-    <p class="lede">Reglas de limpieza aplicadas en el flujo y manejo de las filas que no cumplen,
-    redirigidas a una tabla de errores para su revision.</p>
+    <p class="lede">Tratamiento de valores nulos, duplicados, formatos inconsistentes y valores
+    invalidos o atipicos en la tarea <strong>3 Limpieza</strong> del paquete SSIS. Los registros que
+    requieren revision se separan en <span class="mono">clima_revision</span>, conservando el valor
+    original y registrando el motivo.</p>
 </div>
 
 <h2>Limpieza aplicada</h2>
+<p>El Data Flow lee de staging solo las filas del lote actual y nunca modifica
+<span class="mono">stg_clima</span>: la estandarizacion crea columnas nuevas y los valores originales
+viajan intactos hasta el destino de excepciones.</p>
 <div class="tabla-wrap">
     <table>
-        <thead><tr><th>Regla</th><th>Accion</th></tr></thead>
+        <thead><tr><th>Tratamiento</th><th>Accion en SSIS</th><th>Si no cumple</th></tr></thead>
         <tbody>
-            <tr><td>Tipos</td><td><code>mes</code>/<code>anio</code> a entero, <code>valor</code> a decimal, <code>fecha</code> a fecha</td></tr>
-            <tr><td>Texto</td><td>TRIM en entidad/indicador/unidad; <code>iso_code</code> en mayusculas</td></tr>
-            <tr><td>Duplicados</td><td>Se descartan exactos y por clave logica</td></tr>
-            <tr><td>Dominio</td><td><code>anio</code> en 2020-2026; sin negativos donde no aplica</td></tr>
-            <tr><td>Atipicos</td><td>Se marcan (bandera <code>atipico</code>), no se eliminan</td></tr>
+            <tr><td>Valores nulos</td><td>Vacio &rarr; NULL. Se exigen <code>fuente</code>, <code>fuente_tipo</code>, <code>nivel_geografico</code>, <code>entidad</code>, <code>anio</code>, <code>periodicidad</code>, <code>indicador</code>, <code>valor</code>, <code>unidad</code> y <code>fecha</code>; no se imputa. <code>iso_code</code> vacio en agregados Global/Regional y <code>mes</code> vacio en series anuales son nulos por diseno y se aceptan</td><td>Revision</td></tr>
+            <tr><td>Duplicados</td><td>Exactos y por clave logica (fuente + nivel + entidad + anio + mes + indicador) dentro del lote, y claves ya cargadas en un lote anterior. Se conserva una fila y las demas se apartan indicando cual se quedo</td><td>Duplicado</td></tr>
+            <tr><td>Formatos inconsistentes</td><td>TRIM en textos; <code>iso_code</code> en mayusculas; catalogos (<code>fuente_tipo</code>, <code>nivel_geografico</code>, <code>periodicidad</code>) homologados a formato Nombre; <code>2021.0</code> &rarr; <code>2021</code>; coma decimal &rarr; punto; fecha con <code>/</code> &rarr; <code>-</code>. Tipado: <code>anio</code> SMALLINT, <code>mes</code> TINYINT, <code>valor</code> DECIMAL(18,4), <code>fecha</code> DATE. Unidad validada contra <span class="mono">cat_indicador</span></td><td>Revision / error de conversion</td></tr>
+            <tr><td>Valores invalidos</td><td><code>anio</code> en 2020-2026; <code>mes</code> en 1-12; sin negativos en indicadores que no los admiten (se conservan anomalias y variaciones); <code>fecha</code> coherente con <code>anio</code> y <code>mes</code></td><td>Revision</td></tr>
+            <tr><td>Valores atipicos</td><td>Regla 1.5&times;IQR por indicador: se <strong>marcan</strong> (<code>atipico = 1</code>) y se cargan; se agrega <code>valor_z</code></td><td>No se separan</td></tr>
         </tbody>
     </table>
 </div>
 
 <h2>Manejo de excepciones</h2>
-<p>Cada componente que puede fallar tiene su <strong>error output</strong> configurado en
-<em>Redirect Row</em>: la fila no detiene el paquete, se envia a <span class="mono">err_clima</span>
-con la columna y el motivo del rechazo.</p>
+<p>Cada fila del lote termina en <span class="mono">clima_limpio</span> o en
+<span class="mono">clima_revision</span>, nunca en ambas ni en ninguna. La <strong>Conversion de datos</strong>
+tiene su <em>error output</em> en <em>Redirect Row</em>, de modo que una fila corrupta no detiene el
+paquete; la <strong>Division condicional</strong> separa las aceptadas del resto y una <strong>Union de
+todo</strong> reune las excepciones antes del destino.</p>
 <div class="tabla-wrap">
     <table>
-        <thead><tr><th>Origen del error</th><th>Motivo</th><th>Destino</th></tr></thead>
+        <thead><tr><th>Origen de la excepcion</th><th>Regla que se registra</th><th>Destino</th></tr></thead>
         <tbody>
-            <tr><td>Data Conversion</td><td>Valor no convertible (texto en numerico)</td><td><span class="mono">err_clima</span></td></tr>
-            <tr><td>Conditional Split</td><td>Fuera de dominio (anio o negativo)</td><td><span class="mono">err_clima</span></td></tr>
-            <tr><td>Lookup</td><td>Categoria sin homologacion</td><td><span class="mono">err_clima</span></td></tr>
+            <tr><td>Clave repetida en el lote o ya cargada</td><td><code>duplicado exacto</code>, <code>duplicado por clave logica</code>, <code>clave ya cargada</code></td><td><span class="mono">DUPLICADO</span></td></tr>
+            <tr><td>Campo obligatorio vacio o nulo estructural mal ubicado</td><td><code>nulo en campo obligatorio</code>, <code>iso_code nulo en serie nacional</code>, <code>mes nulo en serie mensual</code></td><td><span class="mono">REVISION_NEGOCIO</span></td></tr>
+            <tr><td>Categoria u homologacion inconsistente</td><td><code>... fuera de catalogo</code>, <code>unidad inconsistente con el indicador</code>, <code>iso_code con formato invalido</code></td><td><span class="mono">REVISION_NEGOCIO</span></td></tr>
+            <tr><td>Fuera de dominio o incoherente</td><td><code>anio fuera de dominio</code>, <code>mes fuera de dominio</code>, <code>valor negativo no permitido</code>, <code>fecha inconsistente con anio</code></td><td><span class="mono">REVISION_NEGOCIO</span></td></tr>
+            <tr><td>Data Conversion (Redirect Row)</td><td><code>tipo de dato no convertible</code></td><td><span class="mono">ERROR_CONVERSION</span></td></tr>
         </tbody>
     </table>
+</div>
+
+<h2>Registro de la revision</h2>
+<div class="tabla-wrap">
+    <table>
+        <thead><tr><th>Columna de <span class="mono">clima_revision</span></th><th>Contenido</th></tr></thead>
+        <tbody>
+            <tr><td><code>fuente</code> ... <code>fecha</code></td><td>Las 12 columnas con el valor ORIGINAL (texto, tal cual llego al staging)</td></tr>
+            <tr><td><code>destino</code></td><td><span class="mono">DUPLICADO</span>, <span class="mono">REVISION_NEGOCIO</span> o <span class="mono">ERROR_CONVERSION</span></td></tr>
+            <tr><td><code>regla</code></td><td>La primera regla que incumple la fila</td></tr>
+            <tr><td><code>motivo</code></td><td>Explicacion legible, por ejemplo: <em>"anio 2019 fuera del rango 2020-2026."</em></td></tr>
+            <tr><td><code>IdLote</code>, <code>IdStg</code></td><td>Trazabilidad hasta la ejecucion y la fila exacta de staging</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="nota" style="margin-top:1.4rem;">
+    Con el CSV consolidado entran <strong>21.369</strong> filas y se aceptan las 21.369 (el dataset ya viene
+    depurado de la Etapa 2), con <strong>2.640</strong> atipicos marcados. Para evidenciar las excepciones se
+    usa <span class="mono">ssis/pruebas/clima_pruebas_limpieza.csv</span>: 26 recibidas = 12 aceptadas +
+    2 duplicadas + 12 en revision. En ambos casos el balance del lote cuadra
+    (<em>recibidas = aceptadas + duplicadas + revision</em>).
 </div>
 
 {% endblock %}

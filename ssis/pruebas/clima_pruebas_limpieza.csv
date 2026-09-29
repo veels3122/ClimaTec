@@ -1,0 +1,27 @@
+fuente,fuente_tipo,nivel_geografico,entidad,iso_code,anio,mes,periodicidad,indicador,valor,unidad,fecha
+Our World in Data - CO2 & GHG (Global Carbon Project),Terciaria,Nacional,Pais Prueba A,ZZA,2021,,Anual,Emisiones de CO2 (total),15.25,Mt CO2,2021-12-31
+Our World in Data - CO2 & GHG (Global Carbon Project),Terciaria,Nacional,Pais Prueba A,ZZA,2021,,Anual,Emisiones de CO2 (total),15.25,Mt CO2,2021-12-31
+Our World in Data - CO2 & GHG (Global Carbon Project),Terciaria,Nacional,Pais Prueba A,ZZA,2021,,Anual,Emisiones de CO2 (total),14.90,Mt CO2,2021-12-31
+Our World in Data - CO2 & GHG (Global Carbon Project),Terciaria,Nacional,Pais Prueba A,ZZA,2022,,Anual,Emisiones de CO2 (total),,Mt CO2,2022-12-31
+Our World in Data - CO2 & GHG (Global Carbon Project),Terciaria,Nacional,Pais Prueba A,ZZA,2023,,Anual,Emisiones de CO2 (total),abc,Mt CO2,2023-12-31
+Our World in Data - CO2 & GHG (Global Carbon Project),Terciaria,Nacional,Pais Prueba A,ZZA,2019,,Anual,Emisiones de CO2 (total),14.00,Mt CO2,2019-12-31
+Our World in Data - CO2 & GHG (Global Carbon Project),Terciaria,Nacional,Pais Prueba A,ZZA,2024,,Anual,Emisiones de CO2 (total),-5.00,Mt CO2,2024-12-31
+Our World in Data - CO2 & GHG (Global Carbon Project),Terciaria,Nacional,Pais Prueba A,ZZA,2022,,Anual,Variacion anual de CO2,-3.20,%,2022-12-31
+Our World in Data - CO2 & GHG (Global Carbon Project), Terciaria ,Nacional,  Pais Prueba B  , zzb ,2021,,Anual,Emisiones de CO2 (total),8.00,Mt CO2,2021-12-31
+Our World in Data - CO2 & GHG (Global Carbon Project),TERCIARIA,NACIONAL,Pais Prueba B,ZZB,2022,,anual,Emisiones de CO2 (total),8.20,Mt CO2,2022-12-31
+Our World in Data - CO2 & GHG (Global Carbon Project),Terciaria,Nacional,Pais Prueba C,,2021,,Anual,Emisiones de CO2 (total),10.00,Mt CO2,2021-12-31
+Our World in Data - CO2 & GHG (Global Carbon Project),Terciaria,Nacional,Pais Prueba C,ZZC,2022,,Anual,Emisiones de CO2 (total),11.00,kt CO2,2022-12-31
+Our World in Data - CO2 & GHG (Global Carbon Project),Terciaria,Nacional,Pais Prueba C,ZZC,2022,,Anual,Emisiones de azufre,11.00,Mt CO2,2022-12-31
+Our World in Data - CO2 & GHG (Global Carbon Project),Terciaria,Nacional,Pais Prueba C,ZZC,2023,,Anual,Emisiones de CO2 (total),12.00,Mt CO2,2023/12/31
+Our World in Data - CO2 & GHG (Global Carbon Project),Terciaria,Nacional,Pais Prueba C,ZZC,2024,,Anual,Emisiones de CO2 (total),13.00,Mt CO2,2023-12-31
+NASA GISS - GISTEMP (anomalia de temperatura),Primaria,Global,Global Prueba,,2021,13,Mensual,Anomalia de temperatura global,1.10,grados C (vs. base),2021-12-15
+NASA GISS - GISTEMP (anomalia de temperatura),Primaria,Global,Global Prueba,,2021,,Mensual,Anomalia de temperatura global,1.05,grados C (vs. base),2021-11-15
+NASA GISS - GISTEMP (anomalia de temperatura),Primaria,Global,Global Prueba,,2021,10.0,Mensual,Anomalia de temperatura global,1.02,grados C (vs. base),2021-10-15
+Our World in Data - CO2 & GHG (Global Carbon Project),Cuaternaria,Nacional,Pais Prueba D,ZZD,2021,,Anual,Emisiones de CO2 (total),5.00,Mt CO2,2021-12-31
+Our World in Data - CO2 & GHG (Global Carbon Project),Terciaria,Nacional,Pais Prueba D,ABCD,2022,,Anual,Emisiones de CO2 (total),6.00,Mt CO2,2022-12-31
+Our World in Data - CO2 & GHG (Global Carbon Project),Terciaria,Nacional,Pais Prueba D,ZZD,2023.0,,Anual,Emisiones de CO2 (total), 7.50 ,Mt CO2,2023-12-31
+Our World in Data - CO2 & GHG (Global Carbon Project),Terciaria,Nacional,Pais Prueba E1,ZE1,2021,,Anual,Poblacion,1000,personas,2021-12-31
+Our World in Data - CO2 & GHG (Global Carbon Project),Terciaria,Nacional,Pais Prueba E2,ZE2,2021,,Anual,Poblacion,1100,personas,2021-12-31
+Our World in Data - CO2 & GHG (Global Carbon Project),Terciaria,Nacional,Pais Prueba E3,ZE3,2021,,Anual,Poblacion,1200,personas,2021-12-31
+Our World in Data - CO2 & GHG (Global Carbon Project),Terciaria,Nacional,Pais Prueba E4,ZE4,2021,,Anual,Poblacion,1300,personas,2021-12-31
+Our World in Data - CO2 & GHG (Global Carbon Project),Terciaria,Nacional,Pais Prueba E5,ZE5,2021,,Anual,Poblacion,9999999,personas,2021-12-31
