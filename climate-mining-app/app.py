@@ -915,6 +915,33 @@ def e3_video():
     return render_template("etapa3/video_colaborativo.html", proyecto=PROYECTO)
 
 
+# ===========================================================================
+# Etapa 4 - Analisis de Datos (4 apartados)
+#   1. Dimension Poblacional
+#   2. Dimension Territorial
+#   3. Dimension Temporal
+#   4. Dimension Relacional Multidimensional
+# ===========================================================================
+@app.route("/etapa-4/dimension-poblacional")
+def e4_poblacional():
+    return render_template("etapa4/dimension_poblacional.html", proyecto=PROYECTO)
+
+
+@app.route("/etapa-4/dimension-territorial")
+def e4_territorial():
+    return render_template("etapa4/dimension_territorial.html", proyecto=PROYECTO)
+
+
+@app.route("/etapa-4/dimension-temporal")
+def e4_temporal():
+    return render_template("etapa4/dimension_temporal.html", proyecto=PROYECTO)
+
+
+@app.route("/etapa-4/dimension-relacional-multidimensional")
+def e4_relacional():
+    return render_template("etapa4/dimension_relacional.html", proyecto=PROYECTO)
+
+
 # Compatibilidad con rutas antiguas (evita 404 en enlaces previos).
 @app.route("/problema")
 def problema():
