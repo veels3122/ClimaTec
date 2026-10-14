@@ -60,20 +60,42 @@
     </table>
 </div>
 
-<h2>Variables numéricas</h2>
+{% macro num(x) -%}
+{%- if x is none -%}–
+{%- elif (x|abs) >= 1000 -%}{{ "{:,.0f}".format(x).replace(',', '.') }}
+{%- elif (x|abs) >= 10 -%}{{ "{:.1f}".format(x).replace('.', ',') }}
+{%- else -%}{{ "{:.3f}".format(x).replace('.', ',') }}
+{%- endif -%}
+{%- endmacro %}
+
+<h2>Estadísticas por indicador y unidad</h2>
+<p>La columna <code>valor</code> guarda {{ rep.n_indicadores_e2 }} indicadores en {{ rep.n_unidades_e2 }}
+unidades distintas (ppm, Mt CO2, personas, %, °C…). Un promedio global de esa columna sumaría magnitudes
+que no se pueden combinar, así que <strong>no se reporta</strong>: los estadísticos se calculan dentro de
+cada par <em>indicador · unidad</em> (función <code>estadisticas_por_indicador</code> de
+<span class="mono">scripts/limpieza.py</span>). La media se acompaña de la mediana porque, al convivir
+países pequeños con agregados mundiales, la distribución es asimétrica y la media se desplaza hacia
+los valores grandes.</p>
 <div class="tabla-wrap">
     <table>
-        <thead><tr><th>Columna</th><th>Mínimo</th><th>Máximo</th><th>Media</th><th>Desv. estándar</th></tr></thead>
+        <thead><tr><th>Indicador</th><th>Unidad</th><th>n</th><th>Mín.</th><th>Q1</th><th>Mediana</th><th>Media</th><th>Q3</th><th>Máx.</th><th>Desv. est.</th><th>Atípicos</th></tr></thead>
         <tbody>
-            {% for e in rep.est_num %}
-            <tr><td><code>{{ e.columna }}</code></td><td class="mono">{{ e.min }}</td><td class="mono">{{ e.max }}</td><td class="mono">{{ e.media }}</td><td class="mono">{{ e.desv }}</td></tr>
+            {% for e in rep.est_indicador %}
+            <tr>
+                <td>{{ e.indicador }}</td><td class="mono">{{ e.unidad }}</td>
+                <td class="mono">{{ "{:,}".format(e.n).replace(',', '.') }}</td>
+                <td class="mono">{{ num(e.min) }}</td><td class="mono">{{ num(e.q1) }}</td>
+                <td class="mono">{{ num(e.mediana) }}</td><td class="mono">{{ num(e.media) }}</td>
+                <td class="mono">{{ num(e.q3) }}</td><td class="mono">{{ num(e.max) }}</td>
+                <td class="mono">{{ num(e.desv) }}</td><td class="mono">{{ e.atipicos }}</td>
+            </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
-<p style="color:var(--ink-soft);font-size:.9rem;">La columna <code>valor</code> mezcla indicadores de
-distinta escala y unidad, por eso sus estadísticos globales son solo de referencia; para comparar se
-usa <code>valor_z</code> (z-score dentro de cada indicador).</p>
+<p style="color:var(--ink-soft);font-size:.9rem;">Notación: punto como separador de miles y coma decimal.
+Para comparar indicadores entre sí se usa <code>valor_z</code> (z-score dentro de cada indicador), que por
+construcción tiene media 0 y desviación 1 en cada indicador; por eso tampoco se reporta su promedio global.</p>
 
 <h2>Cardinalidad de categóricas</h2>
 <div class="tabla-wrap">
