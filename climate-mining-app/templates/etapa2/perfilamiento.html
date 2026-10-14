@@ -16,7 +16,13 @@
 <div class="panel animate-fade-up" style="margin-bottom: 1.5rem; animation-delay: 100ms;">
     <h2>1. Propósito del conjunto de datos</h2>
     <p>
-        El propósito principal de este conjunto de datos es consolidar registros meteorológicos e hídricos (IDEAM/NOAA) integrados con variables operacionales en sitio para alimentar el dashboard de monitoreo en tiempo real de <strong>ClimaTec</strong>. Busca detectar anomalías atmosféricas, predecir riesgos ambientales en faenas mineras y garantizar el cumplimiento de normativas de seguridad laboral y control de emisiones.
+        El conjunto consolida, en una sola tabla de hechos, indicadores de cambio climático de fuentes
+        primarias (NOAA Mauna Loa, NASA GISTEMP, NOAA GCAG), secundarias y terciarias (Our World in Data)
+        para el periodo 2020-2026. Su propósito es responder la pregunta del proyecto en
+        <strong>ClimaTec</strong>: comparar la evolución de las emisiones de CO2 y GEI, la concentración
+        atmosférica de CO2, la anomalía de temperatura y la energía en tres escalas (global, regional
+        con énfasis en Sudamérica y nacional con foco en Colombia) y relacionarla con eventos externos
+        como El Niño / La Niña y las cumbres COP.
     </p>
 </div>
 
@@ -24,10 +30,17 @@
 <div class="panel animate-fade-up" style="margin-bottom: 1.5rem; animation-delay: 125ms;">
     <h2>2. Requisitos de calidad de los datos</h2>
     <ul class="lista-limpia">
-        <li><strong>Completitud:</strong> Las variables críticas de monitoreo (temperatura, precipitación, concentración de gases) deben presentar una tasa de vacíos inferior al 5% no justificado.</li>
-        <li><strong>Consistencia:</strong> Ausencia de registros duplicados por estación o marca temporal, manteniendo coherencia dentro de rangos físicos válidos (ej. precipitación ≥ 0, valores de humedad entre 0% y 100%).</li>
-        <li><strong>Trazabilidad y Oportunidad:</strong> Marcado de tiempo estandarizado en formato ISO/datetime y asociación unívoca a cada estación de medición.</li>
+        <li><strong>Completitud:</strong> sin vacíos en las columnas esenciales (<code>fuente</code>, <code>entidad</code>, <code>indicador</code>, <code>valor</code>, <code>unidad</code>, <code>fecha</code>). Los vacíos de <code>iso_code</code> (agregados globales y regionales) y de <code>mes</code> (series anuales) son estructurales y no cuentan como faltantes.</li>
+        <li><strong>Unicidad:</strong> una sola observación por clave lógica (fuente + nivel geográfico + entidad + año + mes + indicador).</li>
+        <li><strong>Validez:</strong> años dentro de 2020-2026 y sin valores negativos en indicadores que no los admiten (emisiones, población, energía, participaciones); las anomalías de temperatura y las variaciones porcentuales sí pueden ser negativas.</li>
+        <li><strong>Consistencia:</strong> fecha, año y mes coherentes entre sí; periodicidad acorde con el mes; código ISO3 solo en el nivel nacional; una unidad por indicador y un tipo por fuente.</li>
+        <li><strong>Trazabilidad:</strong> cada observación conserva su <code>fuente</code> y su <code>fuente_tipo</code>, y el dataset se regenera con <span class="mono">scripts/preparar_datos.py</span>.</li>
     </ul>
+    {% if rep %}
+    <p style="color:var(--ink-soft);font-size:.9rem;margin-bottom:0;">Resultado actual: completitud efectiva
+    {{ rep.comp_efec_desp }}% · {{ rep.dup_exactos + rep.dup_clave }} duplicados · {{ rep.invalidos }} valores
+    fuera de dominio · {{ rep.consistencia.pct }}% de filas consistentes (detalle en el apartado 3).</p>
+    {% endif %}
 </div>
 
 {% if rep %}
