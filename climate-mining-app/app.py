@@ -23,6 +23,7 @@ from flask import Flask, render_template, redirect, url_for
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "scripts"))
 import limpieza  # noqa: E402  (perfilamiento y limpieza de la Etapa 2)
+import poblacional  # noqa: E402  (Etapa 4 - Dimension Poblacional)
 
 app = Flask(__name__)
 
@@ -943,7 +944,13 @@ def e3_video():
 # ===========================================================================
 @app.route("/etapa-4/dimension-poblacional")
 def e4_poblacional():
-    return render_template("etapa4/dimension_poblacional.html", proyecto=PROYECTO)
+    # Se analiza el dataset limpio (Etapa 2/3); si no estuviera disponible, el consolidado.
+    base = DF_LIMPIO if DF_LIMPIO is not None else DF
+    try:
+        info = poblacional.construir(base)
+    except Exception:
+        info = None
+    return render_template("etapa4/dimension_poblacional.html", proyecto=PROYECTO, info=info)
 
 
 @app.route("/etapa-4/dimension-territorial")
