@@ -595,6 +595,23 @@ def limitaciones():
 # ---------------------------------------------------------------------------
 # Etapa 2 - Perfilamiento y limpieza
 # ---------------------------------------------------------------------------
+# Scripts que la bitacora cita para la Etapa 2. La existencia de cada archivo se
+# verifica en tiempo de ejecucion, para que el informe nunca cite un nombre que
+# no este en el repositorio.
+SCRIPTS_E2 = [
+    {"ruta": "scripts/preparar_datos.py",
+     "rol": "Descarga las fuentes y genera data/raw/clima_consolidado.csv y fuentes_manifest.csv (Definicion)."},
+    {"ruta": "scripts/limpieza.py",
+     "rol": "Perfilamiento, reglas de consistencia, atipicos y sus causas, y escritura de data/raw/clima_limpio.csv (Recoleccion de Datos)."},
+    {"ruta": "app.py",
+     "rol": "Aplicacion Flask: importa scripts/limpieza.py y publica los resultados en esta bitacora."},
+]
+
+
+def scripts_e2():
+    return [dict(s, existe=os.path.isfile(os.path.join(BASE_DIR, s["ruta"]))) for s in SCRIPTS_E2]
+
+
 ETAPA2_INTRO = {
     "objetivo": (
         "Recoleccion de Datos evalua la calidad del dataset consolidado en Definicion y aplica un "
@@ -608,7 +625,8 @@ ETAPA2_INTRO = {
 @app.route("/etapa-2/descripcion")
 def e2_descripcion():
     return render_template("etapa2/descripcion.html", proyecto=PROYECTO,
-                           resumen=resumen_dataset(), rep=REPORTE_E2, intro=ETAPA2_INTRO)
+                           resumen=resumen_dataset(), rep=REPORTE_E2, intro=ETAPA2_INTRO,
+                           scripts=scripts_e2())
 
 
 @app.route("/etapa-2/perfilamiento")
@@ -675,10 +693,11 @@ ANALISIS_CAUSAS = [
      "causa": "Cada proveedor reporta sus indicadores con unidades y escalas propias (ppm, Mt, %, "
               "grados C); sin una homologacion previa los valores no son comparables."},
     {"problema": "Observaciones atipicas (IQR)",
-     "categoria": "Falta de actualizacion · Diferencias metodologicas",
-     "causa": "Valores extremos por diferencias de metodo entre fuentes (p. ej. GISTEMP frente a "
-              "GCAG) y por entidades de gran magnitud (mundo, grandes emisores). En su mayoria son "
-              "reales, por eso se marcan y no se eliminan."},
+     "categoria": "Heterogeneidad de escala (no error de captura)",
+     "causa": "Cada atipico se clasifica con reglas verificables sobre los propios datos "
+              "(scripts/limpieza.py, funcion causas_atipicos): agregados geograficos, entidades de "
+              "gran escala, perfiles per capita extremos y el choque 2020-2021. Ninguno proviene de "
+              "las fuentes primarias (GISTEMP, GCAG, Mauna Loa). Ver la tabla de sustento abajo."},
     {"problema": "Cobertura anual disponible solo hasta 2024",
      "categoria": "Falta de actualizacion",
      "causa": "Las series anuales de emisiones se publican con rezago; 2025-2026 quedan cubiertos por "

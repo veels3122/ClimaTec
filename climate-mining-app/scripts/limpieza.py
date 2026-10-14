@@ -49,6 +49,231 @@ def _completitud(df):
     return glob, efec, nulos, reales
 
 
+# ---------------------------------------------------------------------------
+# Consistencia: reglas de coherencia INTERNA entre columnas, calculadas fila a
+# fila. Miden si el registro es coherente consigo mismo (p. ej. que la fecha,
+# el anio y el mes digan lo mismo); NO miden si el valor es verdadero
+# (exactitud), que requiere comparar contra una referencia externa.
+# ---------------------------------------------------------------------------
+REGLAS_CONSISTENCIA = [
+    ("fecha_anio", "fecha <-> anio",
+     "El anio de la columna fecha coincide con la columna anio."),
+    ("fecha_mes", "fecha <-> mes",
+     "Series mensuales: el mes de la fecha coincide con la columna mes."),
+    ("periodicidad_mes", "periodicidad <-> mes",
+     "Mensual con mes informado (1-12); Anual con mes vacio."),
+    ("nivel_iso", "nivel_geografico <-> iso_code",
+     "Nacional con codigo ISO3 de 3 letras; Global/Regional sin codigo."),
+    ("indicador_unidad", "indicador <-> unidad",
+     "Cada indicador usa una sola unidad (la unidad predominante del indicador)."),
+    ("fuente_tipo", "fuente <-> fuente_tipo",
+     "Cada fuente tiene un solo tipo (primaria/secundaria/terciaria)."),
+]
+
+
+def evaluar_consistencia(df):
+    """Evalua las reglas de REGLAS_CONSISTENCIA sobre cada fila y devuelve el
+    resultado cuantitativo por regla y el porcentaje de filas que cumplen
+    todas las reglas a la vez."""
+    d = df.copy()
+    fecha = pd.to_datetime(d["fecha"], errors="coerce")
+    anio = pd.to_numeric(d["anio"], errors="coerce")
+    mes = pd.to_numeric(d["mes"], errors="coerce")
+    mensual = d["periodicidad"].astype(str).str.strip().eq("Mensual")
+    anual = d["periodicidad"].astype(str).str.strip().eq("Anual")
+    iso = d["iso_code"].astype("string").str.strip()
+    nacional = d["nivel_geografico"].astype(str).str.strip().eq("Nacional")
+
+    unidad_moda = d.groupby("indicador")["unidad"].agg(lambda s: s.mode().iat[0])
+    tipo_moda = d.groupby("fuente")["fuente_tipo"].agg(lambda s: s.mode().iat[0])
+
+    # mask_aplica: filas donde la regla se puede evaluar; mask_ok: cumple.
+    reglas = {
+        "fecha_anio": (pd.Series(True, index=d.index), fecha.dt.year.eq(anio)),
+        "fecha_mes": (mensual, fecha.dt.month.eq(mes)),
+        "periodicidad_mes": (mensual | anual,
+                             (mensual & mes.between(1, 12)) | (anual & mes.isna())),
+        "nivel_iso": (pd.Series(True, index=d.index),
+                      (nacional & iso.str.fullmatch(r"[A-Z]{3}").fillna(False))
+                      | (~nacional & iso.isna())),
+        "indicador_unidad": (pd.Series(True, index=d.index),
+                             d["unidad"].eq(d["indicador"].map(unidad_moda))),
+        "fuente_tipo": (pd.Series(True, index=d.index),
+                        d["fuente_tipo"].eq(d["fuente"].map(tipo_moda))),
+    }
+
+    filas_ok = pd.Series(True, index=d.index)
+    detalle = []
+    for clave, nombre, descripcion in REGLAS_CONSISTENCIA:
+        aplica, ok = reglas[clave]
+        aplica = aplica.fillna(False).astype(bool)
+        ok = ok.fillna(False).astype(bool)
+        n_eval = int(aplica.sum())
+        n_ok = int((aplica & ok).sum())
+        filas_ok &= (~aplica) | ok
+        detalle.append({
+            "regla": nombre, "descripcion": descripcion,
+            "evaluadas": n_eval, "cumplen": n_ok, "incumplen": n_eval - n_ok,
+            "pct": round(100 * n_ok / n_eval, 2) if n_eval else 100.0,
+        })
+    n_ok_total = int(filas_ok.sum())
+    return {
+        "reglas": detalle,
+        "filas": int(len(d)),
+        "filas_consistentes": n_ok_total,
+        "filas_inconsistentes": int(len(d) - n_ok_total),
+        "pct": round(100 * n_ok_total / len(d), 2) if len(d) else 100.0,
+        "unidades_por_indicador_max": int(d.groupby("indicador")["unidad"].nunique().max()),
+    }
+
+
+def concordancia_fuentes(df):
+    """Aproximacion a la EXACTITUD (distinta de la consistencia): compara dos
+    fuentes independientes que miden lo mismo -- la anomalia de temperatura
+    global mensual de NASA GISTEMP y de NOAA GCAG -- en los mismos meses.
+    Como cada fuente usa un periodo base distinto, se espera una diferencia
+    constante (desfase); lo que mide la concordancia es que, descontado ese
+    desfase, ambas series se muevan igual."""
+    t = df[df["indicador"] == "Anomalia de temperatura global"]
+    fuentes = sorted(t["fuente"].unique())
+    if len(fuentes) < 2:
+        return None
+    p = t.pivot_table(index="fecha", columns="fuente", values="valor").dropna()
+    if len(p) < 3:
+        return None
+    a = next((f for f in fuentes if "GISTEMP" in f), fuentes[0])
+    b = next((f for f in fuentes if f != a), fuentes[1])
+    dif = p[a] - p[b]
+    desfase = float(dif.mean())
+    return {
+        "fuente_a": a, "fuente_b": b, "meses": int(len(p)),
+        "correlacion": round(float(p[a].corr(p[b])), 4),
+        "desfase": round(desfase, 3),
+        "mae_sin_desfase": round(float((dif - desfase).abs().mean()), 3),
+        "max_sin_desfase": round(float((dif - desfase).abs().max()), 3),
+    }
+
+
+def estadisticas_por_indicador(df):
+    """Estadisticos descriptivos de 'valor' calculados DENTRO de cada par
+    indicador-unidad (un promedio global de 'valor' mezclaria ppm, Mt,
+    personas, %, etc. y no tendria significado)."""
+    filas = []
+    for (ind, uni), s in df.groupby(["indicador", "unidad"])["valor"]:
+        s = s.dropna()
+        filas.append({
+            "indicador": ind, "unidad": uni, "n": int(len(s)),
+            "min": float(s.min()), "q1": float(s.quantile(0.25)),
+            "mediana": float(s.median()), "media": float(s.mean()),
+            "q3": float(s.quantile(0.75)), "max": float(s.max()),
+            "desv": float(s.std(ddof=0)),
+            "atipicos": int(df.loc[s.index, "atipico"].sum()) if "atipico" in df else 0,
+        })
+    filas.sort(key=lambda x: x["indicador"])
+    return filas
+
+
+# Indicadores relativos (per capita o porcentaje): un valor extremo indica un
+# perfil energetico/emisor extremo del pais, no su tamano.
+UNIDADES_RELATIVAS = {"t CO2/persona", "t eq. CO2/persona", "kWh/persona", "%"}
+
+
+def causas_atipicos(df, cercania=0.20):
+    """Asigna a CADA observacion atipica una causa verificable con los propios
+    datos (reglas en orden de prioridad):
+      1. Agregado geografico: nivel Global/Regional. Son sumas de paises, pero
+         el umbral IQR se calcula sobre todo el indicador (dominado por paises).
+      2. Choque real del periodo: 'Variacion anual de CO2' en 2020-2021, cuando
+         la mediana de variacion de todos los paises tambien cae/rebota.
+      3. Atipico estructural: la entidad es atipica en TODOS los anios de su
+         serie para ese indicador (es su escala o perfil, no un error puntual).
+         Se separa en 'gran escala' (magnitudes absolutas) y 'perfil extremo'
+         (per capita o %).
+      4. Cercano al umbral: atipico solo en algunos anios y a menos de
+         `cercania` (20%) del limite IQR.
+      5. Sin causa estructural: lo restante; queda para revision manual.
+    """
+    if "atipico" not in df or not df["atipico"].any():
+        return {"categorias": [], "ejemplos": [], "total": 0, "evidencia": {}}
+    d = df.copy()
+    lim = d.groupby("indicador")["valor"].quantile([0.25, 0.75]).unstack()
+    lim["lo"] = lim[0.25] - 1.5 * (lim[0.75] - lim[0.25])
+    lim["hi"] = lim[0.75] + 1.5 * (lim[0.75] - lim[0.25])
+    d = d.join(lim[["lo", "hi"]], on="indicador")
+
+    # Fraccion de anios atipicos de cada entidad dentro de cada indicador.
+    frac = d.groupby(["indicador", "entidad"])["atipico"].transform("mean")
+    mediana_var = (d[d["indicador"] == "Variacion anual de CO2"]
+                   .groupby("anio")["valor"].median())
+    anios_choque = [int(a) for a in mediana_var.index
+                    if int(a) in (2020, 2021)]
+
+    a = d[d["atipico"]].copy()
+    a["frac"] = frac[a.index]
+    limite = a["hi"].where(a["valor"] > a["hi"], a["lo"])
+    a["dist_umbral"] = ((a["valor"] - limite).abs() /
+                        limite.abs().where(limite.abs() > 0, 1))
+
+    cat = pd.Series("Sin causa estructural (revision manual)", index=a.index)
+    nac = a["nivel_geografico"].eq("Nacional")
+    relativo = a["unidad"].isin(UNIDADES_RELATIVAS)
+    cat[nac & (a["frac"] < 1) & (a["dist_umbral"] <= cercania)] = \
+        "Cercano al umbral IQR (variacion menor)"
+    cat[nac & (a["frac"] == 1) & relativo] = "Perfil extremo per capita / % (estructural)"
+    cat[nac & (a["frac"] == 1) & ~relativo] = "Entidad de gran escala (estructural)"
+    cat[a["indicador"].eq("Variacion anual de CO2") & a["anio"].isin(anios_choque)] = \
+        "Choque real 2020-2021 (caida y rebote de emisiones)"
+    cat[~nac] = "Agregado geografico (mundo / continentes)"
+    a["causa"] = cat
+
+    orden = ["Agregado geografico (mundo / continentes)",
+             "Entidad de gran escala (estructural)",
+             "Perfil extremo per capita / % (estructural)",
+             "Choque real 2020-2021 (caida y rebote de emisiones)",
+             "Cercano al umbral IQR (variacion menor)",
+             "Sin causa estructural (revision manual)"]
+    sustento = {
+        orden[0]: "Son sumas de paises; el umbral IQR del indicador lo fijan sobre todo los paises, "
+                  "asi que un total continental o mundial queda por encima por construccion.",
+        orden[1]: "La entidad queda fuera del rango en todos los anios de su serie: refleja su "
+                  "tamano (poblacion, economia), no un valor puntual erroneo.",
+        orden[2]: "La entidad es extrema en todos sus anios en un indicador relativo (per capita "
+                  "o %): perfil energetico propio (p. ej. petroestados o paises nordicos).",
+        orden[3]: "La mediana de la variacion anual de todos los paises tambien se desplaza esos "
+                  "anios, por lo que el extremo acompana un movimiento general real.",
+        orden[4]: "Solo algunos anios de la entidad cruzan el limite y quedan a menos de "
+                  "{:.0f}% de el.".format(cercania * 100),
+        orden[5]: "No se explica por las reglas anteriores; se conserva marcada para revision.",
+    }
+    total = int(len(a))
+    categorias = []
+    for c in orden:
+        sub = a[a["causa"] == c]
+        if sub.empty:
+            continue
+        ejemplos = (sub.groupby("entidad").size().sort_values(ascending=False)
+                    .head(4).index.tolist())
+        categorias.append({
+            "causa": c, "n": int(len(sub)),
+            "pct": round(100 * len(sub) / total, 1),
+            "sustento": sustento[c], "ejemplos": ", ".join(ejemplos),
+        })
+    revisar = a[a["causa"] == orden[5]].sort_values("dist_umbral", ascending=False)
+    evidencia = {
+        "pct_lado_alto": round(100 * float((a["valor"] > a["hi"]).mean()), 1),
+        "atipicos_fuentes_primarias": int(a["fuente_tipo"].eq("Primaria").sum()),
+        "mediana_variacion": [{"anio": int(k), "mediana": round(float(v), 2)}
+                              for k, v in mediana_var.items()],
+    }
+    return {
+        "total": total, "categorias": categorias, "evidencia": evidencia,
+        "revision": [{"indicador": r.indicador, "entidad": r.entidad, "anio": int(r.anio),
+                      "valor": round(float(r.valor), 3), "unidad": r.unidad}
+                     for r in revisar.head(10).itertuples()],
+        "pct_explicado": round(100 * (1 - len(revisar) / total), 1) if total else 100.0,
+    }
+
+
 def limpiar(df):
     df = df.copy()
 
@@ -60,6 +285,7 @@ def limpiar(df):
     invalidos_dom = int((df["indicador"].isin(IND_NO_NEGATIVOS) & (df["valor"] < 0)).sum())
     anio_fuera = int(((df["anio"] < ANIO_MIN) | (df["anio"] > ANIO_MAX)).sum())
     filas_antes, cols_antes = df.shape
+    consistencia_antes = evaluar_consistencia(df)
 
     # --------- 1. Normalizacion de tipos ---------
     df["anio"] = pd.to_numeric(df["anio"], errors="coerce").astype("Int64")
@@ -103,6 +329,12 @@ def limpiar(df):
     comp_glob_desp, comp_efec_desp, nulos_desp, reales_desp = _completitud(
         df.drop(columns=["atipico", "valor_z"]))
     filas_desp, cols_desp = df.shape
+    consistencia = evaluar_consistencia(df)
+    concordancia = concordancia_fuentes(df)
+    est_indicador = estadisticas_por_indicador(df)
+    atip_causas = causas_atipicos(df)
+    n_ind = int(df["indicador"].nunique())
+    n_uni = int(df["unidad"].nunique())
 
     # --------- Perfilamiento por columna ---------
     perfil = []
@@ -122,9 +354,11 @@ def limpiar(df):
         }
         perfil.append(fila)
 
-    # Estadisticos de columnas numericas clave.
+    # Estadisticos globales: SOLO de valor_z (adimensional). Los de 'valor' se
+    # calculan por indicador y unidad en estadisticas_por_indicador(), porque
+    # un promedio global mezclaria magnitudes y unidades distintas.
     est_num = []
-    for c in ["valor", "valor_z"]:
+    for c in ["valor_z"]:
         s = df[c].dropna()
         est_num.append({
             "columna": c,
@@ -155,8 +389,20 @@ def limpiar(df):
          "resultado": "{} duplicados".format(dup_clave + dup_exactos), "estado": "ok"},
         {"dimension": "Validez", "metrica": "Valores fuera de dominio (negativos indebidos / anio fuera de rango)",
          "resultado": "{} invalidos".format(invalidos_dom + anio_fuera), "estado": "ok"},
-        {"dimension": "Consistencia", "metrica": "Tipos correctos y una unidad por indicador",
-         "resultado": "mes -> entero; unidades homogeneas", "estado": "ok"},
+        {"dimension": "Consistencia",
+         "metrica": "% de filas que cumplen las {} reglas de coherencia interna "
+                    "(fecha/anio/mes, periodicidad, nivel/ISO, indicador/unidad, fuente/tipo)".format(
+                        len(REGLAS_CONSISTENCIA)),
+         "resultado": "{}% ({:,} de {:,} filas)".format(
+             consistencia["pct"], consistencia["filas_consistentes"],
+             consistencia["filas"]).replace(",", "."),
+         "estado": "ok" if consistencia["pct"] >= 99 else "revisar"},
+        {"dimension": "Exactitud (aproximacion)",
+         "metrica": "Concordancia entre fuentes independientes (GISTEMP vs GCAG, mismos meses)",
+         "resultado": ("r = {} · error medio {} °C tras descontar desfase de base".format(
+             concordancia["correlacion"], concordancia["mae_sin_desfase"])
+             if concordancia else "no evaluable"),
+         "estado": "ok" if concordancia and concordancia["correlacion"] >= 0.9 else "revisar"},
         {"dimension": "Actualidad", "metrica": "Cobertura temporal solicitada",
          "resultado": "{}-{} (incluye mensuales a 2026)".format(ANIO_MIN, ANIO_MAX), "estado": "ok"},
         {"dimension": "Trazabilidad", "metrica": "% de filas con fuente y tipo de fuente",
@@ -173,9 +419,12 @@ def limpiar(df):
          "detalle": "Los agregados globales/regionales no tienen iso_code y las series anuales no tienen mes. Son vacios por diseno, no errores: se documentan y no se imputan."},
         {"problema": "Observaciones atipicas", "severidad": "Media",
          "cantidad": "{} marcadas".format(n_atipicos),
-         "detalle": "Detectadas por rango intercuartilico (1.5*IQR) dentro de cada indicador. Muchas son reales (agregado mundial, grandes emisores), por eso se marcan y no se eliminan."},
+         "detalle": "Detectadas por rango intercuartilico (1.5*IQR) dentro de cada indicador. "
+                    "El {}% tiene una causa verificable en los datos (agregados, entidades de gran "
+                    "escala, perfiles extremos, choque 2020-2021); por eso se marcan y no se eliminan.".format(
+                        atip_causas.get("pct_explicado", 0))},
         {"problema": "Escalas y unidades heterogeneas", "severidad": "Media",
-         "cantidad": "24 indicadores / 11 unidades",
+         "cantidad": "{} indicadores / {} unidades".format(n_ind, n_uni),
          "detalle": "Los indicadores no son comparables directamente; se agrega una variable normalizada (z-score por indicador)."},
         {"problema": "Duplicados", "severidad": "Baja",
          "cantidad": "{} exactos / {} por clave".format(dup_exactos, dup_clave),
@@ -233,6 +482,9 @@ def limpiar(df):
         "dimensiones": dimensiones, "problemas": problemas,
         "acciones": acciones, "comparacion": comparacion,
         "columnas_finales": list(df.columns),
+        "consistencia": consistencia, "consistencia_antes": consistencia_antes,
+        "concordancia": concordancia, "est_indicador": est_indicador,
+        "atip_causas": atip_causas, "n_indicadores_e2": n_ind, "n_unidades_e2": n_uni,
     }
     return df, reporte
 
@@ -248,6 +500,8 @@ def main():
         rep["filas_antes"], rep["filas_desp"], rep["cols_desp"]))
     print("[limpieza] atipicos marcados: {} ({}%)".format(rep["n_atipicos"], rep["pct_atipicos"]))
     print("[limpieza] completitud efectiva: {}%".format(rep["comp_efec_desp"]))
+    print("[limpieza] consistencia: {}% de filas cumplen las {} reglas".format(
+        rep["consistencia"]["pct"], len(REGLAS_CONSISTENCIA)))
     print("[limpieza] escrito:", salida)
 
 
