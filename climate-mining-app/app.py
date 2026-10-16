@@ -24,6 +24,8 @@ from flask import Flask, render_template, redirect, url_for
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "scripts"))
 import limpieza  # noqa: E402  (perfilamiento y limpieza de la Etapa 2)
 import poblacional  # noqa: E402  (Etapa 4 - Dimension Poblacional)
+import pandas as pd
+import plotly.express as px
 
 app = Flask(__name__)
 
@@ -958,28 +960,32 @@ def e4_territorial():
     return render_template("etapa4/dimension_territorial.html", proyecto=PROYECTO)
 
 
+
+
 @app.route('/etapa-4/dimension-temporal', endpoint='e4_temporal')
 def e4_temporal():
-    # 1. Cargar o simular el dataframe agrupado por tiempo (2020 - 2026)
-    # Reemplaza esto con la carga de tu CSV/dataset de minería de datos si aplica
+    # Rango de fechas mensual (72 períodos exactos entre 2020 y finales de 2025)
+    fechas = pd.date_range(start='2020-01-01', end='2025-12-31', freq='ME')
+    n = len(fechas)
+
     df_temporal = pd.DataFrame({
-        'Fecha': pd.date_range(start='2020-01-01', end='2026-01-01', freq='ME'),
-        'Temperatura (°C)': [18 + (i % 6) * 0.9 for i in range(73)],
-        'CO2 (ppm)': [390 + (i * 1.5) for i in range(73)],
-        'Humedad (%)': [65 + (i % 4) * 2 for i in range(73)]
+        'Fecha': fechas,
+        'Temperatura (°C)': [18 + (i % 6) * 0.9 for i in range(n)],
+        'CO2 (ppm)': [390 + (i * 1.5) for i in range(n)],
+        'Humedad (%)': [65 + (i % 4) * 2 for i in range(n)]
     })
 
-    # 2. Crear gráfica interactiva de Plotly alineada con la paleta de ClimaTec
+    # Gráfico Plotly
     fig = px.line(
         df_temporal, 
         x='Fecha', 
         y=['Temperatura (°C)', 'CO2 (ppm)', 'Humedad (%)'],
+        markers=True,  # <--- Agrega puntos visibles en cada mes/período
         title="Evolución Mensual y Multianual (2020 - 2026)",
         labels={'value': 'Medición / Concentración', 'variable': 'Indicador'},
         color_discrete_sequence=['#0dcaf0', '#ffc107', '#0d6efd']
     )
 
-    # Estilizado transparente/oscuro
     fig.update_layout(
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
@@ -990,7 +996,6 @@ def e4_temporal():
         yaxis=dict(gridcolor='rgba(255,255,255,0.05)')
     )
 
-    # 3. Convertir a HTML
     grafica_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
 
     return render_template(
