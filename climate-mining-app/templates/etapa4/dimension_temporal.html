@@ -270,4 +270,54 @@
     </div>
 </section>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAnio = document.getElementById('temp-f-anio');
+    const selectIndicador = document.getElementById('temp-f-indicador');
+    const btnReset = document.getElementById('temp-f-reset');
+
+    function aplicarFiltros() {
+        const valAnio = selectAnio.value;
+        const valInd = selectIndicador.value;
+
+        // 1. Obtener contenedores de las gráficas de Plotly
+        const divG1 = document.querySelector('#temp-viz-1 .plotly-graph-div');
+        const divG2 = document.querySelector('#temp-viz-2 .plotly-graph-div');
+        const divG3 = document.querySelector('#temp-viz-3 .plotly-graph-div');
+
+        // 2. Filtrar ejes X (Rango de Años) en la Visualización 1
+        if (divG1) {
+            let xRango = null;
+            if (valAnio === '2020-2022') xRango = ['2020-01-01', '2022-12-31'];
+            else if (valAnio === '2023-2025') xRango = ['2023-01-01', '2025-12-31'];
+
+            Plotly.relayout(divG1, {
+                'xaxis.autorange': xRango ? false : true,
+                'xaxis.range': xRango
+            });
+
+            // 3. Ocultar/Mostrar trazos según el Indicador seleccionado
+            // Trazo 0: Temperatura, Trazo 1: CO2, Trazo 2: Humedad
+            let vis = [true, true, true];
+            if (valInd === 'temp') vis = [true, false, false];
+            else if (valInd === 'co2') vis = [false, true, false];
+            else if (valInd === 'hum') vis = [false, false, true];
+
+            Plotly.restyle(divG1, { visible: vis });
+        }
+    }
+
+    if (selectAnio) selectAnio.addEventListener('change', aplicarFiltros);
+    if (selectIndicador) selectIndicador.addEventListener('change', aplicarFiltros);
+
+    if (btnReset) {
+        btnReset.addEventListener('click', function() {
+            selectAnio.value = 'todos';
+            selectIndicador.value = 'todos';
+            aplicarFiltros();
+        });
+    }
+});
+</script>
+
 {% endblock %}
