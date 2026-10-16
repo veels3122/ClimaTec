@@ -1,18 +1,52 @@
-{% extends 'base.html' %}
-{% block titulo %}Etapa 4 · Dimension Temporal · ClimaTec{% endblock %}
-{% block contenido %}
+<!-- INICIO DIMENSIÓN TEMPORAL - INTEGRANTE 3 -->
+<div class="row g-4 mt-2">
+  <!-- Tarjeta Resumen Contextual -->
+  <div class="col-12">
+    <div class="p-4 rounded-4" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(10px);">
+      <h4 class="text-white fw-bold mb-2">Comportamiento Temporal (2020 - 2026)</h4>
+      <p class="text-secondary mb-0">
+        Evolución histórica y patrones estacionales de los indicadores ambientales ($CO_2$, $CO$, $CH_4$, Temperatura y Humedad) registrados en los centros de monitoreo.
+      </p>
+    </div>
+  </div>
 
-<div class="page-hero acento-cold animate-fade-down">
-    <div class="fondo-foto-tinte" aria-hidden="true"></div>
-    <canvas class="fondo-seccion" aria-hidden="true"></canvas>
-    <p class="eyebrow"><span class="paso">Etapa 4 · 03</span> Analisis de Datos</p>
-    <h1>Dimension Temporal</h1>
-    <p class="lede">Analisis del dataset en el tiempo: evolucion de los indicadores climaticos durante la ventana 2020-2026, con series anuales y mensuales.</p>
+  <!-- Gráfica Principal / Contenedor de Métricas -->
+  <div class="col-lg-8">
+    <div class="p-4 rounded-4 h-100" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="text-white fw-bold m-0">Serie de Tiempo Anual y Mensual</h5>
+        <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 px-3 py-2">Ventana 2020-2026</span>
+      </div>
+      
+      <!-- Contenedor para el gráfico de Plotly / Chart.js -->
+      {% if grafica_temporal %}
+        {{ grafica_temporal | safe }}
+      {% else %}
+        <div id="graficaTemporal" style="width: 100%; height: 380px;"></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Indicadores / Hallazgos Clave -->
+  <div class="col-lg-4">
+    <div class="p-4 rounded-4 h-100" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);">
+      <h5 class="text-white fw-bold mb-3">Patrones e Hitos</h5>
+      
+      <div class="mb-3 p-3 rounded-3" style="background: rgba(255, 255, 255, 0.02); border-left: 4px solid #0dcaf0;">
+        <span class="text-info small fw-bold d-block mb-1">TENDENCIA MULTIANUAL</span>
+        <p class="text-light small mb-0">Variación progresiva en las concentraciones de gases con picos registrados entre los períodos 2022 y 2024.</p>
+      </div>
+
+      <div class="mb-3 p-3 rounded-3" style="background: rgba(255, 255, 255, 0.02); border-left: 4px solid #ffc107;">
+        <span class="text-warning small fw-bold d-block mb-1">CICLICIDAD MENSUAL</span>
+        <p class="text-light small mb-0">Comportamiento estacional marcado en los meses de mayor humedad y fluctuación térmica.</p>
+      </div>
+
+      <div class="p-3 rounded-3" style="background: rgba(255, 255, 255, 0.02); border-left: 4px solid #0d6efd;">
+        <span class="text-primary small fw-bold d-block mb-1">MUESTREO Y REGISTRO</span>
+        <p class="text-light small mb-0">Consolidado histórico ajustado al intervalo de observación definido para la Etapa 4.</p>
+      </div>
+    </div>
+  </div>
 </div>
-
-<div class="nota" style="margin-top:1.4rem;">
-    <strong>Contenido:</strong> pendiente de desarrollar. En este apartado se publicara el analisis de la
-    dimension temporal del proyecto ({{ proyecto.integrantes | join(' · ') }}).
-</div>
-
-{% endblock %}
+<!-- FIN DIMENSIÓN TEMPORAL -->
