@@ -964,29 +964,22 @@ def e4_territorial():
 
 @app.route('/etapa-4/dimension-temporal', endpoint='e4_temporal')
 def e4_temporal():
-    # Rango de fechas mensual (72 períodos exactos entre 2020 y finales de 2025)
+    # 1. Crear dataset temporal continuo (72 meses)
     fechas = pd.date_range(start='2020-01-01', end='2025-12-31', freq='ME')
     n = len(fechas)
 
     df_temporal = pd.DataFrame({
         'Fecha': fechas,
+        'Año': fechas.year,
+        'Mes_Nombre': fechas.strftime('%b'),
+        'Mes_Num': fechas.month,
         'Temperatura (°C)': [18 + (i % 6) * 0.9 for i in range(n)],
         'CO2 (ppm)': [390 + (i * 1.5) for i in range(n)],
         'Humedad (%)': [65 + (i % 4) * 2 for i in range(n)]
     })
 
-    # Gráfico Plotly
-    fig = px.line(
-        df_temporal, 
-        x='Fecha', 
-        y=['Temperatura (°C)', 'CO2 (ppm)', 'Humedad (%)'],
-        markers=True,  # <--- Agrega puntos visibles en cada mes/período
-        title="Evolución Mensual y Multianual (2020 - 2026)",
-        labels={'value': 'Medición / Concentración', 'variable': 'Indicador'},
-        color_discrete_sequence=['#0dcaf0', '#ffc107', '#0d6efd']
-    )
-
-    fig.update_layout(
+    # Estilo base reutilizable para el layout Dark Mode de ClimaTec
+    layout_dark = dict(
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
         font=dict(color='#e0e0e0', family="sans-serif"),
@@ -996,12 +989,55 @@ def e4_temporal():
         yaxis=dict(gridcolor='rgba(255,255,255,0.05)')
     )
 
-    grafica_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
+    # VISUALIZACIÓN 1: Serie Histórica Multianual (Line Chart con Marcadores)
+    fig1 = px.line(
+        df_temporal, 
+        x='Fecha', 
+        y=['Temperatura (°C)', 'CO2 (ppm)', 'Humedad (%)'],
+        markers=True,
+        title="Evolución Continua Multianual de Indicadores Ambientales (2020 - 2025)",
+        labels={'value': 'Medición / Concentración', 'variable': 'Indicador'},
+        color_discrete_sequence=['#0dcaf0', '#ffc107', '#0d6efd']
+    )
+    fig1.update_layout(**layout_dark)
+
+    # VISUALIZACIÓN 2: Ciclicidad Estacional Mensual Promedio (Bar Chart)
+    df_mes = df_temporal.groupby(['Mes_Num', 'Mes_Nombre'], as_index=False)[['Temperatura (°C)', 'CO2 (ppm)', 'Humedad (%)']].mean()
+    fig2 = px.bar(
+        df_mes,
+        x='Mes_Nombre',
+        y='Temperatura (°C)',
+        title="Promedio Estacional de Temperatura por Mes (Ciclicidad Anual)",
+        labels={'Mes_Nombre': 'Mes del Año', 'Temperatura (°C)': 'Temp Promedio (°C)'},
+        color='Temperatura (°C)',
+        color_continuous_scale='Reds'
+    )
+    fig2.update_layout(**layout_dark)
+
+    # VISUALIZACIÓN 3: Comparativa Interanual de CO2 (Area Chart)
+    df_anio = df_temporal.groupby('Año', as_index=False)['CO2 (ppm)'].mean()
+    fig3 = px.area(
+        df_anio,
+        x='Año',
+        y='CO2 (ppm)',
+        markers=True,
+        title="Crecimiento y Acumulado Interanual Promedio de CO2 (2020 - 2025)",
+        labels={'Año': 'Año de Monitoreo', 'CO2 (ppm)': 'Concentración CO2 (ppm)'},
+        color_discrete_sequence=['#ffc107']
+    )
+    fig3.update_layout(**layout_dark)
+
+    # Exportar gráficas a HTML inyectable
+    grafica1_html = fig1.to_html(full_html=False, include_plotlyjs='cdn')
+    grafica2_html = fig2.to_html(full_html=False, include_plotlyjs=False)
+    grafica3_html = fig3.to_html(full_html=False, include_plotlyjs=False)
 
     return render_template(
         'etapa4/dimension_temporal.html',
         proyecto=PROYECTO,
-        grafica_temporal=grafica_html
+        grafica1=grafica1_html,
+        grafica2=grafica2_html,
+        grafica3=grafica3_html
     )
 @app.route("/etapa-4/dimension-relacional-multidimensional")
 def e4_relacional():
