@@ -1,400 +1,901 @@
-{% extends 'base.html' %}
-{% block titulo %}Etapa 4 · Dimensión Temporal · ClimaTec{% endblock %}
-{% block contenido %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ClimaTec · Dimensión Temporal</title>
 
-<div class="page-hero acento-cold animate-fade-down">
-    <div class="fondo-foto-tinte" aria-hidden="true"></div>
-    <canvas class="fondo-seccion" aria-hidden="true"></canvas>
-    <p class="eyebrow"><span class="paso">Etapa 4 · 03</span> Análisis de Datos</p>
+<!-- ═════════════ BLOQUE 0 · LIBRERÍAS (si tu base.html ya carga Plotly y las fuentes, omite estas 4 líneas) ═════════════ -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Newsreader:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+
+<!-- ═════════════ BLOQUE 1 · CSS (pégalo en tu hoja de estilos o en <style>) ═════════════ -->
+<style>
+  /* Todo el módulo vive bajo .tm  → no choca con el resto de tu página */
+  .tm{
+    --tm-bg-card: rgba(255,255,255,.055);
+    --tm-bg-card-2: rgba(8,18,26,.55);
+    --tm-border: rgba(255,255,255,.12);
+    --tm-text: #eaf2f5;
+    --tm-muted: #9db4bd;
+    --tm-cyan: #4dd0e1;
+    --tm-red: #ff6b4a;
+    --tm-amber: #fbbf24;
+    --tm-blue: #3b82f6;
+    --tm-temp: #22d3ee;
+    --tm-co2: #fbbf24;
+    --tm-hum: #3b82f6;
+    --tm-sticky-top: 12px;          /* ← si tu navbar es fija, pon aquí su alto (ej. 84px) */
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--tm-text);
+    max-width: 1180px; margin: 0 auto; padding: 0 20px 80px;
+    line-height: 1.55;
+  }
+  .tm *{ box-sizing: border-box; }
+  .tm h2,.tm h3{ font-family:'Newsreader',Georgia,serif; font-weight:600; margin:0; letter-spacing:-.01em; }
+  .tm .tm-eyebrow{ font:500 11px/1 'JetBrains Mono',monospace; letter-spacing:.16em; text-transform:uppercase; color:var(--tm-cyan); margin:0 0 10px; }
+  .tm .tm-eyebrow.red{ color:var(--tm-red); } .tm .tm-eyebrow.amber{ color:var(--tm-amber); }
+  .tm .tm-sec{ margin-top:56px; scroll-margin-top:90px; }
+  .tm .tm-sec > h2{ font-size:30px; margin-bottom:8px; }
+  .tm .tm-lead{ color:var(--tm-muted); max-width:760px; margin:0 0 20px; font-size:15px; }
+  .tm .tm-lead b{ color:var(--tm-text); }
+  .tm .tm-card{ background:var(--tm-bg-card); border:1px solid var(--tm-border); border-radius:16px; backdrop-filter: blur(8px); }
+
+  /* ── Navegación por secciones ── */
+  .tm .tm-nav{ display:flex; flex-wrap:wrap; gap:8px; margin:28px 0 0; }
+  .tm .tm-nav a{ display:inline-flex; align-items:center; gap:8px; padding:7px 14px 7px 8px; border-radius:999px; border:1px solid var(--tm-border); color:var(--tm-muted); text-decoration:none; font-size:13px; background:rgba(255,255,255,.04); transition:.15s; }
+  .tm .tm-nav a:hover{ color:#fff; border-color:rgba(255,255,255,.3); }
+  .tm .tm-nav a i{ font:700 11px/1 'JetBrains Mono',monospace; font-style:normal; width:22px; height:22px; display:grid; place-items:center; border-radius:50%; background:rgba(255,255,255,.12); color:#fff; }
+
+  /* ── Barra de filtros (fija al hacer scroll) ── */
+  .tm .tm-filters{ position:sticky; top:var(--tm-sticky-top); z-index:30; padding:16px 18px; background:rgba(10,22,30,.82); backdrop-filter: blur(14px); box-shadow:0 10px 30px rgba(0,0,0,.35); }
+  .tm .tm-filters-grid{ display:grid; grid-template-columns: 1.7fr 1fr 1.2fr auto; gap:18px 24px; align-items:start; }
+  .tm .tm-flabel{ font:500 11px/1 'JetBrains Mono',monospace; letter-spacing:.12em; text-transform:uppercase; color:var(--tm-muted); margin-bottom:9px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .tm .tm-flabel button{ all:unset; cursor:pointer; color:var(--tm-cyan); font-size:11px; letter-spacing:.04em; text-transform:none; }
+  .tm .tm-flabel button:hover{ text-decoration:underline; }
+  .tm .tm-chips{ display:flex; flex-wrap:wrap; gap:6px; }
+  .tm .tm-chip{ all:unset; cursor:pointer; padding:7px 13px; border-radius:10px; border:1px solid var(--tm-border); background:rgba(255,255,255,.05); font:600 13px/1 'Inter',sans-serif; color:var(--tm-muted); transition:.15s; user-select:none; }
+  .tm .tm-chip:hover{ color:#fff; border-color:rgba(255,255,255,.35); }
+  .tm .tm-chip[aria-pressed="true"]{ background:linear-gradient(135deg, rgba(77,208,225,.30), rgba(77,208,225,.12)); border-color:var(--tm-cyan); color:#fff; box-shadow:0 0 0 1px rgba(77,208,225,.25) inset; }
+  .tm .tm-chip:focus-visible,.tm .tm-btn:focus-visible,.tm .tm-seg button:focus-visible{ outline:2px solid var(--tm-cyan); outline-offset:2px; }
+  .tm .tm-presets{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .tm .tm-presets .tm-chip{ font-weight:500; font-size:12px; padding:5px 10px; border-style:dashed; }
+  .tm .tm-seg{ display:flex; border:1px solid var(--tm-border); border-radius:10px; overflow:hidden; background:rgba(255,255,255,.04); }
+  .tm .tm-seg button{ all:unset; flex:1; text-align:center; cursor:pointer; padding:8px 6px; font:600 12.5px/1.1 'Inter',sans-serif; color:var(--tm-muted); border-right:1px solid var(--tm-border); transition:.15s; white-space:nowrap; }
+  .tm .tm-seg button:last-child{ border-right:0; }
+  .tm .tm-seg button:hover{ color:#fff; background:rgba(255,255,255,.06); }
+  .tm .tm-seg button[aria-pressed="true"]{ color:#06141b; background:var(--tm-cyan); }
+  .tm .tm-seg button[data-ind="temp"][aria-pressed="true"]{ background:var(--tm-temp); }
+  .tm .tm-seg button[data-ind="co2"][aria-pressed="true"]{ background:var(--tm-co2); }
+  .tm .tm-seg button[data-ind="hum"][aria-pressed="true"]{ background:var(--tm-hum); color:#fff; }
+  .tm .tm-btn{ all:unset; cursor:pointer; padding:9px 16px; border-radius:10px; border:1px solid var(--tm-border); background:rgba(255,255,255,.07); color:#fff; font:600 13px/1 'Inter',sans-serif; transition:.15s; white-space:nowrap; text-align:center; }
+  .tm .tm-btn:hover{ background:rgba(255,255,255,.14); }
+  .tm .tm-btn.primary{ background:var(--tm-cyan); color:#06141b; border-color:var(--tm-cyan); }
+  .tm .tm-btn.primary:hover{ filter:brightness(1.1); }
+  .tm .tm-summary{ margin-top:14px; padding-top:12px; border-top:1px solid var(--tm-border); display:flex; flex-wrap:wrap; gap:8px 16px; align-items:center; font-size:13px; color:var(--tm-muted); }
+  .tm .tm-summary b{ color:#fff; font-weight:600; }
+  .tm .tm-pill{ font:500 11px/1 'JetBrains Mono',monospace; padding:5px 9px; border-radius:999px; background:rgba(77,208,225,.14); color:var(--tm-cyan); border:1px solid rgba(77,208,225,.3); }
+  .tm .tm-pill.warn{ background:rgba(251,191,36,.12); color:var(--tm-amber); border-color:rgba(251,191,36,.35); }
+
+  /* ── KPIs ── */
+  .tm .tm-kpis{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+  .tm .tm-kpi{ padding:20px; transition:opacity .25s, transform .25s; }
+  .tm .tm-kpi.dim{ opacity:.45; }
+  .tm .tm-kpi .v{ font:700 40px/1.1 'JetBrains Mono',monospace; margin:2px 0 6px; letter-spacing:-.02em; }
+  .tm .tm-kpi .l{ font-size:13px; color:#cfe0e6; font-weight:500; }
+  .tm .tm-kpi .d{ font-size:12.5px; color:var(--tm-muted); margin-top:10px; padding-top:10px; border-top:1px solid var(--tm-border); }
+  .tm .c-cyan{ color:var(--tm-cyan);} .tm .c-red{ color:var(--tm-red);} .tm .c-amber{ color:var(--tm-amber);} .tm .c-white{ color:#fff;} .tm .c-green{ color:#4ade80; }
+
+  /* ── Tarjetas de visualización ── */
+  .tm .tm-viz{ padding:22px 22px 8px; margin-bottom:26px; }
+  .tm .tm-viz-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:12px; }
+  .tm .tm-viz-head h3{ font-size:24px; }
+  .tm .tm-viz-head p{ margin:4px 0 0; color:var(--tm-muted); font-size:13px; }
+  .tm .tm-toggle{ display:inline-flex; align-items:center; gap:8px; font-size:12.5px; color:var(--tm-muted); cursor:pointer; user-select:none; }
+  .tm .tm-toggle input{ accent-color:var(--tm-cyan); width:16px; height:16px; }
+  .tm .tm-plot{ background:var(--tm-bg-card-2); border:1px solid var(--tm-border); border-radius:12px; padding:6px; min-height:380px; }
+  .tm .tm-interp{ margin:16px 0 14px; padding:14px 4px 6px; border-top:1px solid var(--tm-border); }
+  .tm .tm-interp .t{ font:600 11px/1 'JetBrains Mono',monospace; letter-spacing:.12em; text-transform:uppercase; color:var(--tm-amber); margin-bottom:8px; }
+  .tm .tm-interp .b{ font-size:14.5px; color:#d6e4e9; }
+  .tm .tm-interp .b b{ color:#fff; }
+  .tm .tm-interp .tag{ color:var(--tm-amber); font-weight:600; }
+  .tm .tm-note{ font-size:12px; color:var(--tm-muted); margin:6px 2px 10px; font-style:italic; }
+  .tm .tm-flash{ animation: tmFlash .7s ease; }
+  @keyframes tmFlash{ 0%{ background:rgba(77,208,225,.20);} 100%{ background:transparent;} }
+
+  /* ── Tablas ── */
+  .tm .tm-table-wrap{ overflow-x:auto; border:1px solid var(--tm-border); border-radius:12px; background:var(--tm-bg-card-2); }
+  .tm table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  .tm th{ text-align:left; padding:12px 14px; font:600 11.5px/1 'Inter',sans-serif; letter-spacing:.06em; text-transform:uppercase; color:#cfe0e6; background:rgba(255,255,255,.07); white-space:nowrap; user-select:none; }
+  .tm th.sortable{ cursor:pointer; } .tm th.sortable:hover{ color:#fff; }
+  .tm th .arr{ opacity:.35; margin-left:5px; font-size:10px; } .tm th.sorted .arr{ opacity:1; color:var(--tm-cyan); }
+  .tm td{ padding:10px 14px; border-top:1px solid rgba(255,255,255,.07); white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .tm td.num{ font-family:'JetBrains Mono',monospace; font-size:13px; }
+  .tm tbody tr:hover td{ background:rgba(255,255,255,.04); }
+  .tm tfoot td{ background:rgba(255,255,255,.07); font-weight:600; border-top:1px solid var(--tm-border); }
+  .tm td.hot{ color:var(--tm-red); font-weight:600; }
+  .tm td.up{ color:var(--tm-red);} .tm td.down{ color:#4ade80; }
+  .tm .tm-tools{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; margin:0 0 12px; }
+  .tm .tm-search{ all:unset; box-sizing:border-box; padding:9px 14px; border-radius:10px; border:1px solid var(--tm-border); background:rgba(0,0,0,.25); color:#fff; font-size:13px; min-width:230px; }
+  .tm .tm-search:focus{ border-color:var(--tm-cyan); }
+  .tm .tm-pager{ display:flex; gap:10px; align-items:center; justify-content:flex-end; margin-top:12px; font-size:13px; color:var(--tm-muted); }
+  .tm .tm-pager .tm-btn{ padding:7px 12px; } .tm .tm-pager .tm-btn[disabled]{ opacity:.35; pointer-events:none; }
+  .tm .tm-empty{ padding:28px; text-align:center; color:var(--tm-muted); }
+  .tm .tm-tablecard{ padding:22px; margin-bottom:26px; }
+  .tm .tm-tablecard h3{ font-size:22px; margin-bottom:4px; }
+  .tm .tm-tablecard > p{ margin:0 0 14px; color:var(--tm-muted); font-size:13px; }
+
+  /* ── Conocimientos ── */
+  .tm .tm-k{ padding:22px 24px 10px; margin-bottom:22px; }
+  .tm .tm-k-head{ display:flex; align-items:center; gap:14px; margin-bottom:12px; }
+  .tm .tm-k-head .n{ width:34px; height:34px; border-radius:9px; display:grid; place-items:center; background:var(--tm-cyan); color:#06141b; font:700 15px/1 'JetBrains Mono',monospace; flex:none; }
+  .tm .tm-k-head h3{ font-size:22px; }
+  .tm .tm-k-ctx{ font-size:12px; color:var(--tm-muted); margin:-4px 0 10px 48px; }
+  .tm .tm-row{ display:grid; grid-template-columns:150px 1fr; gap:16px; padding:13px 0; border-top:1px solid var(--tm-border); font-size:14px; }
+  .tm .tm-row .k{ font:500 11px/1.5 'JetBrains Mono',monospace; letter-spacing:.1em; text-transform:uppercase; color:var(--tm-cyan); padding-top:2px; }
+  .tm .tm-row .v{ color:#dbe8ec; } .tm .tm-row .v b{ color:#fff; }
+  .tm .tm-row.dynamic .k::after{ content:" ●"; color:var(--tm-amber); font-size:8px; vertical-align:middle; }
+  .tm .tm-legend-dyn{ font-size:12px; color:var(--tm-muted); margin:0 0 16px; }
+  .tm .tm-legend-dyn span{ color:var(--tm-amber); }
+
+  /* ── Limitación / Decisión ── */
+  .tm .tm-two{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  .tm .tm-box{ padding:24px; } .tm .tm-box h3{ font-size:22px; margin-bottom:10px; } .tm .tm-box p{ margin:0 0 10px; font-size:14.5px; color:#d6e4e9; }
+  .tm .tm-verdict{ display:inline-block; font:600 12px/1 'JetBrains Mono',monospace; padding:6px 10px; border-radius:8px; margin:4px 0 12px; }
+  .tm .tm-verdict.ok{ background:rgba(74,222,128,.14); color:#4ade80; border:1px solid rgba(74,222,128,.4); }
+  .tm .tm-verdict.mid{ background:rgba(251,191,36,.12); color:var(--tm-amber); border:1px solid rgba(251,191,36,.4); }
+  .tm .tm-verdict.bad{ background:rgba(255,107,74,.14); color:var(--tm-red); border:1px solid rgba(255,107,74,.4); }
+
+  /* ── Variables (sección 3) ── */
+  .tm .tm-quote{ border-left:3px solid var(--tm-red); padding:18px 22px; font:italic 500 19px/1.5 'Newsreader',serif; }
+  .tm .tm-tag{ font:500 11px/1 'JetBrains Mono',monospace; padding:4px 8px; border-radius:6px; background:rgba(77,208,225,.16); color:var(--tm-cyan); }
+  .tm .tm-tag.t{ background:rgba(251,191,36,.18); color:var(--tm-amber); }
+
+  /* ── Responsive ── */
+  @media (max-width:980px){
+    .tm .tm-filters{ position:static; }
+    .tm .tm-filters-grid{ grid-template-columns:1fr 1fr; }
+    .tm .tm-kpis{ grid-template-columns:1fr 1fr; }
+    .tm .tm-two{ grid-template-columns:1fr; }
+  }
+  @media (max-width:620px){
+    .tm .tm-filters-grid,.tm .tm-kpis{ grid-template-columns:1fr; }
+    .tm .tm-row{ grid-template-columns:1fr; gap:4px; }
+    .tm .tm-k-ctx{ margin-left:0; }
+    .tm .tm-sec > h2{ font-size:25px; }
+  }
+  @media (prefers-reduced-motion:reduce){ .tm *{ animation:none !important; transition:none !important; } }
+
+  /* ── Solo para esta vista independiente (borra si ya tienes tu fondo/navbar) ── */
+  body{ margin:0; background:radial-gradient(1200px 600px at 10% 0%, #17495a 0%, transparent 60%), radial-gradient(900px 600px at 100% 30%, #6b2a22 0%, transparent 60%), #0b1820; background-attachment:fixed; min-height:100vh; }
+  .tm-hero{ padding:70px 0 10px; } .tm-hero h1{ font:600 clamp(40px,6vw,64px)/1.05 'Newsreader',serif; margin:10px 0 14px; color:#fff; }
+  .tm-hero p{ color:var(--tm-muted,#9db4bd); max-width:760px; font-size:16px; margin:0; }
+  .tm-badge{ font:700 11px/1 'JetBrains Mono',monospace; padding:6px 10px; border-radius:999px; background:rgba(77,208,225,.25); color:#fff; letter-spacing:.14em; }
+</style>
+</head>
+
+<body>
+<!-- ═════════════ BLOQUE 2 · HTML (pega esto en tu plantilla Jinja, p. ej. dimension_temporal.html) ═════════════ -->
+<main class="tm" id="temporal-module">
+
+  <!-- (Opcional: ya lo tienes en tu página) Hero + secciones 1-3 -->
+  <header class="tm-hero">
+    <span class="tm-badge">ETAPA 4 · 03</span>
     <h1>Dimensión Temporal</h1>
-    <p class="lede">Análisis del dataset en el tiempo: evolución multianual, estacionalidad mensual e hitos históricos de los indicadores ambientales (CO₂, CO, CH₄, Temperatura y Humedad) durante la ventana 2020-2025.</p>
-</div>
+    <p>Análisis del dataset en el tiempo: evolución multianual, estacionalidad mensual y hitos de los indicadores ambientales durante la ventana 2020-2025.</p>
+  </header>
 
-{# Index de navegación interna #}
-<nav class="pob-indice animate-fade-up" aria-label="Contenido de la dimensión" style="animation-delay:120ms;">
-    <a href="#temp-titulo"><span>1</span> Título</a>
-    <a href="#temp-pregunta"><span>2</span> Pregunta</a>
-    <a href="#temp-variables"><span>3</span> Variables</a>
-    <a href="#temp-indicadores"><span>4</span> Indicadores</a>
-    <a href="#temp-filtros"><span>5</span> Filtros</a>
-    <a href="#temp-visualizaciones"><span>6</span> Visualizaciones</a>
-    <a href="#temp-conocimientos"><span>7</span> Conocimientos</a>
-    <a href="#temp-limitacion"><span>8</span> Limitación</a>
-    <a href="#temp-decision"><span>9</span> Decisión</a>
-</nav>
+  <nav class="tm-nav" aria-label="Secciones">
+    <a href="#tm-s1"><i>1</i>Título</a><a href="#tm-s2"><i>2</i>Pregunta</a><a href="#tm-s3"><i>3</i>Variables</a>
+    <a href="#tm-s4"><i>4</i>Filtros</a><a href="#tm-s5"><i>5</i>Indicadores</a><a href="#tm-s6"><i>6</i>Visualizaciones</a>
+    <a href="#tm-s7"><i>7</i>Conocimientos</a><a href="#tm-s8"><i>8</i>Limitación</a><a href="#tm-s9"><i>9</i>Decisión</a>
+  </nav>
 
-{# 1. Título & 2. Pregunta de análisis #}
-<section class="pob-bloque" id="temp-titulo">
-    <p class="pob-kicker">1 · Título de la dimensión</p>
+  <section class="tm-sec" id="tm-s1">
+    <p class="tm-eyebrow">1 · Título de la dimensión</p>
     <h2>Evolución temporal y patrones estacionales del monitoreo climático</h2>
-    <p>Esta dimensión describe la dinámica de las concentraciones de gases contaminantes y variables térmicas a lo largo del tiempo, identificando tendencias sostenidas, comportamientos cíclicos estacionales y períodos críticos en las estaciones de monitoreo durante los años <strong>2020 a 2025</strong> (72 meses continuos).</p>
-</section>
+    <p class="tm-lead">Describe la dinámica de las concentraciones de gases contaminantes y variables térmicas a lo largo del tiempo, identificando tendencias sostenidas, comportamientos cíclicos estacionales y períodos críticos durante <b>2020 a 2025</b> (72 meses continuos).</p>
+  </section>
 
-<section class="pob-bloque" id="temp-pregunta">
-    <p class="pob-kicker">2 · Pregunta de análisis</p>
-    <blockquote>¿Cómo han evolucionado los indicadores ambientales a lo largo de la ventana temporal 2020-2025 y qué patrones estacionales caracterizan su comportamiento en períodos comparables?</blockquote>
-    <p class="pob-mini">Ejes de análisis evaluados:</p>
-    <div class="pob-chips">
-        <a class="chip" href="#temp-viz-1">Tendencia histórica multianual</a>
-        <a class="chip" href="#temp-viz-2">Ciclicidad estacional mensual</a>
-        <a class="chip" href="#temp-viz-3">Crecimiento acumulado interanual</a>
-        <a class="chip" href="#temp-conocimientos">Anomalías y picos en Q3</a>
-    </div>
-</section>
+  <section class="tm-sec" id="tm-s2">
+    <p class="tm-eyebrow">2 · Pregunta de análisis</p>
+    <div class="tm-card tm-quote">¿Cómo han evolucionado los indicadores ambientales a lo largo de la ventana temporal 2020-2025 y qué patrones estacionales caracterizan su comportamiento en períodos comparables?</div>
+  </section>
 
-{# 3. Variables utilizadas #}
-<section class="pob-bloque" id="temp-variables">
-    <p class="pob-kicker">3 · Descripción de las variables utilizadas</p>
+  <section class="tm-sec" id="tm-s3">
+    <p class="tm-eyebrow">3 · Descripción de las variables utilizadas</p>
     <h2>Variables del análisis temporal</h2>
-    <div class="tabla-wrap">
-        <table>
-            <thead>
-                <tr>
-                    <th>Variable</th>
-                    <th>Tipo</th>
-                    <th>Qué aporta a esta dimensión</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td class="mono">Fecha / Año / Mes</td>
-                    <td><span class="tag tmp">Temporal</span></td>
-                    <td>Eje cronológico ordenado para agrupar, secuenciar y calcular métricas en períodos comparables.</td>
-                </tr>
-                <tr>
-                    <td class="mono">Temperatura (°C)</td>
-                    <td><span class="tag num">Numérica</span></td>
-                    <td>Monitoreo de variaciones térmicas interanuales y contraste durante el verano regional.</td>
-                </tr>
-                <tr>
-                    <td class="mono">CO2 (ppm)</td>
-                    <td><span class="tag num">Numérica</span></td>
-                    <td>Medición cuantitativa del crecimiento acumulado de gases de efecto invernadero en la atmósfera.</td>
-                </tr>
-                <tr>
-                    <td class="mono">Humedad (%)</td>
-                    <td><span class="tag num">Numérica</span></td>
-                    <td>Indicador de correlación inversamente proporcional respecto a la temperatura en épocas secas.</td>
-                </tr>
-            </tbody>
-        </table>
+    <div class="tm-table-wrap" style="margin-top:14px"><table>
+      <thead><tr><th>Variable</th><th>Tipo</th><th>Qué aporta a esta dimensión</th></tr></thead>
+      <tbody>
+        <tr><td class="num c-cyan">Fecha / Año / Mes</td><td><span class="tm-tag t">Temporal</span></td><td>Eje cronológico ordenado para agrupar, secuenciar y calcular métricas en períodos comparables.</td></tr>
+        <tr><td class="num c-cyan">Temperatura (°C)</td><td><span class="tm-tag">Numérica</span></td><td>Monitoreo de variaciones térmicas interanuales y contraste durante el verano regional.</td></tr>
+        <tr><td class="num c-cyan">CO₂ (ppm)</td><td><span class="tm-tag">Numérica</span></td><td>Medición cuantitativa del crecimiento acumulado de gases de efecto invernadero en la atmósfera.</td></tr>
+        <tr><td class="num c-cyan">Humedad (%)</td><td><span class="tm-tag">Numérica</span></td><td>Indicador de correlación inversamente proporcional respecto a la temperatura en épocas secas.</td></tr>
+      </tbody></table></div>
+  </section>
+
+  <!-- ═══════════ 4 · FILTROS (ahora ANTES de los indicadores, y fijos al hacer scroll) ═══════════ -->
+  <section class="tm-sec" id="tm-s4">
+    <p class="tm-eyebrow">4 · Filtros interactivos (segmentadores)</p>
+    <h2>Controla la ventana de tiempo y la variable</h2>
+    <p class="tm-lead">Todo lo que ves debajo —indicadores, gráficas, tablas, conocimientos, limitación y decisión— <b>se recalcula con cada filtro</b>. La barra se mantiene visible mientras haces scroll.</p>
+
+    <div class="tm-card tm-filters" id="tm-filters">
+      <div class="tm-filters-grid">
+        <div>
+          <div class="tm-flabel"><span>Años (selecciona uno o varios)</span></div>
+          <div class="tm-chips" id="tm-years" role="group" aria-label="Años"></div>
+          <div class="tm-presets" id="tm-presets"></div>
+        </div>
+        <div>
+          <div class="tm-flabel"><span>Trimestre</span></div>
+          <div class="tm-chips" id="tm-quarters" role="group" aria-label="Trimestres"></div>
+          <div class="tm-presets"><button class="tm-chip" type="button" id="tm-q-all" aria-pressed="false">Todo el año</button></div>
+        </div>
+        <div>
+          <div class="tm-flabel"><span>Indicador ambiental</span></div>
+          <div class="tm-seg" id="tm-ind" role="group" aria-label="Indicador">
+            <button type="button" data-ind="all"  aria-pressed="true">Todos</button>
+            <button type="button" data-ind="temp" aria-pressed="false">Temp.</button>
+            <button type="button" data-ind="co2"  aria-pressed="false">CO₂</button>
+            <button type="button" data-ind="hum"  aria-pressed="false">Humedad</button>
+          </div>
+        </div>
+        <div style="align-self:end">
+          <button class="tm-btn" type="button" id="tm-reset">↺ Restablecer</button>
+        </div>
+      </div>
+      <div class="tm-summary" id="tm-summary" aria-live="polite"></div>
     </div>
-</section>
+  </section>
 
-{# 4. Indicadores DAX / KPIs #}
-<section class="pob-bloque" id="temp-indicadores">
-    <p class="pob-kicker">4 · Indicadores temporales clave (DAX / Medidas)</p>
-    <h2>Tres indicadores representativos del período</h2>
+  <!-- ═══════════ 5 · INDICADORES (reaccionan al filtro) ═══════════ -->
+  <section class="tm-sec" id="tm-s5">
+    <p class="tm-eyebrow">5 · Indicadores temporales clave (DAX / medidas)</p>
+    <h2>Indicadores representativos del período filtrado</h2>
+    <p class="tm-lead">Se calculan únicamente con los meses que cumplen los filtros de arriba.</p>
+    <div class="tm-kpis" id="tm-kpis"></div>
+  </section>
 
-    <div class="grid grid-3 pob-ind">
-        <div class="panel stat cold">
-            <div class="valor">72</div>
-            <div class="etiqueta">Meses monitoreados</div>
-            <p class="pob-ind-sub">Ventana de observación continua sin interrupciones (2020 - 2025).</p>
-        </div>
-        <div class="panel stat warm">
-            <div class="valor">+25.3%</div>
-            <div class="etiqueta">Variación interanual CO₂</div>
-            <p class="pob-ind-sub">Incremento absoluto registrado entre el promedio de 2020 (398 ppm) y 2025 (498 ppm).</p>
-        </div>
-        <div class="panel stat">
-            <div class="valor">Trimestre 3</div>
-            <div class="etiqueta">Ventana de temperatura máxima</div>
-            <p class="pob-ind-sub">Pico térmico recurrente registrado históricamente entre los meses de julio y septiembre.</p>
-        </div>
+  <!-- ═══════════ 6 · VISUALIZACIONES ═══════════ -->
+  <section class="tm-sec" id="tm-s6">
+    <p class="tm-eyebrow">6 · Visualizaciones dinámicas</p>
+    <h2>Gráficas y evidencia tabular generadas desde el dataset</h2>
+    <p class="tm-lead">Gráficas vectoriales con <b>Plotly Engine</b>: usa la barra flotante para zoom, selección o descarga. Cada una trae su interpretación, que se reescribe con los filtros.</p>
+
+    <article class="tm-card tm-viz">
+      <div class="tm-viz-head">
+        <div><p class="tm-eyebrow red" style="margin:0 0 6px">Visualización 1 · Serie histórica continua</p>
+          <h3>Evolución multianual de variables climáticas</h3>
+          <p id="tm-v1-sub"></p></div>
+        <label class="tm-toggle"><input type="checkbox" id="tm-trend" checked> Mostrar línea de tendencia</label>
+      </div>
+      <div class="tm-plot" id="tm-plot1"></div>
+      <div class="tm-interp"><div class="t" id="tm-i1-t"></div><div class="b" id="tm-i1-b"></div></div>
+    </article>
+
+    <article class="tm-card tm-viz">
+      <div class="tm-viz-head">
+        <div><p class="tm-eyebrow red" style="margin:0 0 6px">Visualización 2 · Perfil estacional</p>
+          <h3 id="tm-v2-title"></h3><p id="tm-v2-sub"></p></div>
+      </div>
+      <div class="tm-plot" id="tm-plot2"></div>
+      <div class="tm-interp"><div class="t" id="tm-i2-t"></div><div class="b" id="tm-i2-b"></div></div>
+    </article>
+
+    <article class="tm-card tm-viz">
+      <div class="tm-viz-head">
+        <div><p class="tm-eyebrow red" style="margin:0 0 6px">Visualización 3 · Evolución interanual</p>
+          <h3 id="tm-v3-title"></h3><p id="tm-v3-sub"></p></div>
+      </div>
+      <div class="tm-plot" id="tm-plot3"></div>
+      <div class="tm-interp"><div class="t" id="tm-i3-t"></div><div class="b" id="tm-i3-b"></div></div>
+    </article>
+
+    <div class="tm-card tm-tablecard">
+      <h3>Tabla 1 · Resumen anual</h3>
+      <p>Promedios por año dentro del filtro y variación frente al año anterior.</p>
+      <div class="tm-table-wrap" id="tm-annual"></div>
     </div>
-</section>
 
-{# 5. Filtros Interactivos #}
-<section class="pob-bloque" id="temp-filtros">
-    <div class="pob-filtros panel" id="pob-filtros" role="group" aria-label="Filtros interactivos temporales">
-        <div class="pob-filtros-tit">
-            <span class="pob-kicker" style="margin:0;">5 · Filtros interactivos (Segmentadores)</span>
-            <span class="pob-mini">Controlan la ventana de tiempo y las variables dinámicas del informe.</span>
-        </div>
-        <div class="pob-filtros-campos">
-            <label class="pob-campo">
-                <span>Filtro 1 · Rango de Años</span>
-                <select id="temp-f-anio">
-                    <option value="todos">Todos los Años (2020 - 2025)</option>
-                    <option value="2020-2022">Primer Trienio (2020 - 2022)</option>
-                    <option value="2023-2025">Segundo Trienio (2023 - 2025)</option>
-                </select>
-            </label>
-            <label class="pob-campo">
-                <span>Filtro 2 · Indicador Ambiental</span>
-                <select id="temp-f-indicador">
-                    <option value="todos">Todos los Indicadores</option>
-                    <option value="co2">Solo CO₂ (ppm)</option>
-                    <option value="temp">Solo Temperatura (°C)</option>
-                    <option value="hum">Solo Humedad (%)</option>
-                </select>
-            </label>
-            <button type="button" class="pob-reset" id="temp-f-reset">Restablecer Filtros</button>
-        </div>
+    <div class="tm-card tm-tablecard">
+      <h3>Tabla 2 · Registros mensuales</h3>
+      <p>Evidencia fila a fila del filtro activo. Ordena con clic en el encabezado, busca por mes o año, y exporta a CSV.</p>
+      <div class="tm-tools">
+        <input class="tm-search" id="tm-search" type="search" placeholder="Buscar: «jul», «2023», «T3»…" aria-label="Buscar en la tabla">
+        <button class="tm-btn primary" type="button" id="tm-csv">⬇ Exportar CSV del filtro</button>
+      </div>
+      <div class="tm-table-wrap" id="tm-monthly"></div>
+      <div class="tm-pager"><span id="tm-pageinfo"></span>
+        <button class="tm-btn" type="button" id="tm-prev">← Anterior</button>
+        <button class="tm-btn" type="button" id="tm-next">Siguiente →</button></div>
     </div>
-</section>
+  </section>
 
-{# 6. Visualizaciones Dinámicas (Plotly) #}
-<section class="pob-bloque" id="temp-visualizaciones">
-    <p class="pob-kicker">6 · Visualizaciones dinámicas</p>
-    <h2>Tres visualizaciones generadas desde el dataset</h2>
-    <p>Visualizaciones interactivas vectoriales generadas con <strong>Plotly Engine</strong>. Utiliza la barra flotante para hacer zoom, seleccionar períodos, aislar variables o examinar detalles pasando el cursor.</p>
+  <!-- ═══════════ 7 · CONOCIMIENTOS ═══════════ -->
+  <section class="tm-sec" id="tm-s7">
+    <p class="tm-eyebrow">7 · Conocimientos evidentes</p>
+    <h2>Tres conocimientos extraídos del análisis temporal</h2>
+    <p class="tm-lead">Estructura metodológica de 8 puntos. Las filas marcadas con <span style="color:var(--tm-amber)">●</span> se recalculan con los datos del filtro activo.</p>
+    <p class="tm-legend-dyn" id="tm-kctx"></p>
+    <div id="tm-knowledge"></div>
+  </section>
 
-    <!-- Visualización 1 -->
-    <article class="panel pob-viz mb-4" id="temp-viz-1">
-        <header>
-            <p class="pob-viz-num">Visualización 1 · Serie Histórica Continua</p>
-            <h3>Evolución multianual de variables climáticas</h3>
-            <p class="pob-mini">Tendencia mes a mes de las tres variables térmicas y de gases contaminantes en el intervalo 2020-2025.</p>
-        </header>
-        <div class="p-3 my-2" style="background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-            {{ grafica1 | safe }}
-        </div>
-        <div class="pob-interp">
-            <h4>7 · Interpretación (Visualización 1)</h4>
-            <p>Se evidencia una tendencia marcadamente ascendente y lineal en los niveles de CO₂, pasando de 390 ppm a inicios de 2020 a rozar los 500 ppm a finales de 2025. Mientras tanto, la Temperatura y la Humedad mantienen patrones estacionales oscilantes y estables en torno a sus medias.</p>
-        </div>
-    </article>
-
-    <!-- Visualización 2 -->
-    <article class="panel pob-viz mb-4" id="temp-viz-2">
-        <header>
-            <p class="pob-viz-num">Visualización 2 · Ciclicidad Estacional</p>
-            <h3>Comportamiento promedio de la temperatura por mes</h3>
-            <p class="pob-mini">Promedio histórico mensual acumulado para identificar el comportamiento estacional dentro de cada año.</p>
-        </header>
-        <div class="p-3 my-2" style="background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-            {{ grafica2 | safe }}
-        </div>
-        <div class="pob-interp">
-            <h4>7 · Interpretación (Visualización 2)</h4>
-            <p>La gráfica de barras refleja con claridad un pico estacional durante el tercer trimestre (julio, agosto y septiembre), donde las temperaturas promedio alcanzan los niveles más altos del año (~22.5°C), diferenciándose del primer trimestre donde la temperatura media desciende a 18°C.</p>
-        </div>
-    </article>
-
-    <!-- Visualización 3 -->
-    <article class="panel pob-viz mb-4" id="temp-viz-3">
-        <header>
-            <p class="pob-viz-num">Visualización 3 · Crecimiento Interanual</p>
-            <h3>Acumulado interanual de la concentración de CO₂</h3>
-            <p class="pob-mini">Comparativa de medias anuales de concentración para evaluar el crecimiento persistente del contaminante.</p>
-        </header>
-        <div class="p-3 my-2" style="background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-            {{ grafica3 | safe }}
-        </div>
-        <div class="pob-interp">
-            <h4>7 · Interpretación (Visualización 3)</h4>
-            <p>El gráfico de área confirma un ritmo de acumulación constante e ininterrumpido del CO₂ interanual, incrementando aproximadamente 18 ppm por cada año transcurrido, respaldando la necesidad de aplicar políticas preventivas sostenidas.</p>
-        </div>
-    </article>
-</section>
-
-{# 7. Tres Conocimientos Evidentes (Estructura de 8 puntos) #}
-<section class="pob-bloque" id="temp-conocimientos">
-    <p class="pob-kicker">7 · Conocimientos evidentes</p>
-    <h2>Tres conocimientos evidentes extraídos del análisis temporal</h2>
-    <p>Cada conocimiento está sustentado bajo la estructura metodológica oficial de 8 puntos requerida por el proyecto.</p>
-
-    <!-- Conocimiento 1 -->
-    <article class="panel pob-conoc mb-4">
-        <header>
-            <span class="pob-conoc-num">1</span>
-            <h3>Tendencia de crecimiento constante en la concentración de CO₂</h3>
-        </header>
-        <dl class="pob-dl">
-            <div><dt>1 · Pregunta</dt><dd>¿Cuál es la tasa de crecimiento anual del CO₂ y si muestra períodos de estabilización a lo largo del tiempo?</dd></div>
-            <div><dt>2 · Variables</dt><dd>Fecha (Año/Mes), CO₂ (ppm)</dd></div>
-            <div><dt>3 · Procedimiento</dt><dd>Cálculo de la media móvil mensual y agrupación de promedios interanuales entre 2020 y 2025.</dd></div>
-            <div><dt>4 · Evidencia</dt><dd>Indicador KPI de +25.3% y Visualizaciones 1 y 3 (subida lineal de 390 ppm a 496.5 ppm).</dd></div>
-            <div><dt>5 · Hallazgo</dt><dd>El CO₂ incrementó en 106.5 ppm netos durante los 72 meses, creciendo a una tasa sostenida media de 1.48 ppm por mes sin períodos de reducción o meseta.</dd></div>
-            <div><dt>6 · Interpretación</dt><dd>Existe un aumento continuo del gas contaminante impulsado por actividades antrópicas e industriales constantes que no se detiene en ninguna estación del año.</dd></div>
-            <div><dt>7 · Utilidad</dt><dd>Permite proyectar escenarios de emisiones futuras y ajustar las metas fijadas en los planes de descarbonización regional a 2030.</dd></div>
-            <div><dt>8 · Limitación</dt><dd>No permite atribuir la tasa de crecimiento a un sector económico específico sin cruzar los datos con variables operativas industriales.</dd></div>
-        </dl>
-    </article>
-
-    <!-- Conocimiento 2 -->
-    <article class="panel pob-conoc mb-4">
-        <header>
-            <span class="pob-conoc-num">2</span>
-            <h3>Comportamiento cíclico y picos térmicos en el tercer trimestre (Q3)</h3>
-        </header>
-        <dl class="pob-dl">
-            <div><dt>1 · Pregunta</dt><dd>¿Existen meses específicos dentro del ciclo anual donde se concentren las temperaturas más elevadas?</dd></div>
-            <div><dt>2 · Variables</dt><dd>Mes_Nombre, Mes_Num, Temperatura (°C)</dd></div>
-            <div><dt>3 · Procedimiento</dt><dd>Agrupación de promedios históricos por mes natural sobre la serie de 6 años para eliminar el ruido interanual.</dd></div>
-            <div><dt>4 · Evidencia</dt><dd>Visualización 2 (Barras de temperatura por mes) y tarjeta estadística del Trimestre 3.</dd></div>
-            <div><dt>5 · Hallazgo</dt><dd>Los meses de julio, agosto y septiembre promedian 22.5°C, superando en 4.5°C la media del trimestre de inicio de año (18.0°C en ene-mar).</dd></div>
-            <div><dt>6 · Interpretación</dt><dd>El ecosistema monitoreado presenta una clara estacionalidad térmica de verano/sequía a mitad de cada año calendario.</dd></div>
-            <div><dt>7 · Utilidad</dt><dd>Sirve para programar alertas de vulnerabilidad ambiental, prevención de incendios y control de consumo energético durante el verano.</dd></div>
-            <div><dt>8 · Limitación</dt><dd>No considera la radiación solar directa ni la velocidad del viento por no estar disponibles en el dataset procesado.</dd></div>
-        </dl>
-    </article>
-
-    <!-- Conocimiento 3 -->
-    <article class="panel pob-conoc mb-4">
-        <header>
-            <span class="pob-conoc-num">3</span>
-            <h3>Correlación inversa entre temperatura estacional y humedad relativa</h3>
-        </header>
-        <dl class="pob-dl">
-            <div><dt>1 · Pregunta</dt><dd>¿Cómo reacciona la humedad relativa atmosférica ante los incrementos térmicos de la temporada estacional?</dd></div>
-            <div><dt>2 · Variables</dt><dd>Fecha (Mes), Temperatura (°C), Humedad (%)</dd></div>
-            <div><dt>3 · Procedimiento</dt><dd>Cálculo de variaciones porcentuales simultáneas de temperatura y humedad en períodos mensuales comparables.</dd></div>
-            <div><dt>4 · Evidencia</dt><dd>Visualización 1 (Comportamiento contrapuesto de las líneas cian y azul durante las crestas térmicas).</dd></div>
-            <div><dt>5 · Hallazgo</dt><dd>Durante los meses donde la temperatura supera los 22°C, la humedad relativa desciende un 8.2% promedio situándose cerca del 65%.</dd></div>
-            <div><dt>6 · Interpretación</dt><dd>La humedad guarda una relación inversamente proporcional con la temperatura en la serie de tiempo, acentuando la sequedad atmosférica en los meses cálidos.</dd></div>
-            <div><dt>7 · Utilidad</dt><dd>Facilita la gestión de recursos hídricos y la activación de sistemas de dispersión o mitigación ambiental en faenas mineras/industriales.</dd></div>
-            <div><dt>8 · Limitación</dt><dd>Se evalúa sobre agregaciones mensuales; no registra micro-fluctuaciones intradía o cambios horarios brutos.</dd></div>
-        </dl>
-    </article>
-</section>
-
-{# 8. Limitación del análisis #}
-<section class="pob-bloque" id="temp-limitacion">
-    <p class="pob-kicker">8 · Limitación del análisis temporal</p>
-    <h2>Ventana de muestreo y agregación de datos</h2>
-    <div class="nota">
-        <p style="margin:0;max-width:none;">El análisis asume una transmisión continua y uniforme de los datos mensuales. Eventuales fallas momentáneas de calibración en los sensores remotos durante eventos meteorológicos extremos podrían introducir sesgos menores en las medias calculadas. Además, la agregación mensual impide identificar ráfagas de contaminación u olas de calor intradía extremas.</p>
+  <!-- ═══════════ 8 y 9 ═══════════ -->
+  <section class="tm-sec" id="tm-s8">
+    <p class="tm-eyebrow">8 · Limitación &nbsp;·&nbsp; 9 · Decisión sustentada</p>
+    <h2>Alcance, márgenes de error y acción operativa</h2>
+    <div class="tm-two" style="margin-top:18px">
+      <div class="tm-card tm-box" id="tm-limit"></div>
+      <div class="tm-card tm-box" id="tm-decision"></div>
     </div>
-</section>
+  </section>
+</main>
 
-{# 9. Posible Decisión Sustentada #}
-<section class="pob-bloque" id="temp-decision">
-    <p class="pob-kicker">9 · Posible decisión sustentada en los datos</p>
-    <h2>Plan de contingencia ambiental estacional y tope de emisiones</h2>
-    <div class="panel pob-decision">
-        <p style="max-width:none;">Implementar un protocolo obligatorio de mitigación de emisiones y restricciones operativas temporales activo únicamente durante el trimestre junio-septiembre de cada año.</p>
-        <p class="pob-mini" style="margin-bottom:0;">Sustento cuantitativo: Los datos demuestran que el 100% de los picos térmicos anuales (>22°C) y los descensos de humedad coincidentes se concentran históricamente en dicha ventana de meses, elevando el riesgo de contingencias ambientales.</p>
-    </div>
-</section>
-
+<!-- ═════════════ BLOQUE 3 · JAVASCRIPT (pégalo antes de </body> o en static/js/dimension_temporal.js) ═════════════ -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const selectAnio = document.getElementById('temp-f-anio');
-    const selectIndicador = document.getElementById('temp-f-indicador');
-    const btnReset = document.getElementById('temp-f-reset');
+(function () {
+  'use strict';
 
-    function aplicarFiltros() {
-        const valAnio = selectAnio.value;
-        const valInd = selectIndicador.value;
+  /* ───────────────────────── 0 · CONFIGURACIÓN ───────────────────────── */
+  var API_URL        = '/api/temporal-data';   // endpoint Flask (ver instrucciones). Si no existe, usa datos de demostración.
+  var UMBRAL_CALIDO  = 22;                      // °C: umbral de "pico térmico crítico"
+  var VENTANA_CRITICA = [6, 7, 8, 9];           // meses de la ventana de contingencia (jun–sep)
+  var PROYECCION_ANIO = 2030;                   // año de la proyección de CO₂
 
-        // 1. Obtener contenedores Plotly
-        const divG1 = document.querySelector('#temp-viz-1 .plotly-graph-div');
+  var MES   = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  var MESL  = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  var QMES  = { 1:'Ene–Mar', 2:'Abr–Jun', 3:'Jul–Sep', 4:'Oct–Dic' };
+  var IND = {
+    temp: { label:'Temperatura', unit:'°C',  color:'#22d3ee', short:'Temperatura' },
+    co2:  { label:'CO₂',         unit:'ppm', color:'#fbbf24', short:'CO₂' },
+    hum:  { label:'Humedad',     unit:'%',   color:'#3b82f6', short:'Humedad' }
+  };
+  var K_ALIAS = {
+    temp: ['temp','temperatura','temperature','temperatura_c','temperatura (°c)'],
+    co2:  ['co2','co₂','co2_ppm','co2 (ppm)'],
+    hum:  ['hum','humedad','humidity','humedad_pct','humedad (%)']
+  };
 
-        // 2. Obtener párrafos de interpretación
-        const pInterp1 = document.querySelector('#temp-viz-1 .pob-interp p');
-        const pInterp2 = document.querySelector('#temp-viz-2 .pob-interp p');
-        const pInterp3 = document.querySelector('#temp-viz-3 .pob-interp p');
+  /* ───────────────────────── 1 · UTILIDADES ───────────────────────── */
+  var $ = function (id) { return document.getElementById(id); };
+  var sum  = function (a) { var s = 0; for (var i = 0; i < a.length; i++) s += a[i]; return s; };
+  var mean = function (a) { return a.length ? sum(a) / a.length : null; };
+  var f1 = function (n) { return (n == null || isNaN(n)) ? '—' : Number(n).toLocaleString('en-US', { minimumFractionDigits:1, maximumFractionDigits:1 }); };
+  var f2 = function (n) { return (n == null || isNaN(n)) ? '—' : Number(n).toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 }); };
+  var sg = function (n, d) { d = d == null ? 1 : d; var s = Number(n).toFixed(d); return (n > 0 ? '+' : (n < 0 ? '−' : '')) + s.replace('-', ''); };
+  var clamp = function (v, a, b) { return Math.max(a, Math.min(b, v)); };
 
-        // 3. Rango de años y etiquetas
-        let xRango = null;
-        let textoAnio = "2020 - 2025";
-        if (valAnio === '2020-2022') {
-            xRango = ['2020-01-01', '2022-12-31'];
-            textoAnio = "2020 - 2022";
-        } else if (valAnio === '2023-2025') {
-            xRango = ['2023-01-01', '2025-12-31'];
-            textoAnio = "2023 - 2025";
-        }
+  function linreg(xs, ys) {
+    var n = xs.length; if (n < 2) return null;
+    var mx = mean(xs), my = mean(ys), sxx = 0, sxy = 0, syy = 0;
+    for (var i = 0; i < n; i++) { var dx = xs[i] - mx, dy = ys[i] - my; sxx += dx*dx; sxy += dx*dy; syy += dy*dy; }
+    if (sxx === 0) return null;
+    var b = sxy / sxx, a = my - b * mx, r = syy === 0 ? 0 : sxy / Math.sqrt(sxx * syy);
+    return { a:a, b:b, r:r, r2:r*r };
+  }
+  function pearson(xs, ys) { var l = linreg(xs, ys); return l ? l.r : null; }
+  function quantile(arr, q) { var s = arr.slice().sort(function (a, b) { return a - b; }); var p = (s.length - 1) * q, lo = Math.floor(p), hi = Math.ceil(p); return s[lo] + (s[hi] - s[lo]) * (p - lo); }
+  function strengthR(r) { var a = Math.abs(r); return a >= 0.7 ? 'fuerte' : (a >= 0.4 ? 'moderada' : 'débil'); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
 
-        // Trazos de la Gráfica 1 (0: Temp, 1: CO2, 2: Humedad)
-        let vis = [true, true, true];
-        if (valInd === 'temp') vis = [true, false, false];
-        else if (valInd === 'co2') vis = [false, true, false];
-        else if (valInd === 'hum') vis = [false, false, true];
+  function yearsLabel(set) {
+    var ys = Array.from(set).sort(), out = [], i = 0;
+    while (i < ys.length) { var j = i; while (j + 1 < ys.length && ys[j+1] === ys[j] + 1) j++; out.push(j > i ? ys[i] + '–' + ys[j] : String(ys[i])); i = j + 1; }
+    return out.join(', ');
+  }
+  function quartersLabel(set) { return set.size === 4 ? 'todo el año' : Array.from(set).sort().map(function (q) { return 'T' + q; }).join(', '); }
 
-        // ==========================================
-        // VISUALIZACIÓN 1: Serie Histórica Continua
-        // ==========================================
-        if (divG1) {
-            Plotly.relayout(divG1, {
-                'xaxis.autorange': xRango ? false : true,
-                'xaxis.range': xRango
-            });
-            Plotly.restyle(divG1, { visible: vis });
+  // Escribe HTML y resalta con una animación sólo si el contenido cambió
+  function setHTML(el, html) {
+    if (!el) return;
+    if (el.__h === html) return;
+    var first = el.__h === undefined; el.__h = html; el.innerHTML = html;
+    if (!first) { el.classList.remove('tm-flash'); void el.offsetWidth; el.classList.add('tm-flash'); }
+  }
 
-            if (pInterp1) {
-                if (valInd === 'temp') {
-                    let detalleTemp = (valAnio === '2020-2022') 
-                        ? "registrando 3 ciclos anuales completos con mínimas de 18 °C y máximas de 22.5 °C." 
-                        : "evidenciando la consolidación del patrón térmico estacional entre los 18 °C y los 22.5 °C.";
-                    pInterp1.innerHTML = `<strong>[Filtro: Temperatura | Período: ${textoAnio}]</strong> En la variable térmica se observa un comportamiento marcadamente estacional, ${detalleTemp}`;
+  /* ───────────────────────── 2 · DATOS ───────────────────────── */
+  var ALL = [];           // meses ordenados cronológicamente
+  var IS_DEMO = false;
+  var YEARS = [];
 
-                } else if (valInd === 'co2') {
-                    let detalleCO2 = "pasando de 390 ppm a inicios de 2020 a rozar los 500 ppm a finales de 2025.";
-                    if (valAnio === '2020-2022') detalleCO2 = "acumulando un incremento de +53 ppm, al pasar de 390 ppm (2020) a ~443 ppm (2022).";
-                    else if (valAnio === '2023-2025') detalleCO2 = "con un incremento de +54 ppm, pasando de ~444 ppm (2023) a ~498 ppm (2025).";
-
-                    pInterp1.innerHTML = `<strong>[Filtro: CO₂ | Período: ${textoAnio}]</strong> Se evidencia un crecimiento acumulativo constante a una tasa de +1.5 ppm/mes, ${detalleCO2}`;
-
-                } else if (valInd === 'hum') {
-                    pInterp1.innerHTML = `<strong>[Filtro: Humedad | Período: ${textoAnio}]</strong> La humedad relativa muestra oscilaciones estacionales regulares entre el 65% y el 71%, registrando sus caídas en coincidencia con las crestas térmicas del período ${textoAnio}.`;
-
-                } else {
-                    pInterp1.innerHTML = `<strong>[Vista General | Período: ${textoAnio}]</strong> Se evidencia una tendencia marcadamente ascendente en CO₂, mientras Temperatura y Humedad mantienen patrones estacionales oscilantes y estables durante el rango ${textoAnio}.`;
-                }
-            }
-        }
-
-        // ==========================================
-        // VISUALIZACIÓN 2: Ciclicidad Mensual (Promedio Intraanual)
-        // ==========================================
-        if (pInterp2) {
-            if (valInd === 'temp') {
-                pInterp2.innerHTML = `<strong>[Filtro: Temperatura | Período: ${textoAnio}]</strong> El perfil intraanual refleja un patrón bimodal exacto donde los máximos térmicos se alcanzan en junio y diciembre (~22.5 °C), mientras que los valles de menor temperatura ocurren en enero y julio (~18 °C).`;
-
-            } else if (valInd === 'co2') {
-                pInterp2.innerHTML = `<strong>[Filtro: CO₂ | Período: ${textoAnio}]</strong> El promedio mensual de CO₂ refleja la acumulación constante a lo largo del año, alcanzando los valores medios más altos en el tramo final del período ${textoAnio}.`;
-
-            } else if (valInd === 'hum') {
-                pInterp2.innerHTML = `<strong>[Filtro: Humedad | Período: ${textoAnio}]</strong> La ciclicidad mensual de la humedad relativa muestra una correlación inversa estricta respecto a la temperatura, alcanzando sus picos (~71%) en enero y julio, y cayendo al 65% en junio y diciembre.`;
-
-            } else {
-                pInterp2.innerHTML = `<strong>[Vista General | Período: ${textoAnio}]</strong> El análisis intraanual demuestra la sincronía estacional del microclima en ${textoAnio}: caídas de humedad proporcionales a las subidas térmicas de junio y diciembre, junto con una base ascendente de CO₂.`;
-            }
-        }
-
-        // ==========================================
-        // VISUALIZACIÓN 3: Crecimiento y Acumulado Interanual
-        // ==========================================
-        if (pInterp3) {
-            if (valInd === 'temp') {
-                pInterp3.innerHTML = `<strong>[Filtro: Temperatura | Período: ${textoAnio}]</strong> El promedio interanual de la temperatura se mantiene estable en torno a los 20.25 °C año tras año, confirmando la ausencia de tendencias de calentamiento o enfriamiento a largo plazo en el período ${textoAnio}.`;
-
-            } else if (valInd === 'co2') {
-                let detalleAcum3 = "escalando progresivamente desde un promedio anual de ~396 ppm en 2020 hasta alcanzar los ~490 ppm en 2025.";
-                if (valAnio === '2020-2022') detalleAcum3 = "pasando de un promedio anual de ~396 ppm en 2020 a ~437 ppm en 2022, reflejando un crecimiento interanual constante de ~18 ppm por año.";
-                else if (valAnio === '2023-2025') detalleAcum3 = "elevando la media anual desde ~455 ppm en 2023 hasta bordear los ~490 ppm en 2025.";
-
-                pInterp3.innerHTML = `<strong>[Filtro: CO₂ | Período: ${textoAnio}]</strong> La comparativa interanual demuestra un crecimiento estructural sostenido en la concentración de CO₂, ${detalleAcum3}`;
-
-            } else if (valInd === 'hum') {
-                pInterp3.innerHTML = `<strong>[Filtro: Humedad | Período: ${textoAnio}]</strong> El comportamiento interanual de la humedad relativa promedia un 68% constante a lo largo de los años, demostrando estabilidad estructural sin desviaciones interanuales significativas en ${textoAnio}.`;
-
-            } else {
-                let detalleGen3 = "evidenciando un crecimiento estructural exclusivo en la concentración de CO₂ (de ~396 ppm a ~490 ppm anuales), mientras que la temperatura (20.25 °C) y la humedad (68%) permanecen invariables entre años.";
-                if (valAnio === '2020-2022') detalleGen3 = "mostrando el tramo inicial de acumulación anual de CO₂ (de 396 ppm a 437 ppm) junto con la estabilidad interanual de la temperatura y la humedad en el primer trienio.";
-                else if (valAnio === '2023-2025') detalleGen3 = "reflejando los niveles máximos de CO₂ en el acumulado anual (hasta ~490 ppm) con invariabilidad en los promedios anuales de temperatura y humedad.";
-
-                pInterp3.innerHTML = `<strong>[Vista General | Período: ${textoAnio}]</strong> La comparativa de medias anuales para ${textoAnio} confirma la dinámica del sistema, ${detalleGen3}`;
-            }
-        }
+  function pick(obj, aliases) {
+    var keys = Object.keys(obj), lower = {};
+    keys.forEach(function (k) { lower[k.toLowerCase().trim()] = k; });
+    for (var i = 0; i < aliases.length; i++) if (lower[aliases[i]] !== undefined) return parseFloat(obj[lower[aliases[i]]]);
+    return NaN;
+  }
+  function normalize(raw) {
+    // Acepta filas diarias o mensuales: agrupa por mes y promedia.
+    var buckets = {};
+    raw.forEach(function (r) {
+      var fk = Object.keys(r).filter(function (k) { return /fecha|date|periodo|mes/i.test(k); })[0];
+      var m = /^(\d{4})-(\d{1,2})/.exec(String(r[fk]));
+      if (!m) return;
+      var y = +m[1], mo = +m[2], key = y * 12 + mo - 1;
+      var b = buckets[key] || (buckets[key] = { y:y, m:mo, t:key, v:{ temp:[], co2:[], hum:[] } });
+      ['temp','co2','hum'].forEach(function (k) { var v = pick(r, K_ALIAS[k]); if (!isNaN(v)) b.v[k].push(v); });
+    });
+    return Object.keys(buckets).map(Number).sort(function (a, b) { return a - b; }).map(function (k) {
+      var b = buckets[k];
+      return { t:b.t, y:b.y, m:b.m, q:Math.ceil(b.m / 3), date:b.y + '-' + String(b.m).padStart(2,'0') + '-01', label:MES[b.m-1] + ' ' + b.y,
+               temp:mean(b.v.temp), co2:mean(b.v.co2), hum:mean(b.v.hum) };
+    }).filter(function (r) { return r.temp != null && r.co2 != null && r.hum != null; });
+  }
+  function demoData() {
+    // Datos SINTÉTICOS solo para que la vista funcione sin backend. Se reemplazan con tu dataset real.
+    var seed = 11, rnd = function () { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646 - .5; }, out = [];
+    for (var i = 0; i < 72; i++) {
+      var y = 2020 + Math.floor(i / 12), m = i % 12 + 1, s = Math.sin((m - 5) / 12 * 2 * Math.PI);
+      out.push({ fecha: y + '-' + String(m).padStart(2,'0') + '-01',
+                 temperatura: +(20 + 2.4 * s + rnd() * .9).toFixed(2),
+                 co2: +(390 + i * 1.5 + 1.6 * Math.sin(m / 12 * 2 * Math.PI) + rnd() * 1.2).toFixed(2),
+                 humedad: +(68 - 4.6 * s + rnd() * 1.6).toFixed(2) });
     }
+    return out;
+  }
+  function loadData() {
+    // Opción A (sin tocar app.py): si tu plantilla define window.TM_DATA = [...] antes de este script, se usa esa.
+    if (Array.isArray(window.TM_DATA) && window.TM_DATA.length) { var pre = normalize(window.TM_DATA); if (pre.length > 1) return Promise.resolve(pre); }
+    return fetch(API_URL, { headers:{ 'Accept':'application/json' } })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (j) { var rows = normalize(Array.isArray(j) ? j : (j.data || [])); if (rows.length < 2) throw new Error('sin datos'); return rows; })
+      .catch(function () { IS_DEMO = true; return normalize(demoData()); });
+  }
 
-    // Event Listeners
-    if (selectAnio) selectAnio.addEventListener('change', aplicarFiltros);
-    if (selectIndicador) selectIndicador.addEventListener('change', aplicarFiltros);
+  /* ───────────────────────── 3 · ESTADO + FILTRADO ───────────────────────── */
+  var state = { years:new Set(), quarters:new Set([1,2,3,4]), ind:'all', sortKey:'t', sortDir:1, page:0, pageSize:12, search:'', trend:true };
+  var DEFAULT_YEARS = function () { return new Set(YEARS); };
 
-    if (btnReset) {
-        btnReset.addEventListener('click', function() {
-            selectAnio.value = 'todos';
-            selectIndicador.value = 'todos';
-            aplicarFiltros();
-        });
+  function filtered() { return ALL.filter(function (r) { return state.years.has(r.y) && state.quarters.has(r.q); }); }
+  function visKeys() { return state.ind === 'all' ? ['temp','co2','hum'] : [state.ind]; }
+  function focusKey(def) { return state.ind === 'all' ? def : state.ind; }
+
+  // Persistencia en la URL (para compartir un filtro exacto)
+  function readURL() {
+    try {
+      var p = new URLSearchParams(location.search);
+      if (p.get('y')) { var ys = p.get('y').split(',').map(Number).filter(function (y) { return YEARS.indexOf(y) >= 0; }); if (ys.length) state.years = new Set(ys); }
+      if (p.get('q')) { var qs = p.get('q').split(',').map(Number).filter(function (q) { return q >= 1 && q <= 4; }); if (qs.length) state.quarters = new Set(qs); }
+      if (['all','temp','co2','hum'].indexOf(p.get('i')) >= 0) state.ind = p.get('i');
+    } catch (e) {}
+  }
+  function writeURL() {
+    try {
+      var p = new URLSearchParams(location.search);
+      var allY = state.years.size === YEARS.length, allQ = state.quarters.size === 4;
+      allY ? p.delete('y') : p.set('y', Array.from(state.years).sort().join(','));
+      allQ ? p.delete('q') : p.set('q', Array.from(state.quarters).sort().join(','));
+      state.ind === 'all' ? p.delete('i') : p.set('i', state.ind);
+      var qs = p.toString();
+      history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
+    } catch (e) {}
+  }
+
+  /* ───────────────────────── 4 · CÁLCULOS REUTILIZABLES ───────────────────────── */
+  function monthMeans(rows, key) {
+    var acc = []; for (var i = 0; i < 12; i++) acc.push({ s:0, n:0 });
+    rows.forEach(function (r) { acc[r.m-1].s += r[key]; acc[r.m-1].n++; });
+    return acc.map(function (o) { return { mean:o.n ? o.s / o.n : null, n:o.n }; });
+  }
+  function extremes(mm) {
+    var hi = -1, lo = -1;
+    mm.forEach(function (o, i) { if (o.mean == null) return; if (hi < 0 || o.mean > mm[hi].mean) hi = i; if (lo < 0 || o.mean < mm[lo].mean) lo = i; });
+    return { hi:hi, lo:lo };
+  }
+  function quarterMeans(rows, key) {
+    var out = {}; [1,2,3,4].forEach(function (q) { var v = rows.filter(function (r) { return r.q === q; }).map(function (r) { return r[key]; }); out[q] = mean(v); });
+    return out;
+  }
+  function bestQuarter(rows, key) {
+    var qm = quarterMeans(rows, key), best = null;
+    [1,2,3,4].forEach(function (q) { if (qm[q] != null && (best == null || qm[q] > qm[best])) best = q; });
+    return best == null ? null : { q:best, v:qm[best], all:qm };
+  }
+  function annualStats(rows) {
+    var ys = Array.from(new Set(rows.map(function (r) { return r.y; }))).sort();
+    return ys.map(function (y) {
+      var rr = rows.filter(function (r) { return r.y === y; });
+      return { y:y, n:rr.length, temp:mean(rr.map(function (r) { return r.temp; })), co2:mean(rr.map(function (r) { return r.co2; })), hum:mean(rr.map(function (r) { return r.hum; })) };
+    });
+  }
+  function co2Change(rows) {
+    if (rows.length < 2) return null;
+    var an = annualStats(rows);
+    if (an.length >= 2) { var a = an[0], b = an[an.length-1]; return { mode:'anual', from:String(a.y), to:String(b.y), a:a.co2, b:b.co2, abs:b.co2 - a.co2, pct:(b.co2 - a.co2) / a.co2 * 100 }; }
+    var f = rows[0], l = rows[rows.length-1];
+    return { mode:'mensual', from:f.label, to:l.label, a:f.co2, b:l.co2, abs:l.co2 - f.co2, pct:(l.co2 - f.co2) / f.co2 * 100 };
+  }
+  function isContinuous(rows) { for (var i = 1; i < rows.length; i++) if (rows[i].t - rows[i-1].t !== 1) return false; return true; }
+  function context(rows) {
+    return 'Filtro activo: <b>' + yearsLabel(state.years) + '</b> · ' + quartersLabel(state.quarters) + ' · <b>' + rows.length + ' meses</b>';
+  }
+  function needMore(msg) { return '<span style="color:var(--tm-muted)">' + msg + '</span>'; }
+
+  /* ───────────────────────── 5 · RENDER · FILTROS ───────────────────────── */
+  function renderControls() {
+    var ys = $('tm-years');
+    ys.innerHTML = YEARS.map(function (y) { return '<button type="button" class="tm-chip" data-y="' + y + '" aria-pressed="' + state.years.has(y) + '">' + y + '</button>'; }).join('');
+    var presets = [['Todos', YEARS.slice()]];
+    if (YEARS.length >= 4) { var h = Math.floor(YEARS.length / 2); presets.push([YEARS[0] + '–' + YEARS[h-1], YEARS.slice(0, h)]); presets.push([YEARS[h] + '–' + YEARS[YEARS.length-1], YEARS.slice(h)]); }
+    presets.push(['Último año', [YEARS[YEARS.length-1]]]);
+    $('tm-presets').innerHTML = presets.map(function (p, i) { return '<button type="button" class="tm-chip" data-p="' + i + '">' + p[0] + '</button>'; }).join('');
+    $('tm-presets').__p = presets;
+    $('tm-quarters').innerHTML = [1,2,3,4].map(function (q) { return '<button type="button" class="tm-chip" data-q="' + q + '" aria-pressed="' + state.quarters.has(q) + '" title="' + QMES[q] + '">T' + q + ' · ' + QMES[q] + '</button>'; }).join('');
+    $('tm-q-all').setAttribute('aria-pressed', String(state.quarters.size === 4));
+    Array.prototype.forEach.call($('tm-ind').children, function (b) { b.setAttribute('aria-pressed', String(b.dataset.ind === state.ind)); });
+  }
+  function renderSummary(rows) {
+    var total = ALL.length, pct = Math.round(rows.length / total * 100);
+    var h = '<span>Mostrando <b>' + rows.length + '</b> de ' + total + ' meses (' + pct + '%)</span>' +
+            '<span class="tm-pill">Años: ' + yearsLabel(state.years) + '</span>' +
+            '<span class="tm-pill">' + quartersLabel(state.quarters) + '</span>' +
+            '<span class="tm-pill">' + (state.ind === 'all' ? 'Todos los indicadores' : IND[state.ind].label) + '</span>';
+    if (IS_DEMO) h += '<span class="tm-pill warn" title="No se encontró ' + API_URL + '. Conecta tu dataset real.">⚠ Datos de demostración</span>';
+    if (rows.length < 12) h += '<span class="tm-pill warn">Menos de 12 meses: no cubre un ciclo estacional completo</span>';
+    setHTML($('tm-summary'), h);
+  }
+
+  /* ───────────────────────── 6 · RENDER · KPIs ───────────────────────── */
+  function renderKPIs(rows) {
+    var n = rows.length, cc = co2Change(rows), bq = bestQuarter(rows, 'temp');
+    var r = n >= 3 ? pearson(rows.map(function (x) { return x.temp; }), rows.map(function (x) { return x.hum; })) : null;
+    var ny = new Set(rows.map(function (x) { return x.y; })).size;
+    var rel = function (keys) { return state.ind === 'all' || keys.indexOf(state.ind) >= 0 ? '' : ' dim'; };
+
+    var cards = [];
+    cards.push('<div class="tm-card tm-kpi"><div class="v c-cyan">' + n + '</div><div class="l">Meses monitoreados</div><div class="d">' +
+      ny + (ny === 1 ? ' año' : ' años') + ' (' + yearsLabel(state.years) + ') · ' + (isContinuous(rows) ? 'observación continua sin interrupciones' : 'con saltos entre períodos seleccionados') +
+      '. Representa el ' + Math.round(n / ALL.length * 100) + '% del dataset.</div></div>');
+
+    cards.push('<div class="tm-card tm-kpi' + rel(['co2']) + '"><div class="v ' + (cc && cc.abs < 0 ? 'c-green' : 'c-red') + '">' + (cc ? sg(cc.pct, 1) + '%' : '—') + '</div><div class="l">Variación de CO₂ en el período</div><div class="d">' +
+      (cc ? (cc.mode === 'anual' ? 'Entre el promedio de ' + cc.from + ' (' + f1(cc.a) + ' ppm) y ' + cc.to + ' (' + f1(cc.b) + ' ppm): <b>' + sg(cc.abs, 1) + ' ppm</b>.'
+                                 : 'Entre ' + cc.from + ' (' + f1(cc.a) + ' ppm) y ' + cc.to + ' (' + f1(cc.b) + ' ppm): <b>' + sg(cc.abs, 1) + ' ppm</b>.')
+          : 'Selecciona al menos 2 meses.') + '</div></div>');
+
+    cards.push('<div class="tm-card tm-kpi' + rel(['temp']) + '"><div class="v c-white">' + (bq ? 'Trimestre ' + bq.q : '—') + '</div><div class="l">Ventana de temperatura máxima</div><div class="d">' +
+      (bq ? 'Promedio de <b>' + f1(bq.v) + ' °C</b> en ' + QMES[bq.q] + (state.quarters.size === 1 ? ' (único trimestre filtrado)' : '') + '.' : 'Sin datos en el filtro.') + '</div></div>');
+
+    cards.push('<div class="tm-card tm-kpi' + rel(['temp','hum']) + '"><div class="v c-amber">' + (r != null ? 'r = ' + sg(r, 2) : '—') + '</div><div class="l">Correlación Temperatura–Humedad</div><div class="d">' +
+      (r != null ? 'Relación <b>' + strengthR(r) + (r < 0 ? ' inversa' : ' directa') + '</b> calculada sobre ' + n + ' meses.' : 'Se requieren al menos 3 meses.') + '</div></div>');
+    setHTML($('tm-kpis'), cards.join(''));
+  }
+
+  /* ───────────────────────── 7 · RENDER · GRÁFICAS ───────────────────────── */
+  var CFG = { responsive:true, displaylogo:false, modeBarButtonsToRemove:['lasso2d','select2d','autoScale2d'], toImageButtonOptions:{ format:'png', scale:2 } };
+  function baseLayout(extra) {
+    var L = { paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', font:{ family:'Inter, sans-serif', color:'#cfe0e6', size:12 },
+              margin:{ l:62, r:62, t:46, b:60 }, hovermode:'x unified',
+              legend:{ orientation:'h', y:1.14, x:0, font:{ size:12 } },
+              hoverlabel:{ bgcolor:'#0b1820', bordercolor:'rgba(255,255,255,.25)', font:{ color:'#fff' } },
+              xaxis:{ gridcolor:'rgba(255,255,255,.07)', zeroline:false, linecolor:'rgba(255,255,255,.3)' },
+              yaxis:{ gridcolor:'rgba(255,255,255,.07)', zeroline:false } };
+    for (var k in extra) { L[k] = (typeof extra[k] === 'object' && !Array.isArray(extra[k]) && L[k]) ? Object.assign({}, L[k], extra[k]) : extra[k]; }
+    return L;
+  }
+  function emptyPlot(id, msg) {
+    Plotly.react(id, [], baseLayout({ xaxis:{ visible:false }, yaxis:{ visible:false }, annotations:[{ text:msg, showarrow:false, font:{ size:14, color:'#9db4bd' } }] }), CFG);
+  }
+  function plotTicks(rows) {
+    var span = rows[rows.length-1].t - rows[0].t + 1, vals = [], txt = [];
+    ALL.forEach(function (r) {
+      if (r.t < rows[0].t || r.t > rows[rows.length-1].t) return;
+      var ok = span <= 18 ? true : (span <= 40 ? (r.m - 1) % 3 === 0 : r.m === 1);
+      if (ok) { vals.push(r.date); txt.push(span <= 40 ? MES[r.m-1] + ' ' + String(r.y).slice(2) : String(r.y)); }
+    });
+    return { tickmode:'array', tickvals:vals, ticktext:txt };
+  }
+  function shiftDate(iso, days) { var d = new Date(iso + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + days); return d.toISOString().slice(0, 10); }
+
+  function renderPlot1(rows) {
+    var vis = visKeys(), dual = state.ind === 'all';
+    setHTML($('tm-v1-sub'), 'Tendencia mes a mes · ' + yearsLabel(state.years) + ' · ' + quartersLabel(state.quarters) + (dual ? ' · CO₂ en el eje derecho' : ''));
+    if (rows.length < 1) return emptyPlot('tm-plot1', 'Sin datos para este filtro');
+    var inSel = {}; rows.forEach(function (r) { inSel[r.t] = 1; });
+    var traces = [];
+    vis.forEach(function (k) {
+      var I = IND[k], ya = (dual && k === 'co2') ? 'y2' : 'y';
+      traces.push({ type:'scatter', mode:'lines+markers', x:ALL.map(function (r) { return r.date; }), y:ALL.map(function (r) { return inSel[r.t] ? r[k] : null; }),
+        customdata:ALL.map(function (r) { return r.label; }), name:I.label + ' (' + I.unit + ')', yaxis:ya, connectgaps:false,
+        line:{ color:I.color, width:2.4, shape:'linear' }, marker:{ size:6, color:I.color, line:{ width:1, color:'#0b1820' } },
+        hovertemplate:'<b>' + I.label + '</b>: %{y:.1f} ' + I.unit + '<extra></extra>' });
+      if (state.trend && rows.length >= 3) {
+        var lr = linreg(rows.map(function (r) { return r.t; }), rows.map(function (r) { return r[k]; })), a = rows[0], b = rows[rows.length-1];
+        traces.push({ type:'scatter', mode:'lines', x:[a.date, b.date], y:[lr.a + lr.b * a.t, lr.a + lr.b * b.t], yaxis:ya, name:'Tendencia ' + I.label, showlegend:false,
+          line:{ color:I.color, width:1.6, dash:'dot' }, hoverinfo:'skip' });
+      }
+    });
+    var lay = baseLayout({
+      xaxis:Object.assign({ range:[shiftDate(rows[0].date, -16), shiftDate(rows[rows.length-1].date, 16)], title:{ text:'Fecha' }, type:'date' }, plotTicks(rows)),
+      yaxis:{ title:{ text: dual ? 'Temperatura (°C) · Humedad (%)' : IND[state.ind].label + ' (' + IND[state.ind].unit + ')' }, rangemode: dual ? 'tozero' : 'normal' },
+      hovermode:'x unified'
+    });
+    if (dual) lay.yaxis2 = { title:{ text:'CO₂ (ppm)' }, overlaying:'y', side:'right', showgrid:false, zeroline:false, tickfont:{ color:IND.co2.color }, titlefont:{ color:IND.co2.color } };
+    // título de hover con mes-año
+    traces.forEach(function (t) { if (t.customdata) t.text = t.customdata; });
+    Plotly.react('tm-plot1', traces, lay, CFG);
+  }
+
+  function renderPlot2(rows) {
+    var key = focusKey('temp'), I = IND[key];
+    setHTML($('tm-v2-title'), 'Comportamiento promedio mensual de ' + I.label.toLowerCase());
+    setHTML($('tm-v2-sub'), 'Promedio por mes calendario · ' + yearsLabel(state.years) + ' · ' + quartersLabel(state.quarters) + (state.ind === 'all' ? ' · selecciona un indicador arriba para cambiar la variable' : ''));
+    if (!rows.length) return emptyPlot('tm-plot2', 'Sin datos para este filtro');
+    var mm = monthMeans(rows, key), ex = extremes(mm), avg = mean(rows.map(function (r) { return r[key]; }));
+    var colors = mm.map(function (o, i) { return o.mean == null ? 'rgba(0,0,0,0)' : (i === ex.hi ? '#ff6b4a' : (i === ex.lo ? '#4dd0e1' : I.color + 'aa')); });
+    var tr = [{ type:'bar', x:MES, y:mm.map(function (o) { return o.mean; }), marker:{ color:colors, line:{ width:0 } }, customdata:mm.map(function (o) { return o.n; }),
+      text:mm.map(function (o) { return o.mean == null ? '' : f1(o.mean); }), textposition:'outside', cliponaxis:false, textfont:{ size:11, color:'#dbe8ec' },
+      hovertemplate:'<b>%{x}</b><br>' + I.label + ': %{y:.2f} ' + I.unit + '<br>Años promediados: %{customdata}<extra></extra>' }];
+    var lay = baseLayout({ hovermode:'closest', showlegend:false, margin:{ l:62, r:30, t:30, b:50 },
+      xaxis:{ title:{ text:'Mes' }, type:'category' }, yaxis:{ title:{ text:I.label + ' (' + I.unit + ')' }, rangemode:'tozero' },
+      shapes:[{ type:'line', xref:'paper', x0:0, x1:1, y0:avg, y1:avg, line:{ color:'rgba(255,255,255,.5)', width:1.2, dash:'dash' } }],
+      annotations:[{ xref:'paper', x:1, y:avg, xanchor:'right', yanchor:'bottom', showarrow:false, text:'promedio ' + f1(avg) + ' ' + I.unit, font:{ size:11, color:'#9db4bd' } }] });
+    Plotly.react('tm-plot2', tr, lay, CFG);
+  }
+
+  function renderPlot3(rows) {
+    var key = focusKey('co2'), I = IND[key], an = annualStats(rows);
+    setHTML($('tm-v3-title'), 'Evolución de medias anuales de ' + I.label);
+    setHTML($('tm-v3-sub'), 'Comparativa interanual de promedios · ' + yearsLabel(state.years) + ' · ' + quartersLabel(state.quarters) + (state.ind === 'all' ? ' · selecciona un indicador arriba para cambiar la variable' : ''));
+    if (!an.length) return emptyPlot('tm-plot3', 'Sin datos para este filtro');
+    var vals = an.map(function (a) { return a[key]; }), lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals), pad = Math.max((hi - lo) * 0.35, hi * 0.02);
+    var x = an.map(function (a) { return String(a.y); });
+    var tr = [{ type:'scatter', mode:'lines+markers+text', x:x, y:vals, fill:'tozeroy', fillcolor:I.color + '22', line:{ color:I.color, width:3 }, marker:{ size:10, color:I.color, line:{ width:2, color:'#0b1820' } },
+      text:vals.map(function (v) { return f1(v); }), textposition:'top center', textfont:{ color:'#fff', size:12 }, customdata:an.map(function (a) { return a.n; }),
+      hovertemplate:'<b>%{x}</b><br>' + I.label + ' promedio: %{y:.2f} ' + I.unit + '<br>Meses en el filtro: %{customdata}<extra></extra>' }];
+    if (an.length >= 3) {
+      var lr = linreg(an.map(function (a) { return a.y; }), vals);
+      tr.push({ type:'scatter', mode:'lines', x:[x[0], x[x.length-1]], y:[lr.a + lr.b * an[0].y, lr.a + lr.b * an[an.length-1].y], line:{ color:'#ff6b4a', width:1.8, dash:'dot' }, name:'Tendencia', hoverinfo:'skip' });
     }
-});
+    var lay = baseLayout({ hovermode:'closest', showlegend:false, margin:{ l:62, r:30, t:30, b:50 },
+      xaxis:{ title:{ text:'Año' }, type:'category' }, yaxis:{ title:{ text:I.label + ' (' + I.unit + ')' }, range:[lo - pad, hi + pad * 1.3] } });
+    Plotly.react('tm-plot3', tr, lay, CFG);
+  }
+
+  /* ───────────────────────── 8 · RENDER · INTERPRETACIONES ───────────────────────── */
+  function viewTag(extra) { return '<span class="tag">[' + extra + ']</span> '; }
+  function renderInterp(rows) {
+    var tag = 'Período: ' + yearsLabel(state.years) + ' | ' + quartersLabel(state.quarters);
+    var n = rows.length, I1 = [];
+    // ----- Viz 1
+    setHTML($('tm-i1-t'), '7 · Interpretación (Visualización 1)');
+    if (!n) { setHTML($('tm-i1-b'), needMore('No hay meses que cumplan el filtro actual.')); }
+    else {
+      var parts = [];
+      visKeys().forEach(function (k) {
+        var v = rows.map(function (r) { return r[k]; }), I = IND[k], a = rows[0], b = rows[n-1];
+        if (k === 'co2') {
+          var lr = n >= 3 ? linreg(rows.map(function (r) { return r.t; }), v) : null;
+          parts.push('<b>CO₂</b>: pasa de ' + f1(a.co2) + ' ppm (' + a.label + ') a ' + f1(b.co2) + ' ppm (' + b.label + ')' + (lr ? ', es decir <b>' + sg(lr.b, 2) + ' ppm/mes</b> (R² = ' + f2(lr.r2) + ')' : '') + '.');
+        } else {
+          var mx = rows.reduce(function (p, r) { return r[k] > p[k] ? r : p; }, rows[0]), mn = rows.reduce(function (p, r) { return r[k] < p[k] ? r : p; }, rows[0]);
+          parts.push('<b>' + I.label + '</b>: promedio ' + f1(mean(v)) + ' ' + I.unit + ', con máximo de ' + f1(mx[k]) + ' ' + I.unit + ' en ' + mx.label + ' y mínimo de ' + f1(mn[k]) + ' ' + I.unit + ' en ' + mn.label + '.');
+        }
+      });
+      var concl = '';
+      if (state.ind === 'all' && n >= 6) {
+        var lrc = linreg(rows.map(function (r) { return r.t; }), rows.map(function (r) { return r.co2; }));
+        var tamp = extremes(monthMeans(rows, 'temp')), hamp = extremes(monthMeans(rows, 'hum')), tm = monthMeans(rows, 'temp'), hm = monthMeans(rows, 'hum');
+        concl = ' Mientras el CO₂ ' + (lrc.b > 0 ? 'asciende de forma sostenida' : 'desciende') + ', la temperatura oscila ' + f1(tm[tamp.hi].mean - tm[tamp.lo].mean) + ' °C entre su mes más cálido y el más frío, y la humedad ' + f1(hm[hamp.hi].mean - hm[hamp.lo].mean) + ' puntos porcentuales.';
+      }
+      setHTML($('tm-i1-b'), viewTag(tag) + parts.join(' ') + concl);
+    }
+    // ----- Viz 2
+    var k2 = focusKey('temp'), I2 = IND[k2];
+    setHTML($('tm-i2-t'), 'Interpretación (Visualización 2)');
+    if (n < 2) { setHTML($('tm-i2-b'), needMore('Se requieren al menos 2 meses para hablar de un perfil estacional.')); }
+    else {
+      var mm = monthMeans(rows, k2), ex = extremes(mm), bq = bestQuarter(rows, k2), amp = mm[ex.hi].mean - mm[ex.lo].mean;
+      var txt = viewTag(tag) + 'El valor medio más alto de <b>' + I2.label.toLowerCase() + '</b> aparece en <b>' + MESL[ex.hi] + ' (' + f1(mm[ex.hi].mean) + ' ' + I2.unit + ')</b> y el más bajo en <b>' + MESL[ex.lo] + ' (' + f1(mm[ex.lo].mean) + ' ' + I2.unit + ')</b>, una amplitud de ' + f1(amp) + ' ' + I2.unit + '. ' +
+                (bq ? 'El trimestre con mayor promedio es el <b>T' + bq.q + ' (' + f1(bq.v) + ' ' + I2.unit + ')</b>.' : '');
+      if (k2 === 'co2') txt += ' <i>Nota: en CO₂ la diferencia entre meses refleja sobre todo la tendencia creciente, no estacionalidad.</i>';
+      var withData = mm.filter(function (o) { return o.mean != null; }).length;
+      if (withData < 12) txt += ' <i>(El filtro deja ' + withData + ' de 12 meses con datos.)</i>';
+      setHTML($('tm-i2-b'), txt);
+    }
+    // ----- Viz 3
+    var k3 = focusKey('co2'), I3 = IND[k3], an = annualStats(rows);
+    setHTML($('tm-i3-t'), 'Interpretación (Visualización 3)');
+    if (an.length < 2) { setHTML($('tm-i3-b'), needMore('Selecciona dos o más años para comparar la evolución interanual.')); }
+    else {
+      var yrs = an.map(function (a) { return a.y; }), vals = an.map(function (a) { return a[k3]; }), perYear = (vals[vals.length-1] - vals[0]) / (yrs[yrs.length-1] - yrs[0]);
+      var best = null; for (var i = 1; i < an.length; i++) { var d = (an[i][k3] - an[i-1][k3]) / (an[i].y - an[i-1].y); if (!best || Math.abs(d) > Math.abs(best.d)) best = { d:d, a:an[i-1].y, b:an[i].y }; }
+      var up = 0, dn = 0; for (var j = 1; j < an.length; j++) { an[j][k3] >= an[j-1][k3] ? up++ : dn++; }
+      var txt3 = viewTag(tag) + 'El promedio anual de <b>' + I3.label + '</b> va de ' + f1(vals[0]) + ' ' + I3.unit + ' (' + yrs[0] + ') a ' + f1(vals[vals.length-1]) + ' ' + I3.unit + ' (' + yrs[yrs.length-1] + '): <b>' + sg(perYear, 2) + ' ' + I3.unit + ' por año</b> en promedio. ' +
+                 'El mayor cambio ocurre entre ' + best.a + ' y ' + best.b + ' (' + sg(best.d, 2) + ' ' + I3.unit + '/año). ' +
+                 (dn === 0 ? 'Todas las comparaciones consecutivas son ascensos, lo que indica <b>crecimiento acumulativo sostenido</b>.' : (up === 0 ? 'Todas las comparaciones consecutivas son descensos.' : 'Hay ' + up + ' ascenso(s) y ' + dn + ' descenso(s) entre años consecutivos: la serie <b>fluctúa</b> sin un patrón monótono.'));
+      setHTML($('tm-i3-b'), txt3);
+    }
+  }
+
+  /* ───────────────────────── 9 · RENDER · TABLAS ───────────────────────── */
+  function renderAnnual(rows) {
+    var an = annualStats(rows), show = visKeys();
+    if (!an.length) return setHTML($('tm-annual'), '<div class="tm-empty">Sin datos para este filtro.</div>');
+    var head = '<th>Año</th><th>Meses</th>' + show.map(function (k) { return '<th>' + IND[k].label + ' prom. (' + IND[k].unit + ')</th><th>Δ vs año ant.</th>'; }).join('');
+    var body = an.map(function (a, i) {
+      return '<tr><td class="num"><b>' + a.y + '</b></td><td class="num">' + a.n + '</td>' + show.map(function (k) {
+        var d = i ? a[k] - an[i-1][k] : null, cls = d == null ? '' : (d > 0 ? 'up' : 'down'), p = d == null ? '' : ' (' + sg(d / an[i-1][k] * 100, 1) + '%)';
+        if (k === 'hum' && d != null) cls = '';  // el color "malo/bueno" solo aplica a temperatura y CO₂
+        return '<td class="num">' + f1(a[k]) + '</td><td class="num ' + cls + '">' + (d == null ? '—' : sg(d, 2) + p) + '</td>';
+      }).join('') + '</tr>';
+    }).join('');
+    var foot = '<tr><td>Total / prom.</td><td class="num">' + rows.length + '</td>' + show.map(function (k) { return '<td class="num">' + f1(mean(rows.map(function (r) { return r[k]; }))) + '</td><td></td>'; }).join('') + '</tr>';
+    setHTML($('tm-annual'), '<table><thead><tr>' + head + '</tr></thead><tbody>' + body + '</tbody><tfoot>' + foot + '</tfoot></table>');
+  }
+
+  var COLS = [ ['t','Fecha'], ['y','Año'], ['m','Mes'], ['q','Trim.'], ['temp','Temp. (°C)'], ['co2','CO₂ (ppm)'], ['hum','Humedad (%)'] ];
+  function monthlyRows(rows) {
+    var s = state.search.trim().toLowerCase(), out = rows;
+    if (s) out = rows.filter(function (r) { return (r.label + ' ' + MESL[r.m-1] + ' T' + r.q + ' ' + r.y).toLowerCase().indexOf(s) >= 0; });
+    var k = state.sortKey, d = state.sortDir;
+    return out.slice().sort(function (a, b) { var va = k === 'm' ? a.m : a[k], vb = k === 'm' ? b.m : b[k]; return (va - vb) * d || (a.t - b.t); });
+  }
+  function renderMonthly(rows) {
+    var list = monthlyRows(rows), pages = Math.max(1, Math.ceil(list.length / state.pageSize));
+    state.page = clamp(state.page, 0, pages - 1);
+    var slice = list.slice(state.page * state.pageSize, (state.page + 1) * state.pageSize);
+    var show = visKeys(), rng = {};
+    ['temp','co2','hum'].forEach(function (k) { var v = rows.map(function (r) { return r[k]; }); rng[k] = { lo:Math.min.apply(null, v), hi:Math.max.apply(null, v) }; });
+    var cols = COLS.filter(function (c) { return ['temp','co2','hum'].indexOf(c[0]) < 0 || show.indexOf(c[0]) >= 0; });
+    var head = cols.map(function (c) {
+      var on = state.sortKey === c[0]; return '<th class="sortable' + (on ? ' sorted' : '') + '" data-sort="' + c[0] + '">' + c[1] + '<span class="arr">' + (on ? (state.sortDir > 0 ? '▲' : '▼') : '↕') + '</span></th>';
+    }).join('');
+    var body = slice.map(function (r) {
+      return '<tr><td class="num">' + r.date.slice(0, 7) + '</td><td class="num">' + r.y + '</td><td>' + MES[r.m-1] + '</td><td class="num">T' + r.q + '</td>' +
+        show.map(function (k) {
+          var p = rng[k].hi === rng[k].lo ? 50 : Math.round((r[k] - rng[k].lo) / (rng[k].hi - rng[k].lo) * 100), hot = k === 'temp' && r.temp > UMBRAL_CALIDO;
+          return '<td class="num' + (hot ? ' hot' : '') + '" style="background:linear-gradient(90deg,' + IND[k].color + '30 ' + p + '%,transparent ' + p + '%)" title="' + (hot ? 'Supera ' + UMBRAL_CALIDO + ' °C' : '') + '">' + f2(r[k]) + '</td>';
+        }).join('') + '</tr>';
+    }).join('');
+    var foot = '';
+    if (list.length) foot = '<tfoot><tr><td colspan="4">Promedio de ' + list.length + ' registros</td>' + show.map(function (k) { return '<td class="num">' + f2(mean(list.map(function (r) { return r[k]; }))) + '</td>'; }).join('') + '</tr></tfoot>';
+    setHTML($('tm-monthly'), list.length ? '<table><thead><tr>' + head + '</tr></thead><tbody>' + body + '</tbody>' + foot + '</table>' : '<div class="tm-empty" id="tm-emptymsg"></div>');
+    if (!list.length) { var em = $('tm-emptymsg'); if (em) em.textContent = state.search ? 'Ningún registro coincide con «' + state.search + '».' : 'Sin datos para este filtro.'; }
+    $('tm-pageinfo').textContent = list.length ? 'Mostrando ' + (state.page * state.pageSize + 1) + '–' + Math.min((state.page + 1) * state.pageSize, list.length) + ' de ' + list.length + (list.length !== rows.length ? ' (búsqueda sobre ' + rows.length + ')' : '') + ' · página ' + (state.page + 1) + '/' + pages : '0 registros';
+    $('tm-prev').disabled = state.page <= 0; $('tm-next').disabled = state.page >= pages - 1;
+  }
+  function exportCSV() {
+    var rows = monthlyRows(filtered());
+    var csv = '﻿Fecha,Año,Mes,Trimestre,Temperatura_C,CO2_ppm,Humedad_pct\n' + rows.map(function (r) { return [r.date.slice(0, 7), r.y, MES[r.m-1], 'T' + r.q, r.temp.toFixed(2), r.co2.toFixed(2), r.hum.toFixed(2)].join(','); }).join('\n');
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type:'text/csv;charset=utf-8' }));
+    a.download = 'climatec_temporal_' + yearsLabel(state.years).replace(/[^0-9–,]/g, '').replace(/,/g, '_') + '.csv'; document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  /* ───────────────────────── 10 · RENDER · CONOCIMIENTOS ───────────────────────── */
+  function kRow(label, html, dyn) { return '<div class="tm-row' + (dyn ? ' dynamic' : '') + '"><div class="k">' + label + '</div><div class="v">' + html + '</div></div>'; }
+  function kCard(n, title, rowsHtml) { return '<article class="tm-card tm-k"><div class="tm-k-head"><div class="n">' + n + '</div><h3>' + title + '</h3></div>' + rowsHtml + '</article>'; }
+
+  function renderKnowledge(rows) {
+    var n = rows.length, ctx = context(rows);
+    setHTML($('tm-kctx'), ctx);
+    var few = n < 3;
+    var f = '';
+
+    /* ── Conocimiento 1: CO₂ ── */
+    var cc = co2Change(rows), lr = n >= 3 ? linreg(rows.map(function (r) { return r.t; }), rows.map(function (r) { return r.co2; })) : null;
+    var pairs = 0, drops = 0; for (var i = 1; i < n; i++) if (rows[i].t - rows[i-1].t === 1) { pairs++; if (rows[i].co2 < rows[i-1].co2) drops++; }
+    var an = annualStats(rows), k1 = '';
+    k1 += kRow('1 · Pregunta', '¿Cuál es la tasa de crecimiento del CO₂ y muestra períodos de estabilización a lo largo del tiempo?');
+    k1 += kRow('2 · Variables', 'Fecha (Año/Mes), CO₂ (ppm)');
+    k1 += kRow('3 · Procedimiento', few ? needMore('Se requieren al menos 3 meses.') : 'Regresión lineal sobre <b>' + n + ' meses</b> (' + yearsLabel(state.years) + ') y comparación de promedios anuales' + (an.length >= 2 ? ' entre ' + an[0].y + ' y ' + an[an.length-1].y : '') + '.', true);
+    k1 += kRow('4 · Evidencia', few ? needMore('Sin evidencia suficiente en este filtro.') : 'KPI de <b>' + (cc ? sg(cc.pct, 1) + '%' : '—') + '</b>, pendiente <b>' + sg(lr.b, 2) + ' ppm/mes</b>, R² = <b>' + f2(lr.r2) + '</b>, serie de ' + f1(rows[0].co2) + ' a ' + f1(rows[n-1].co2) + ' ppm (Visualizaciones 1 y 3, Tablas 1 y 2).', true);
+    k1 += kRow('5 · Hallazgo', few ? needMore('—') : 'El CO₂ ' + (cc.abs >= 0 ? 'incrementó' : 'disminuyó') + ' <b>' + f1(Math.abs(rows[n-1].co2 - rows[0].co2)) + ' ppm netos</b> entre ' + rows[0].label + ' y ' + rows[n-1].label + ' (' + n + ' meses), a una tasa media de <b>' + sg(lr.b, 2) + ' ppm/mes</b> (' + sg(lr.b * 12, 1) + ' ppm/año). ' +
+      (pairs ? 'De ' + pairs + ' variaciones mensuales consecutivas, <b>' + drops + '</b> fueron descensos' + (drops === 0 ? ': no hay períodos de reducción ni meseta.' : ' (' + Math.round(drops / pairs * 100) + '%).') : ''), true);
+    k1 += kRow('6 · Interpretación', few ? needMore('—') : (lr.r2 >= 0.9 && lr.b > 0 ? 'Existe un aumento <b>continuo y casi lineal</b> del gas (R² ≥ 0.90) que no se detiene en ninguna estación del año del período filtrado.' :
+      (lr.r2 >= 0.6 && lr.b > 0 ? 'Hay una tendencia ascendente clara, aunque con variaciones mensuales que se desvían de una recta perfecta (R² = ' + f2(lr.r2) + ').' :
+      (lr.b <= 0 ? 'En este filtro el CO₂ <b>no muestra crecimiento</b> (pendiente ' + sg(lr.b, 2) + ' ppm/mes).' : 'La tendencia es débil dentro de este filtro (R² = ' + f2(lr.r2) + '): conviene ampliar la ventana.'))), true);
+    var tgt = PROYECCION_ANIO * 12 + 11;
+    k1 += kRow('7 · Utilidad', 'Permite proyectar escenarios de emisiones futuras y ajustar metas de los planes de descarbonización regional.' + (lr && lr.b > 0 && n >= 12 ? ' <b>Si se mantuviera la pendiente de este filtro</b>, el CO₂ rondaría ' + f1(lr.a + lr.b * tgt) + ' ppm hacia dic-' + PROYECCION_ANIO + ' (extrapolación lineal, no pronóstico).' : ''), true);
+    k1 += kRow('8 · Limitación', 'No permite atribuir la tasa de crecimiento a un sector económico específico sin cruzar los datos con variables operativas industriales.' + (n < 12 && n >= 3 ? ' Con menos de 12 meses la pendiente puede estar sesgada por estacionalidad.' : ''), n < 12);
+    f += kCard(1, 'Tendencia de crecimiento constante en la concentración de CO₂', k1);
+
+    /* ── Conocimiento 2: Picos térmicos ── */
+    var mm = monthMeans(rows, 'temp'), ex = n ? extremes(mm) : { hi:-1, lo:-1 }, bq = bestQuarter(rows, 'temp');
+    var hot = rows.filter(function (r) { return r.temp > UMBRAL_CALIDO; }), byQ = { 1:0, 2:0, 3:0, 4:0 }; hot.forEach(function (r) { byQ[r.q]++; });
+    var topQ = [1,2,3,4].sort(function (a, b) { return byQ[b] - byQ[a]; }).filter(function (q) { return byQ[q] > 0; });
+    var inWin = hot.filter(function (r) { return VENTANA_CRITICA.indexOf(r.m) >= 0; }).length;
+    var k2 = '';
+    k2 += kRow('1 · Pregunta', '¿En qué meses y trimestres se concentran las temperaturas más altas y qué tan marcada es la estacionalidad?');
+    k2 += kRow('2 · Variables', 'Fecha (Mes/Trimestre), Temperatura (°C)');
+    k2 += kRow('3 · Procedimiento', n < 2 ? needMore('Se requieren al menos 2 meses.') : 'Promedio por mes calendario y por trimestre sobre <b>' + n + ' meses</b> y conteo de meses por encima de <b>' + UMBRAL_CALIDO + ' °C</b>.', true);
+    k2 += kRow('4 · Evidencia', n < 2 ? needMore('—') : 'Visualización 2 y Tabla 2: mes más cálido <b>' + MES[ex.hi] + ' (' + f1(mm[ex.hi].mean) + ' °C)</b>, más frío <b>' + MES[ex.lo] + ' (' + f1(mm[ex.lo].mean) + ' °C)</b>; <b>' + hot.length + '</b> de ' + n + ' meses superan ' + UMBRAL_CALIDO + ' °C.', true);
+    k2 += kRow('5 · Hallazgo', n < 2 ? needMore('—') : 'El trimestre más cálido es el <b>T' + bq.q + ' (' + f1(bq.v) + ' °C; ' + QMES[bq.q] + ')</b>. ' + (hot.length ? 'Los meses críticos se reparten así: ' + topQ.map(function (q) { return 'T' + q + ' = ' + byQ[q]; }).join(', ') + '. <b>' + Math.round(inWin / hot.length * 100) + '%</b> de ellos cae entre junio y septiembre.' : 'Ningún mes supera el umbral de ' + UMBRAL_CALIDO + ' °C en este filtro.'), true);
+    k2 += kRow('6 · Interpretación', n < 2 ? needMore('—') : (mm[ex.hi].mean - mm[ex.lo].mean >= 3 ? 'La temperatura presenta un <b>ciclo estacional marcado</b> (amplitud ' + f1(mm[ex.hi].mean - mm[ex.lo].mean) + ' °C): el calor se concentra en ' + MESL[ex.hi] + ' y el período cálido de verano.' : 'La estacionalidad es <b>moderada</b> (amplitud ' + f1(mm[ex.hi].mean - mm[ex.lo].mean) + ' °C): la temperatura es relativamente estable a lo largo del año.'), true);
+    k2 += kRow('7 · Utilidad', 'Sirve para anticipar alertas de vulnerabilidad ambiental y planificar el control energético y operativo en los trimestres de mayor temperatura.');
+    k2 += kRow('8 · Limitación', 'Los promedios mensuales ocultan picos diarios u horarios; el umbral de ' + UMBRAL_CALIDO + ' °C es un criterio del proyecto, no una norma oficial.' + (n < 12 ? ' El filtro actual no cubre los 12 meses del ciclo anual.' : ''), n < 12);
+    f += kCard(2, 'Comportamiento cíclico y picos térmicos estacionales', k2);
+
+    /* ── Conocimiento 3: Temperatura vs Humedad ── */
+    var r3 = n >= 3 ? pearson(rows.map(function (x) { return x.temp; }), rows.map(function (x) { return x.hum; })) : null;
+    var warm = hot, rest = rows.filter(function (x) { return x.temp <= UMBRAL_CALIDO; }), crit = '“meses cálidos” (> ' + UMBRAL_CALIDO + ' °C)';
+    if (warm.length < 2 || rest.length < 2) { if (n >= 4) { var q75 = quantile(rows.map(function (x) { return x.temp; }), .75); warm = rows.filter(function (x) { return x.temp >= q75; }); rest = rows.filter(function (x) { return x.temp < q75; }); crit = 'cuartil más cálido de este filtro (≥ ' + f1(q75) + ' °C)'; } else { warm = []; rest = []; } }
+    var hw = mean(warm.map(function (x) { return x.hum; })), hr = mean(rest.map(function (x) { return x.hum; })), dh = (hw != null && hr != null) ? hw - hr : null;
+    var k3 = '';
+    k3 += kRow('1 · Pregunta', '¿Qué relación existe entre la temperatura estacional y la humedad relativa?');
+    k3 += kRow('2 · Variables', 'Temperatura (°C), Humedad (%), Fecha (Mes)');
+    k3 += kRow('3 · Procedimiento', r3 == null ? needMore('Se requieren al menos 3 meses.') : 'Coeficiente de correlación de Pearson sobre <b>' + n + ' meses</b> y comparación de la humedad media en ' + crit + ' frente al resto.', true);
+    k3 += kRow('4 · Evidencia', r3 == null ? needMore('—') : 'Pearson <b>r = ' + sg(r3, 2) + '</b> (R² = ' + f2(r3 * r3) + '); humedad media ' + (dh != null ? '<b>' + f1(hw) + '%</b> en ' + warm.length + ' ' + crit + ' vs <b>' + f1(hr) + '%</b> en los otros ' + rest.length + ' meses.' : 'sin base suficiente para comparar grupos.'), true);
+    k3 += kRow('5 · Hallazgo', r3 == null ? needMore('—') : 'La correlación es <b>' + strengthR(r3) + (r3 < 0 ? ' e inversa' : ' y directa') + '</b>.' + (dh != null ? ' En ' + crit + ' la humedad ' + (dh < 0 ? 'cae' : 'sube') + ' <b>' + f1(Math.abs(dh)) + ' puntos porcentuales</b> (' + sg(dh / hr * 100, 1) + '% respecto al resto).' : ''), true);
+    k3 += kRow('6 · Interpretación', r3 == null ? needMore('—') : (r3 <= -0.4 ? 'Cuando la temperatura sube, la humedad relativa tiende a bajar: es consistente con aire más cálido y seco en épocas de verano.' : (r3 >= 0.4 ? 'En este filtro la humedad <b>sube junto con la temperatura</b>, lo contrario a lo esperado en épocas secas; conviene revisar el período o la calidad de los datos.' : 'La relación lineal es débil en este filtro: temperatura y humedad no se mueven de forma consistente entre sí.')) + ' Correlación no implica causalidad.', true);
+    k3 += kRow('7 · Utilidad', 'Permite anticipar condiciones de sequedad atmosférica y combinar ambas variables en alertas tempranas de vulnerabilidad ambiental.');
+    k3 += kRow('8 · Limitación', 'La correlación lineal no captura relaciones con retardo ni efectos de otras variables (viento, lluvia, altitud).' + (n < 12 ? ' Con menos de 12 meses el coeficiente es poco estable.' : ''), n < 12);
+    f += kCard(3, 'Correlación inversa entre temperatura estacional y humedad relativa', k3);
+
+    setHTML($('tm-knowledge'), f);
+  }
+
+  /* ───────────────────────── 11 · LIMITACIÓN Y DECISIÓN ───────────────────────── */
+  function renderLimitDecision(rows) {
+    var n = rows.length, hot = rows.filter(function (r) { return r.temp > UMBRAL_CALIDO; }), inWin = hot.filter(function (r) { return VENTANA_CRITICA.indexOf(r.m) >= 0; }).length;
+    var winTxt = MESL[VENTANA_CRITICA[0]-1] + ' y ' + MESL[VENTANA_CRITICA[VENTANA_CRITICA.length-1]-1];
+    var L = '<p class="tm-eyebrow">8 · Limitación del análisis temporal</p><h3>Qué no puede afirmar este análisis</h3>' +
+      '<p>Se asume transmisión uniforme del dato y se trabaja con <b>valores agregados por mes</b>, lo que impide identificar ráfagas de contaminación o micro-fluctuaciones intradía.</p>' +
+      '<p>' + (n >= 12 ? 'El filtro actual cubre <b>' + n + ' meses</b>: suficiente para observar el ciclo estacional.' : 'El filtro actual solo cubre <b>' + n + ' meses</b>: <b>no completa un ciclo anual</b>, por lo que la estacionalidad y las pendientes deben leerse con cautela.') +
+      (isContinuous(rows) ? '' : ' Además, los años/trimestres elegidos <b>no son consecutivos</b>, así que las tendencias comparan períodos separados.') + '</p>';
+    setHTML($('tm-limit'), L);
+
+    var verdict = '', cls = '', msg = '';
+    if (hot.length === 0) { verdict = 'Sin meses críticos en el filtro'; cls = 'mid'; msg = 'Ningún mes supera ' + UMBRAL_CALIDO + ' °C en el filtro actual, por lo que esta evidencia no puede respaldar ni refutar la ventana de contingencia.'; }
+    else { var pct = inWin / hot.length * 100; verdict = pct >= 80 ? 'Respaldo sólido' : (pct >= 50 ? 'Respaldo parcial' : 'Respaldo insuficiente'); cls = pct >= 80 ? 'ok' : (pct >= 50 ? 'mid' : 'bad');
+      msg = 'En el filtro actual, <b>' + inWin + ' de ' + hot.length + ' meses críticos</b> (> ' + UMBRAL_CALIDO + ' °C), es decir el <b>' + Math.round(pct) + '%</b>, ocurren entre ' + winTxt + '.' + (pct < 100 ? ' ' + (hot.length - inWin) + ' ocurren fuera de esa ventana' + (pct < 80 ? ': conviene revisar si la ventana debe ampliarse.' : '.') : ''); }
+    var D = '<p class="tm-eyebrow">9 · Posible decisión sustentada</p><h3>Plan de contingencia ambiental estacional y tope de emisiones</h3>' +
+      '<p>Activar protocolos obligatorios de mitigación durante la ventana <b>' + winTxt.replace(' y ',' – ') + '</b> de cada año.</p>' +
+      '<span class="tm-verdict ' + cls + '">' + verdict + '</span><p>' + msg + '</p>';
+    setHTML($('tm-decision'), D);
+  }
+
+  /* ───────────────────────── 12 · ORQUESTADOR ───────────────────────── */
+  var raf = 0;
+  function update() { cancelAnimationFrame(raf); raf = requestAnimationFrame(render); }
+  function render() {
+    var rows = filtered();
+    renderControls(); renderSummary(rows); renderKPIs(rows);
+    renderPlot1(rows); renderPlot2(rows); renderPlot3(rows);
+    renderInterp(rows); renderAnnual(rows); renderMonthly(rows);
+    renderKnowledge(rows); renderLimitDecision(rows);
+    writeURL();
+  }
+  function resetAll() { state.years = DEFAULT_YEARS(); state.quarters = new Set([1,2,3,4]); state.ind = 'all'; state.page = 0; state.search = ''; $('tm-search').value = ''; state.sortKey = 't'; state.sortDir = 1; update(); }
+
+  function bind() {
+    $('tm-years').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-y]'); if (!b) return; var y = +b.dataset.y;
+      if (state.years.has(y)) { if (state.years.size === 1) return; state.years.delete(y); } else state.years.add(y);   // siempre queda ≥1 año
+      state.page = 0; update();
+    });
+    $('tm-presets').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-p]'); if (!b) return; state.years = new Set($('tm-presets').__p[+b.dataset.p][1]); state.page = 0; update();
+    });
+    $('tm-quarters').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-q]'); if (!b) return; var q = +b.dataset.q;
+      if (state.quarters.has(q)) { if (state.quarters.size === 1) return; state.quarters.delete(q); } else state.quarters.add(q);
+      state.page = 0; update();
+    });
+    $('tm-q-all').addEventListener('click', function () { state.quarters = new Set([1,2,3,4]); state.page = 0; update(); });
+    $('tm-ind').addEventListener('click', function (e) { var b = e.target.closest('[data-ind]'); if (!b) return; state.ind = b.dataset.ind; update(); });
+    $('tm-reset').addEventListener('click', resetAll);
+    $('tm-trend').addEventListener('change', function (e) { state.trend = e.target.checked; update(); });
+    $('tm-search').addEventListener('input', function (e) { state.search = e.target.value; state.page = 0; update(); });
+    $('tm-prev').addEventListener('click', function () { state.page--; update(); });
+    $('tm-next').addEventListener('click', function () { state.page++; update(); });
+    $('tm-csv').addEventListener('click', exportCSV);
+    $('tm-monthly').addEventListener('click', function (e) {
+      var th = e.target.closest('[data-sort]'); if (!th) return; var k = th.dataset.sort;
+      if (state.sortKey === k) state.sortDir *= -1; else { state.sortKey = k; state.sortDir = 1; } update();
+    });
+    window.addEventListener('resize', function () { ['tm-plot1','tm-plot2','tm-plot3'].forEach(function (id) { try { Plotly.Plots.resize(id); } catch (e) {} }); });
+  }
+
+  loadData().then(function (rows) {
+    ALL = rows; YEARS = Array.from(new Set(rows.map(function (r) { return r.y; }))).sort();
+    state.years = DEFAULT_YEARS(); readURL(); bind(); render();
+    window.TM = { state:state, data:ALL, update:update };       // útil para depurar en consola
+  });
+})();
 </script>
-
-{% endblock %}
+</body>
+</html>
