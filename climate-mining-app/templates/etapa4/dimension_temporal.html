@@ -280,33 +280,110 @@ document.addEventListener('DOMContentLoaded', function() {
         const valAnio = selectAnio.value;
         const valInd = selectIndicador.value;
 
-        // 1. Obtener contenedores de las gráficas de Plotly
+        // 1. Obtener contenedores Plotly
         const divG1 = document.querySelector('#temp-viz-1 .plotly-graph-div');
-        const divG2 = document.querySelector('#temp-viz-2 .plotly-graph-div');
-        const divG3 = document.querySelector('#temp-viz-3 .plotly-graph-div');
 
-        // 2. Filtrar ejes X (Rango de Años) en la Visualización 1
+        // 2. Obtener párrafos de interpretación
+        const pInterp1 = document.querySelector('#temp-viz-1 .pob-interp p');
+        const pInterp2 = document.querySelector('#temp-viz-2 .pob-interp p');
+        const pInterp3 = document.querySelector('#temp-viz-3 .pob-interp p');
+
+        // 3. Rango de años y etiquetas
+        let xRango = null;
+        let textoAnio = "2020 - 2025";
+        if (valAnio === '2020-2022') {
+            xRango = ['2020-01-01', '2022-12-31'];
+            textoAnio = "2020 - 2022";
+        } else if (valAnio === '2023-2025') {
+            xRango = ['2023-01-01', '2025-12-31'];
+            textoAnio = "2023 - 2025";
+        }
+
+        // Trazos de la Gráfica 1 (0: Temp, 1: CO2, 2: Humedad)
+        let vis = [true, true, true];
+        if (valInd === 'temp') vis = [true, false, false];
+        else if (valInd === 'co2') vis = [false, true, false];
+        else if (valInd === 'hum') vis = [false, false, true];
+
+        // ==========================================
+        // VISUALIZACIÓN 1: Serie Histórica Continua
+        // ==========================================
         if (divG1) {
-            let xRango = null;
-            if (valAnio === '2020-2022') xRango = ['2020-01-01', '2022-12-31'];
-            else if (valAnio === '2023-2025') xRango = ['2023-01-01', '2025-12-31'];
-
             Plotly.relayout(divG1, {
                 'xaxis.autorange': xRango ? false : true,
                 'xaxis.range': xRango
             });
-
-            // 3. Ocultar/Mostrar trazos según el Indicador seleccionado
-            // Trazo 0: Temperatura, Trazo 1: CO2, Trazo 2: Humedad
-            let vis = [true, true, true];
-            if (valInd === 'temp') vis = [true, false, false];
-            else if (valInd === 'co2') vis = [false, true, false];
-            else if (valInd === 'hum') vis = [false, false, true];
-
             Plotly.restyle(divG1, { visible: vis });
+
+            if (pInterp1) {
+                if (valInd === 'temp') {
+                    let detalleTemp = (valAnio === '2020-2022') 
+                        ? "registrando 3 ciclos anuales completos con mínimas de 18 °C y máximas de 22.5 °C." 
+                        : "evidenciando la consolidación del patrón térmico estacional entre los 18 °C y los 22.5 °C.";
+                    pInterp1.innerHTML = `<strong>[Filtro: Temperatura | Período: ${textoAnio}]</strong> En la variable térmica se observa un comportamiento marcadamente estacional, ${detalleTemp}`;
+
+                } else if (valInd === 'co2') {
+                    let detalleCO2 = "pasando de 390 ppm a inicios de 2020 a rozar los 500 ppm a finales de 2025.";
+                    if (valAnio === '2020-2022') detalleCO2 = "acumulando un incremento de +53 ppm, al pasar de 390 ppm (2020) a ~443 ppm (2022).";
+                    else if (valAnio === '2023-2025') detalleCO2 = "con un incremento de +54 ppm, pasando de ~444 ppm (2023) a ~498 ppm (2025).";
+
+                    pInterp1.innerHTML = `<strong>[Filtro: CO₂ | Período: ${textoAnio}]</strong> Se evidencia un crecimiento acumulativo constante a una tasa de +1.5 ppm/mes, ${detalleCO2}`;
+
+                } else if (valInd === 'hum') {
+                    pInterp1.innerHTML = `<strong>[Filtro: Humedad | Período: ${textoAnio}]</strong> La humedad relativa muestra oscilaciones estacionales regulares entre el 65% y el 71%, registrando sus caídas en coincidencia con las crestas térmicas del período ${textoAnio}.`;
+
+                } else {
+                    pInterp1.innerHTML = `<strong>[Vista General | Período: ${textoAnio}]</strong> Se evidencia una tendencia marcadamente ascendente en CO₂, mientras Temperatura y Humedad mantienen patrones estacionales oscilantes y estables durante el rango ${textoAnio}.`;
+                }
+            }
+        }
+
+        // ==========================================
+        // VISUALIZACIÓN 2: Ciclicidad Mensual (Promedio Intraanual)
+        // ==========================================
+        if (pInterp2) {
+            if (valInd === 'temp') {
+                pInterp2.innerHTML = `<strong>[Filtro: Temperatura | Período: ${textoAnio}]</strong> El perfil intraanual refleja un patrón bimodal exacto donde los máximos térmicos se alcanzan en junio y diciembre (~22.5 °C), mientras que los valles de menor temperatura ocurren en enero y julio (~18 °C).`;
+
+            } else if (valInd === 'co2') {
+                pInterp2.innerHTML = `<strong>[Filtro: CO₂ | Período: ${textoAnio}]</strong> El promedio mensual de CO₂ refleja la acumulación constante a lo largo del año, alcanzando los valores medios más altos en el tramo final del período ${textoAnio}.`;
+
+            } else if (valInd === 'hum') {
+                pInterp2.innerHTML = `<strong>[Filtro: Humedad | Período: ${textoAnio}]</strong> La ciclicidad mensual de la humedad relativa muestra una correlación inversa estricta respecto a la temperatura, alcanzando sus picos (~71%) en enero y julio, y cayendo al 65% en junio y diciembre.`;
+
+            } else {
+                pInterp2.innerHTML = `<strong>[Vista General | Período: ${textoAnio}]</strong> El análisis intraanual demuestra la sincronía estacional del microclima en ${textoAnio}: caídas de humedad proporcionales a las subidas térmicas de junio y diciembre, junto con una base ascendente de CO₂.`;
+            }
+        }
+
+        // ==========================================
+        // VISUALIZACIÓN 3: Crecimiento y Acumulado Interanual
+        // ==========================================
+        if (pInterp3) {
+            if (valInd === 'temp') {
+                pInterp3.innerHTML = `<strong>[Filtro: Temperatura | Período: ${textoAnio}]</strong> El promedio interanual de la temperatura se mantiene estable en torno a los 20.25 °C año tras año, confirmando la ausencia de tendencias de calentamiento o enfriamiento a largo plazo en el período ${textoAnio}.`;
+
+            } else if (valInd === 'co2') {
+                let detalleAcum3 = "escalando progresivamente desde un promedio anual de ~396 ppm en 2020 hasta alcanzar los ~490 ppm en 2025.";
+                if (valAnio === '2020-2022') detalleAcum3 = "pasando de un promedio anual de ~396 ppm en 2020 a ~437 ppm en 2022, reflejando un crecimiento interanual constante de ~18 ppm por año.";
+                else if (valAnio === '2023-2025') detalleAcum3 = "elevando la media anual desde ~455 ppm en 2023 hasta bordear los ~490 ppm en 2025.";
+
+                pInterp3.innerHTML = `<strong>[Filtro: CO₂ | Período: ${textoAnio}]</strong> La comparativa interanual demuestra un crecimiento estructural sostenido en la concentración de CO₂, ${detalleAcum3}`;
+
+            } else if (valInd === 'hum') {
+                pInterp3.innerHTML = `<strong>[Filtro: Humedad | Período: ${textoAnio}]</strong> El comportamiento interanual de la humedad relativa promedia un 68% constante a lo largo de los años, demostrando estabilidad estructural sin desviaciones interanuales significativas en ${textoAnio}.`;
+
+            } else {
+                let detalleGen3 = "evidenciando un crecimiento estructural exclusivo en la concentración de CO₂ (de ~396 ppm a ~490 ppm anuales), mientras que la temperatura (20.25 °C) y la humedad (68%) permanecen invariables entre años.";
+                if (valAnio === '2020-2022') detalleGen3 = "mostrando el tramo inicial de acumulación anual de CO₂ (de 396 ppm a 437 ppm) junto con la estabilidad interanual de la temperatura y la humedad en el primer trienio.";
+                else if (valAnio === '2023-2025') detalleGen3 = "reflejando los niveles máximos de CO₂ en el acumulado anual (hasta ~490 ppm) con invariabilidad en los promedios anuales de temperatura y humedad.";
+
+                pInterp3.innerHTML = `<strong>[Vista General | Período: ${textoAnio}]</strong> La comparativa de medias anuales para ${textoAnio} confirma la dinámica del sistema, ${detalleGen3}`;
+            }
         }
     }
 
+    // Event Listeners
     if (selectAnio) selectAnio.addEventListener('change', aplicarFiltros);
     if (selectIndicador) selectIndicador.addEventListener('change', aplicarFiltros);
 

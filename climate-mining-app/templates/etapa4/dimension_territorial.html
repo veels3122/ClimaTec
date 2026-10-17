@@ -7,12 +7,259 @@
     <canvas class="fondo-seccion" aria-hidden="true"></canvas>
     <p class="eyebrow"><span class="paso">Etapa 4 · 02</span> Analisis de Datos</p>
     <h1>Dimension Territorial</h1>
-    <p class="lede">Analisis del dataset por escala geografica: comparacion entre los niveles Global, Regional (Sudamerica) y Nacional (Colombia).</p>
+    <p class="lede">Como se reparten las emisiones y la energia entre los territorios del dataset: el mundo, las seis regiones y los paises, con Colombia comparada frente a Sudamerica y al promedio mundial.</p>
 </div>
 
+{% if info %}
+{% set co2 = info.co2 %}
+
+{# ------------------------------------------------------------------ #}
+{# Indice de requisitos                                                #}
+{# ------------------------------------------------------------------ #}
+<nav class="pob-indice animate-fade-up" aria-label="Contenido de la dimension" style="animation-delay:120ms;">
+    <a href="#ter-titulo"><span>1</span> Titulo</a>
+    <a href="#ter-pregunta"><span>2</span> Pregunta</a>
+    <a href="#ter-variables"><span>3</span> Variables</a>
+    <a href="#ter-indicadores"><span>4</span> Indicadores</a>
+    <a href="#ter-visualizaciones"><span>5</span> Visualizaciones</a>
+    <a href="#ter-filtros"><span>6</span> Filtros</a>
+    <a href="#ter-interpretacion"><span>7</span> Interpretacion</a>
+    <a href="#ter-conocimientos"><span>8</span> Conocimientos</a>
+    <a href="#ter-limitacion"><span>9</span> Limitacion</a>
+    <a href="#ter-decision"><span>10</span> Decision</a>
+</nav>
+
+{# ------------------------------------------------------------------ #}
+{# 1. Titulo   2. Pregunta                                             #}
+{# ------------------------------------------------------------------ #}
+<section class="pob-bloque" id="ter-titulo">
+    <p class="pob-kicker">1 · Titulo de la dimension</p>
+    <h2>Distribucion territorial de las emisiones y la energia</h2>
+    <p>Esta dimension compara los territorios del dataset en tres escalas: el <strong>mundo</strong>, las
+    <strong>6 regiones</strong> (continentes) y <strong>{{ info.n_paises }} paises</strong>, entre {{ info.anio_min }} y
+    {{ info.anio_max }}. Se analizan {{ '{:,}'.format(info.n_registros).replace(',', '.') }} registros de cinco indicadores
+    que se pueden repartir entre territorios (CO2, gases de efecto invernadero, energia primaria, metano y electricidad),
+    mas cuatro indicadores per capita para comparar a Colombia. Todo se calcula en vivo sobre <span class="mono">clima_limpio.csv</span>.</p>
+</section>
+
+<section class="pob-bloque" id="ter-pregunta">
+    <p class="pob-kicker">2 · Pregunta de analisis</p>
+    <blockquote>¿Como se distribuye la poblacion y sus principales caracteristicas entre los territorios disponibles?</blockquote>
+    <p class="pob-mini">Aplicada a este proyecto: ¿como se reparten las emisiones y el consumo de energia entre regiones y paises, y donde se ubica Colombia? Para responderla se analiza:</p>
+    <div class="pob-chips">
+        <a class="chip" href="#ter-viz-1">Distribucion por region</a>
+        <a class="chip" href="#ter-viz-2">Territorios con mayor y menor valor</a>
+        <a class="chip" href="#ter-viz-1">Participacion porcentual de cada territorio</a>
+        <a class="chip" href="#ter-indicadores">Concentraciones territoriales</a>
+        <a class="chip" href="#ter-viz-3">Diferencias entre territorios</a>
+        <a class="chip" href="#ter-viz-3">Comportamiento particular de Colombia</a>
+    </div>
+</section>
+
+{# ------------------------------------------------------------------ #}
+{# 3. Variables                                                        #}
+{# ------------------------------------------------------------------ #}
+<section class="pob-bloque" id="ter-variables">
+    <p class="pob-kicker">3 · Descripcion de las variables utilizadas</p>
+    <h2>Variables del analisis</h2>
+    <div class="tabla-wrap">
+        <table>
+            <thead><tr><th>Variable</th><th>Tipo</th><th>Que aporta a esta dimension</th></tr></thead>
+            <tbody>
+                {% for v in info.variables %}
+                {% set c = 'num' if 'Numerica' in v.tipo else ('tmp' if 'Temporal' in v.tipo else 'cat') %}
+                <tr>
+                    <td class="mono">{{ v.variable }}</td>
+                    <td><span class="tag {{ c }}">{{ v.tipo }}</span></td>
+                    <td>{{ v.uso }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p class="pob-mini" style="margin-top:.8rem;">Las regiones se muestran en espanol; los paises, como vienen en el dataset (en ingles), excepto Colombia.</p>
+</section>
+
+{# ------------------------------------------------------------------ #}
+{# 6 (filtros) + 4 (indicadores)                                       #}
+{# ------------------------------------------------------------------ #}
+<section class="pob-bloque" id="ter-indicadores">
+    <p class="pob-kicker">4 · Indicadores</p>
+    <h2>Tres indicadores clave</h2>
+
+    <div class="pob-filtros panel" id="ter-filtros" role="group" aria-label="Filtros interactivos">
+        <div class="pob-filtros-tit">
+            <span class="pob-kicker" style="margin:0;">6 · Filtros interactivos</span>
+            <span class="pob-mini">Controlan los indicadores y las tres visualizaciones.</span>
+        </div>
+        <div class="pob-filtros-campos">
+            <label class="pob-campo">
+                <span>Filtro 1 · Anio</span>
+                <select id="ter-f-anio" aria-controls="ter-ind ter-viz-1 ter-viz-2 ter-viz-3"></select>
+            </label>
+            <label class="pob-campo">
+                <span>Filtro 2 · Indicador a repartir</span>
+                <select id="ter-f-ind" aria-controls="ter-ind ter-viz-1 ter-viz-2"></select>
+            </label>
+            <button type="button" class="pob-reset" id="ter-f-reset">Restablecer</button>
+        </div>
+    </div>
+
+    <div class="grid grid-3 pob-ind" id="ter-ind" aria-live="polite">
+        <div class="panel stat cold">
+            <div class="valor" id="ter-i1-valor">-</div>
+            <div class="etiqueta" id="ter-i1-etq">del total se concentra en la region principal</div>
+            <p class="pob-ind-sub" id="ter-i1-sub"></p>
+        </div>
+        <div class="panel stat warm">
+            <div class="valor" id="ter-i2-valor">-</div>
+            <div class="etiqueta">del total de los paises lo aportan los 10 primeros</div>
+            <p class="pob-ind-sub" id="ter-i2-sub"></p>
+        </div>
+        <div class="panel stat">
+            <div class="valor" id="ter-i3-valor">-</div>
+            <div class="etiqueta" id="ter-i3-etq">posicion de Colombia entre los paises</div>
+            <p class="pob-ind-sub" id="ter-i3-sub"></p>
+        </div>
+    </div>
+</section>
+
+{# ------------------------------------------------------------------ #}
+{# 5. Visualizaciones   7. Interpretacion                              #}
+{# ------------------------------------------------------------------ #}
+<section class="pob-bloque" id="ter-visualizaciones">
+    <p class="pob-kicker">5 · Visualizaciones</p>
+    <h2>Tres visualizaciones generadas desde el dataset</h2>
+    <p>Las graficas se dibujan en el navegador con las sumas y participaciones que calcula <span class="mono">scripts/territorial.py</span>
+    sobre el CSV; no son imagenes ni datos de terceros. Pasa el cursor sobre cada elemento para ver su valor.</p>
+
+    <article class="panel pob-viz" id="ter-viz-1">
+        <header>
+            <p class="pob-viz-num">Visualizacion 1</p>
+            <h3 id="ter-v1-titulo">Participacion de cada region</h3>
+            <p class="pob-mini" id="ter-v1-sub"></p>
+        </header>
+        <div class="pob-barras" id="ter-v1" role="img" aria-label="Barras horizontales con la participacion de cada region"></div>
+        <p class="pob-lectura" id="ter-v1-lectura" aria-live="polite"></p>
+        <div class="pob-interp" id="ter-interpretacion">
+            <h4>7 · Interpretacion <span>(CO2, {{ info.anio_ref }})</span></h4>
+            <p>{{ info.interpretaciones.v1 }}</p>
+        </div>
+    </article>
+
+    <article class="panel pob-viz" id="ter-viz-2">
+        <header>
+            <p class="pob-viz-num">Visualizacion 2</p>
+            <h3 id="ter-v2-titulo">Paises con mayor valor y posicion de Colombia</h3>
+            <p class="pob-mini" id="ter-v2-sub"></p>
+        </header>
+        <div class="pob-barras" id="ter-v2" role="img" aria-label="Barras horizontales con los diez paises de mayor valor, el resto y Colombia"></div>
+        <div class="tabla-wrap" style="margin-top:1rem;">
+            <table>
+                <thead><tr><th>Territorios con menor valor (mayor que cero)</th><th>Valor</th><th>% del total</th></tr></thead>
+                <tbody id="ter-v2-menores"></tbody>
+            </table>
+        </div>
+        <p class="pob-lectura" id="ter-v2-lectura" aria-live="polite"></p>
+        <div class="pob-interp">
+            <h4>7 · Interpretacion <span>(CO2, {{ info.anio_ref }})</span></h4>
+            <p>{{ info.interpretaciones.v2 }}</p>
+        </div>
+    </article>
+
+    <article class="panel pob-viz" id="ter-viz-3">
+        <header>
+            <p class="pob-viz-num">Visualizacion 3</p>
+            <h3>Colombia y Sudamerica frente al promedio mundial (mundo = 100)</h3>
+            <p class="pob-mini" id="ter-v3-sub"></p>
+        </header>
+        <div class="pob-leyenda-h">
+            <span><i class="pob-sw warm"></i> Colombia</span>
+            <span><i class="pob-sw" style="background:#ffb454;"></i> Sudamerica</span>
+            <span><i class="pob-sw cold"></i> Mundo = 100</span>
+        </div>
+        <div class="pob-columnas" id="ter-v3" role="img" aria-label="Columnas agrupadas: Colombia y Sudamerica como porcentaje del valor mundial"></div>
+        <div class="tabla-wrap" style="margin-top:1rem;">
+            <table>
+                <thead><tr><th>Indicador</th><th>Colombia</th><th>Sudamerica</th><th>Mundo</th><th>Colombia / mundo</th></tr></thead>
+                <tbody id="ter-v3-tabla"></tbody>
+            </table>
+        </div>
+        <p class="pob-lectura" id="ter-v3-lectura" aria-live="polite"></p>
+        <div class="pob-interp">
+            <h4>7 · Interpretacion <span>({{ info.anio_ref }})</span></h4>
+            <p>{{ info.interpretaciones.v3 }}</p>
+        </div>
+    </article>
+</section>
+
+{# ------------------------------------------------------------------ #}
+{# 8. Conocimientos evidentes                                          #}
+{# ------------------------------------------------------------------ #}
+<section class="pob-bloque" id="ter-conocimientos">
+    <p class="pob-kicker">8 · Conocimientos evidentes</p>
+    <h2>Tres conocimientos evidentes</h2>
+    <p>Cada conocimiento sigue la estructura pregunta, variables, procedimiento, evidencia, hallazgo,
+    interpretacion, utilidad y limitacion. Las cifras corresponden a {{ info.anio_ref }}, el ultimo anio con datos territoriales.</p>
+
+    {% for k in info.conocimientos %}
+    <article class="panel pob-conoc">
+        <header>
+            <span class="pob-conoc-num">{{ k.numero }}</span>
+            <h3>{{ k.titulo }}</h3>
+        </header>
+        <dl class="pob-dl">
+            <div><dt>1 · Pregunta</dt><dd>{{ k.pregunta }}</dd></div>
+            <div><dt>2 · Variables</dt><dd>{{ k.variables }}</dd></div>
+            <div><dt>3 · Procedimiento</dt><dd>{{ k.procedimiento }}</dd></div>
+            <div class="pob-evid">
+                <dt>4 · Evidencia</dt>
+                <dd>
+                    <p class="pob-mini" style="margin:0 0 .4rem;">{{ k.evidencia_titulo }}</p>
+                    {% for e in k.evidencia %}
+                    <div class="barra-h-fila">
+                        <div class="barra-h-label">{{ e.etiqueta }}</div>
+                        <div class="barra-h-track"><div class="barra-h-fill" style="width: {{ [[e.pct, 0.6] | max, 100] | min }}%;"></div></div>
+                        <div class="barra-h-val">{{ e.valor }} · {{ e.pct_txt }}</div>
+                    </div>
+                    {% endfor %}
+                </dd>
+            </div>
+            <div><dt>5 · Hallazgo</dt><dd>{{ k.hallazgo }}</dd></div>
+            <div><dt>6 · Interpretacion</dt><dd>{{ k.interpretacion }}</dd></div>
+            <div><dt>7 · Utilidad</dt><dd>{{ k.utilidad }}</dd></div>
+            <div><dt>8 · Limitacion</dt><dd>{{ k.limitacion }}</dd></div>
+        </dl>
+    </article>
+    {% endfor %}
+</section>
+
+{# ------------------------------------------------------------------ #}
+{# 9. Limitacion   10. Decision                                        #}
+{# ------------------------------------------------------------------ #}
+<section class="pob-bloque" id="ter-limitacion">
+    <p class="pob-kicker">9 · Limitacion del analisis</p>
+    <h2>{{ info.limitacion.titulo }}</h2>
+    <div class="nota"><p style="margin:0;max-width:none;">{{ info.limitacion.texto }}</p></div>
+</section>
+
+<section class="pob-bloque" id="ter-decision">
+    <p class="pob-kicker">10 · Posible decision sustentada en los datos</p>
+    <h2>{{ info.decision.titulo }}</h2>
+    <div class="panel pob-decision">
+        <p style="max-width:none;">{{ info.decision.texto }}</p>
+        <p class="pob-mini" style="margin-bottom:0;">{{ info.decision.sustento }}</p>
+    </div>
+</section>
+
+<script type="application/json" id="ter-datos">{{ info.graficos | tojson }}</script>
+<script src="{{ url_for('static', filename='js/dimension_territorial.js') }}"></script>
+
+{% else %}
 <div class="nota" style="margin-top:1.4rem;">
-    <strong>Contenido:</strong> pendiente de desarrollar. En este apartado se publicara el analisis de la
-    dimension territorial del proyecto ({{ proyecto.integrantes | join(' · ') }}).
+    No se pudo calcular el analisis territorial: verifica que exista
+    <span class="mono">data/raw/clima_limpio.csv</span> y que contenga el indicador <em>Emisiones de CO2 (total)</em> por pais.
 </div>
+{% endif %}
 
 {% endblock %}
