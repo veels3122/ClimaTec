@@ -957,7 +957,16 @@ def e4_poblacional():
 
 @app.route("/etapa-4/dimension-territorial")
 def e4_territorial():
-    return render_template("etapa4/dimension_territorial.html", proyecto=PROYECTO)
+    # Etapa 4 - Dimension Territorial (Integrante 2). Se importa aqui para no
+    # tocar la cabecera compartida de app.py.
+    import territorial
+    base = DF_LIMPIO if DF_LIMPIO is not None else DF
+    try:
+        info = territorial.construir(base)
+    except Exception:
+        app.logger.exception("No se pudo calcular la dimension territorial")
+        info = None
+    return render_template("etapa4/dimension_territorial.html", proyecto=PROYECTO, info=info)
 
 
 
