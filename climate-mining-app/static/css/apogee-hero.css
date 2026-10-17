@@ -357,3 +357,18 @@
     #inicio-hero { min-height: auto; padding-top: 24px; padding-bottom: 8px; }
     .hero-panel-derecho { max-width: 460px; margin: 0 auto; }
 }
+
+/* Etapa 4 (Analisis de Datos): con un item mas en el menu, evita que los
+   textos de la pill central y de la pill derecha se partan en dos lineas. */
+@media (min-width: 1024px) {
+    .nav-pill-link, .nav-auth-link { white-space: nowrap; }
+}
+@media (min-width: 1024px) and (max-width: 1439px) {
+    .nav-pill { gap: 18px; padding: 0 18px; }
+    .nav-auth-link { padding: 0 16px; }
+}
+@media (min-width: 1024px) and (max-width: 1199px) {
+    .nav-pill { gap: 14px; padding: 0 14px; }
+    .nav-pill-link, .nav-auth-link { font-size: 13px; }
+    .nav-auth-link { padding: 0 12px; }
+}

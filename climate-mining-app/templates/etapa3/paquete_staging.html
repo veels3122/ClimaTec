@@ -1,52 +1,117 @@
 {% extends 'base.html' %}
-{% block titulo %}Etapa 3 · Paquete SSIS y Staging · ClimaTec{% endblock %}
+{% block titulo %}Paquete SSIS y Staging · ClimaTec{% endblock %}
 {% block contenido %}
+
+<style>
+    .figura-etl { margin: 1.4rem 0 2rem; }
+    .figura-etl img { width: 100%; height: auto; display: block; border-radius: 14px;
+        border: 1px solid rgba(255,255,255,.12); box-shadow: 0 18px 40px rgba(0,0,0,.35); }
+    .figura-etl figcaption { font-size: .82rem; color: var(--ink-mute); margin-top: .6rem; }
+    @media (max-width: 760px) { .grid-3, .grid-2 { grid-template-columns: 1fr; } }
+</style>
 
 <div class="page-hero acento-cold animate-fade-down">
     <div class="fondo-foto-tinte" aria-hidden="true"></div>
     <canvas class="fondo-seccion" aria-hidden="true"></canvas>
-    <p class="eyebrow"><span class="paso">Etapa 3 · 02</span> ETL en SSIS</p>
+    <p class="eyebrow"><span class="paso">02</span> ETL en SSIS</p>
     <h1>Paquete SSIS y Staging</h1>
-    <p class="lede">Estructura del paquete <span class="mono">.dtsx</span>: administradores de conexion,
-    area de staging y flujo de control que orquesta la carga.</p>
+    <p class="lede">Paquete <span class="mono">ClimaTec_ETL.dtsx</span> construido en Visual Studio (SQL Server
+    Integration Services). Extrae el dataset consolidado, lo conserva sin cambios en una zona de
+    <strong>staging</strong> y orquesta la limpieza, la verificacion y el cierre de cada ejecucion.</p>
+</div>
+
+<div class="grid grid-3 animate-fade-up" style="margin:1.2rem 0; animation-delay:120ms;">
+    <div class="panel stat cold"><div class="valor">21.369</div><div class="etiqueta">filas del CSV cargadas a staging por ejecucion</div></div>
+    <div class="panel stat"><div class="valor">5</div><div class="etiqueta">tareas en el flujo de control</div></div>
+    <div class="panel stat warm"><div class="valor">0</div><div class="etiqueta">modificaciones al origen: el CSV y el staging se conservan intactos</div></div>
+</div>
+
+<h2>Proyecto y parametros</h2>
+<p>Todo lo que depende del equipo donde se ejecuta esta en los <strong>parametros del proyecto</strong>
+(<span class="mono">Project.params</span>). Para correr el paquete en otro computador o repetir una iteracion
+solo se cambian estos valores, sin editar el flujo. La conexion usa autenticacion de Windows: no hay
+contraseñas en el repositorio.</p>
+<div class="tabla-wrap">
+    <table>
+        <thead><tr><th>Parametro</th><th>Tipo</th><th>Para que sirve</th></tr></thead>
+        <tbody>
+            <tr><td class="mono">Servidor</td><td>String</td><td>Nombre del SQL Server donde vive la base <span class="mono">ClimaTec_ETL</span></td></tr>
+            <tr><td class="mono">RutaCSV</td><td>String</td><td>Ruta del archivo a cargar (<span class="mono">clima_consolidado.csv</span> o el archivo de prueba)</td></tr>
+            <tr><td class="mono">Iteracion</td><td>Int32</td><td>Numero de iteracion que queda registrado en el lote</td></tr>
+            <tr><td class="mono">DescripcionLote</td><td>String</td><td>Que cambio en esa ejecucion</td></tr>
+        </tbody>
+    </table>
 </div>
 
 <h2>Administradores de conexion</h2>
 <div class="tabla-wrap">
     <table>
-        <thead><tr><th>Conexion</th><th>Tipo</th><th>Origen / Destino</th></tr></thead>
+        <thead><tr><th>Conexion</th><th>Tipo</th><th>Configuracion</th></tr></thead>
         <tbody>
-            <tr><td>CM_Origen_CSV</td><td>Flat File</td><td><span class="mono">clima_consolidado.csv</span> (UTF-8, separador coma)</td></tr>
-            <tr><td>CM_SQL_ClimaTec</td><td>OLE DB</td><td>SQL Server · base <span class="mono">ClimaTec_DW</span></td></tr>
+            <tr><td class="mono">CSV_clima</td><td>Flat File</td><td>UTF-8 (65001), separador coma, fin de linea LF, encabezados en la primera fila. Las 12 columnas se leen como texto Unicode (DT_WSTR 255) para no perder ningun valor al extraer. La ruta sale de <span class="mono">@[$Project::RutaCSV]</span></td></tr>
+            <tr><td class="mono">ClimaTec</td><td>OLE DB</td><td>Microsoft OLE DB Driver para SQL Server, base <span class="mono">ClimaTec_ETL</span>. El servidor sale del parametro <span class="mono">Servidor</span></td></tr>
+            <tr><td class="mono">localhost.ClimaTec_ETL</td><td>OLE DB</td><td>Usada por los destinos de la tarea de limpieza</td></tr>
         </tbody>
     </table>
 </div>
 
-<h2>Area de staging</h2>
-<p>Los datos crudos aterrizan primero en tablas de staging sin transformar, para desacoplar la
-extraccion de la transformacion y permitir reprocesos.</p>
+<h2>Base de datos y zona de staging</h2>
+<p>La base <span class="mono">ClimaTec_ETL</span> se crea con el script <span class="mono">ssis/sql/01_crear_base_climatec_etl.sql</span>.
+El staging recibe los datos <strong>crudos, todos como texto</strong>, y nunca se modifica: la limpieza lee de ahi y
+escribe en tablas separadas, asi que el proceso se puede repetir sin volver a tocar el origen.</p>
 <div class="tabla-wrap">
     <table>
         <thead><tr><th>Tabla</th><th>Rol</th><th>Contenido</th></tr></thead>
         <tbody>
-            <tr><td><span class="mono">stg_clima</span></td><td>Staging</td><td>Copia cruda del CSV consolidado</td></tr>
-            <tr><td><span class="mono">dw_clima_hechos</span></td><td>Destino</td><td>Datos limpios y validados (tabla de hechos)</td></tr>
-            <tr><td><span class="mono">err_clima</span></td><td>Errores</td><td>Filas rechazadas con su motivo</td></tr>
+            <tr><td class="mono">stg_clima</td><td>Staging</td><td>Copia cruda del CSV (12 columnas en texto) + <span class="mono">IdStg</span> (clave de fila estable), <span class="mono">IdLote</span>, <span class="mono">archivo_origen</span> y <span class="mono">fecha_carga</span></td></tr>
+            <tr><td class="mono">clima_limpio</td><td>Destino</td><td>Registros aceptados, con tipos correctos y enlazados a su fila de staging (<span class="mono">IdStg</span>). Indice unico por la clave logica para que una recarga no duplique</td></tr>
+            <tr><td class="mono">clima_revision</td><td>Excepciones</td><td>Duplicados y registros enviados a revision, con el <strong>valor original</strong>, la regla incumplida y el motivo</td></tr>
+            <tr><td class="mono">etl_lote</td><td>Registro de ejecucion</td><td>Una fila por ejecucion: iteracion, inicio, fin, estado y conteos de recibidas, aceptadas, duplicadas y en revision</td></tr>
         </tbody>
     </table>
 </div>
 
 <h2>Flujo de control (Control Flow)</h2>
+<p>El paquete sigue los cinco pasos de orquestacion: inicio, extraccion, limpieza, verificacion y cierre.
+Cada tarea continua solo si la anterior termino con exito (restricciones de precedencia).</p>
 <div class="tabla-wrap">
     <table>
-        <thead><tr><th>#</th><th>Tarea</th><th>Descripcion</th></tr></thead>
+        <thead><tr><th>#</th><th>Tarea</th><th>Tipo</th><th>Que hace</th><th>Evidencia</th></tr></thead>
         <tbody>
-            <tr><td>1</td><td>Execute SQL — TRUNCATE staging</td><td>Limpia <span class="mono">stg_clima</span> antes de cargar</td></tr>
-            <tr><td>2</td><td>Data Flow — Carga cruda</td><td>CSV → <span class="mono">stg_clima</span></td></tr>
-            <tr><td>3</td><td>Data Flow — Transformacion</td><td>Staging → destino con limpieza y validacion</td></tr>
-            <tr><td>4</td><td>Execute SQL — Indicadores</td><td>Calcula metricas de calidad de la carga</td></tr>
+            <tr><td>1</td><td>Abrir Lote</td><td>Execute SQL</td><td><span class="mono">EXEC dbo.usp_abrir_lote ?, ?, ?</span> registra la ejecucion y guarda su numero en <span class="mono">User::IdLote</span></td><td>Lote abierto y hora de inicio</td></tr>
+            <tr><td>2</td><td>Extraccion a staging</td><td>Data Flow</td><td>CSV → <span class="mono">stg_clima</span>, marcando cada fila con su lote</td><td>Filas recibidas en staging</td></tr>
+            <tr><td>3</td><td>Limpieza</td><td>Data Flow</td><td>Estandariza, tipa y valida: aceptadas → <span class="mono">clima_limpio</span>; excepciones → <span class="mono">clima_revision</span></td><td>Aceptados y excepciones</td></tr>
+            <tr><td>4</td><td>Verificar lote</td><td>Execute SQL</td><td><span class="mono">EXEC dbo.usp_verificar_lote ?</span> cuenta cada destino y comprueba el balance</td><td>Conteos y balance</td></tr>
+            <tr><td>5</td><td>Cerrar lote</td><td>Execute SQL</td><td><span class="mono">EXEC dbo.usp_cerrar_lote ?</span> marca el estado final: <span class="mono">OK</span> o <span class="mono">REVISAR_BALANCE</span></td><td>Estado final del lote</td></tr>
         </tbody>
     </table>
+</div>
+<figure class="figura-etl">
+    <img src="{{ url_for('static', filename='img/etl/paquete_control_flow.png') }}" alt="Control Flow del paquete con las cinco tareas ejecutadas con exito" loading="lazy">
+    <figcaption>Control Flow de <span class="mono">ClimaTec_ETL.dtsx</span> despues de una ejecucion: las cinco tareas terminaron con exito.</figcaption>
+</figure>
+
+<h2>Extraccion a staging (Data Flow)</h2>
+<div class="tabla-wrap">
+    <table>
+        <thead><tr><th>Componente</th><th>Tipo</th><th>Funcion</th></tr></thead>
+        <tbody>
+            <tr><td>Leer CSV</td><td>Flat File Source</td><td>Lee el archivo; los campos vacios (<span class="mono">iso_code</span>, <span class="mono">mes</span>) se conservan como NULL</td></tr>
+            <tr><td>Agregar lote y archivo</td><td>Derived Column</td><td>Agrega <span class="mono">IdLote</span> y <span class="mono">archivo_origen</span> para rastrear cada fila</td></tr>
+            <tr><td>Contar recibidas</td><td>Row Count</td><td>Guarda en <span class="mono">User::FilasRecibidas</span> cuantas filas llegaron</td></tr>
+            <tr><td>Guardar en stg_clima</td><td>OLE DB Destination</td><td>Carga rapida (fast load) a la tabla de staging</td></tr>
+        </tbody>
+    </table>
+</div>
+<figure class="figura-etl">
+    <img src="{{ url_for('static', filename='img/etl/paquete_extraccion.png') }}" alt="Data Flow de extraccion con 21.369 filas en cada paso" loading="lazy">
+    <figcaption>Las 21.369 filas del CSV pasan por los cuatro componentes y llegan completas a <span class="mono">stg_clima</span>.</figcaption>
+</figure>
+
+<div class="nota" style="margin-top:1.4rem;">
+    El paquete, los scripts SQL y la guia de ejecucion estan en la carpeta <span class="mono">ssis/</span> del repositorio
+    (<span class="mono">ssis/LEEME.md</span>). Las tres ejecuciones documentadas del paquete estan en
+    <a href="{{ url_for('e3_iteraciones') }}"><strong>Iteraciones y Trazabilidad</strong></a>.
 </div>
 
 {% endblock %}

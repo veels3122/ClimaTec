@@ -1,41 +1,179 @@
 {% extends 'base.html' %}
-{% block titulo %}Etapa 3 · Iteraciones y Trazabilidad · ClimaTec{% endblock %}
+{% block titulo %}Iteraciones y Trazabilidad · ClimaTec{% endblock %}
 {% block contenido %}
+
+<style>
+    .figura-etl { margin: 1.2rem 0 1.8rem; }
+    .figura-etl img { width: 100%; height: auto; display: block; border-radius: 14px;
+        border: 1px solid rgba(255,255,255,.12); box-shadow: 0 18px 40px rgba(0,0,0,.35); }
+    .figura-etl figcaption { font-size: .82rem; color: var(--ink-mute); margin-top: .6rem; }
+    .fila-ok td:first-child { border-left: 3px solid var(--ok); }
+    .fila-corr td:first-child { border-left: 3px solid var(--cold); }
+    .fila-rev td:first-child { border-left: 3px solid var(--warm); }
+    .fila-dup td:first-child { border-left: 3px solid var(--amber); }
+    @media (max-width: 760px) { .grid-3, .grid-2 { grid-template-columns: 1fr; } }
+</style>
 
 <div class="page-hero acento-cold animate-fade-down">
     <div class="fondo-foto-tinte" aria-hidden="true"></div>
     <canvas class="fondo-seccion" aria-hidden="true"></canvas>
-    <p class="eyebrow"><span class="paso">Etapa 3 · 05</span> ETL en SSIS</p>
+    <p class="eyebrow"><span class="paso">05</span> ETL en SSIS</p>
     <h1>Iteraciones y Trazabilidad</h1>
-    <p class="lede">Registro de las ejecuciones del paquete y de los mecanismos que permiten seguir
-    cada fila desde el origen hasta el destino.</p>
+    <p class="lede">Tres ejecuciones del paquete <span class="mono">ClimaTec_ETL.dtsx</span>: datos reales, una prueba
+    controlada con errores introducidos a proposito y una recarga del mismo archivo. Cada una queda
+    registrada con sus conteos, y cada fila se puede seguir desde el archivo de origen hasta su destino.</p>
 </div>
 
-<h2>Trazabilidad</h2>
+<div class="grid grid-3 animate-fade-up" style="margin:1.2rem 0; animation-delay:120ms;">
+    <div class="panel stat cold"><div class="valor">3 / 3</div><div class="etiqueta">iteraciones con balance correcto y estado OK</div></div>
+    <div class="panel stat"><div class="valor">12</div><div class="etiqueta">registros enviados a revision en la prueba controlada, con su valor original y motivo</div></div>
+    <div class="panel stat warm"><div class="valor">0</div><div class="etiqueta">filas duplicadas al volver a cargar el mismo archivo</div></div>
+</div>
+
+<h2>Como se garantiza la trazabilidad</h2>
 <div class="tabla-wrap">
     <table>
         <thead><tr><th>Mecanismo</th><th>Para que sirve</th></tr></thead>
         <tbody>
-            <tr><td>Columnas de auditoria</td><td><code>fecha_carga</code>, <code>paquete</code>, <code>ejecucion_id</code> en cada fila</td></tr>
-            <tr><td>Row Count</td><td>Cuenta filas leidas, cargadas y rechazadas</td></tr>
-            <tr><td>SSIS Logging</td><td>Bitacora de eventos (OnError, OnTaskFailed) del paquete</td></tr>
-            <tr><td>Tabla de errores</td><td><span class="mono">err_clima</span> conserva las filas rechazadas y su motivo</td></tr>
+            <tr><td>Registro de lotes (<span class="mono">etl_lote</span>)</td><td>Cada ejecucion abre un lote con su iteracion, descripcion, archivo, inicio y fin. Al cerrar guarda recibidas, aceptadas, duplicadas y en revision</td></tr>
+            <tr><td><span class="mono">IdLote</span> e <span class="mono">IdStg</span></td><td>Cada fila de staging tiene una clave estable (<span class="mono">IdStg</span>) y el numero de su lote; los destinos guardan esa misma clave, asi cada registro limpio o en revision apunta a su fila original</td></tr>
+            <tr><td>Staging intacto</td><td><span class="mono">stg_clima</span> conserva los valores tal como llegaron; la limpieza crea columnas nuevas y escribe en otras tablas</td></tr>
+            <tr><td>Row Count y verificacion</td><td>La tarea <em>Verificar lote</em> comprueba el balance <strong>recibidas = aceptadas + duplicadas + revision</strong>; si no cuadra, el lote queda en <span class="mono">REVISAR_BALANCE</span></td></tr>
+            <tr><td>Tabla de excepciones</td><td><span class="mono">clima_revision</span> guarda el valor original, el destino (<span class="mono">DUPLICADO</span>, <span class="mono">REVISION_NEGOCIO</span>, <span class="mono">ERROR_CONVERSION</span>), la regla y el motivo</td></tr>
         </tbody>
     </table>
 </div>
 
-<h2>Iteraciones del ETL</h2>
-<p>El ETL se ejecuta de forma iterativa: cada corrida ajusta reglas y vuelve a procesar sin perder
-el historico de ejecuciones.</p>
+<h2>Resumen de las tres iteraciones</h2>
 <div class="tabla-wrap">
     <table>
-        <thead><tr><th>Iteracion</th><th>Ajuste principal</th><th>Resultado</th></tr></thead>
+        <thead><tr><th>Lote</th><th>Iteracion</th><th>Archivo</th><th>Recibidas</th><th>Aceptadas</th><th>Duplicadas</th><th>Revision</th><th>Estado</th></tr></thead>
         <tbody>
-            <tr><td>1</td><td>Carga cruda y tipado base</td><td>Staging cargado</td></tr>
-            <tr><td>2</td><td>Reglas de dominio y duplicados</td><td>Rechazos aislados en <span class="mono">err_clima</span></td></tr>
-            <tr><td>3</td><td>Homologacion y marcado de atipicos</td><td>Tabla de hechos lista para publicar</td></tr>
+            <tr><td>1</td><td>Datos reales</td><td class="mono">clima_consolidado.csv</td><td>21.369</td><td>21.369</td><td>0</td><td>0</td><td>OK</td></tr>
+            <tr><td>2</td><td>Prueba controlada con errores</td><td class="mono">clima_pruebas_limpieza.csv</td><td>26</td><td>12</td><td>2</td><td>12</td><td>OK</td></tr>
+            <tr><td>3</td><td>Recarga del mismo archivo</td><td class="mono">clima_pruebas_limpieza.csv</td><td>26</td><td>0</td><td>14</td><td>12</td><td>OK</td></tr>
         </tbody>
     </table>
+</div>
+<p>Las tres se ejecutaron seguidas, sin borrar datos entre ellas; solo cambiaron los parametros del proyecto
+(<span class="mono">RutaCSV</span>, <span class="mono">Iteracion</span>, <span class="mono">DescripcionLote</span>).</p>
+
+<h2>Iteracion 1 — datos reales</h2>
+<p>Se aplicaron todas las reglas al dataset consolidado de la etapa anterior. Las <strong>21.369</strong> filas
+se aceptaron y ninguna fue a revision, porque el consolidado ya venia depurado. La regla de atipicos
+(1,5 × IQR por indicador) marco <strong>2.640</strong> filas con <span class="mono">atipico = 1</span>: se
+<strong>marcan y se cargan</strong>, no se eliminan, porque muchos extremos son reales (agregado mundial, grandes emisores).</p>
+<div class="grid grid-2">
+    <figure class="figura-etl">
+        <img src="{{ url_for('static', filename='img/etl/iteracion1_dataflow.png') }}" alt="Data Flow de limpieza con 21.369 filas aceptadas" loading="lazy">
+        <figcaption>Limpieza: las 21.369 filas llegan a <span class="mono">clima_limpio</span>.</figcaption>
+    </figure>
+    <figure class="figura-etl">
+        <img src="{{ url_for('static', filename='img/etl/iteracion1_sql.png') }}" alt="Conteos del lote 1 y atipicos marcados" loading="lazy">
+        <figcaption>Lote 1 en estado OK y conteo de atipicos (18.729 normales, 2.640 atipicos).</figcaption>
+    </figure>
+</div>
+
+<h2>Iteracion 2 — prueba controlada con errores</h2>
+<p>Se cargo un archivo de 26 filas con errores introducidos a proposito para comprobar que cada regla
+envia la fila al destino correcto. Resultado: <strong>26 = 12 aceptadas + 2 duplicadas + 12 en revision</strong>
+(11 por reglas de negocio y 1 por error de conversion).</p>
+<div class="tabla-wrap">
+    <table>
+        <thead><tr><th>Fila</th><th>Que trae</th><th>Destino</th><th>Regla o correccion</th></tr></thead>
+        <tbody>
+            <tr class="fila-ok"><td>1</td><td>Pais Prueba A 2021, 15.25</td><td>Aceptada</td><td>Se conserva frente a sus duplicados</td></tr>
+            <tr class="fila-dup"><td>2</td><td>Copia identica de la fila 1</td><td>Duplicado</td><td>duplicado exacto</td></tr>
+            <tr class="fila-dup"><td>3</td><td>Misma clave que la fila 1, valor 14.90</td><td>Duplicado</td><td>duplicado por clave logica</td></tr>
+            <tr class="fila-rev"><td>4</td><td><span class="mono">valor</span> vacio</td><td>Revision</td><td>nulo en campo obligatorio (no se imputa)</td></tr>
+            <tr class="fila-rev"><td>5</td><td><span class="mono">valor = abc</span></td><td>Error de conversion</td><td>tipo de dato no convertible</td></tr>
+            <tr class="fila-rev"><td>6</td><td><span class="mono">anio = 2019</span></td><td>Revision</td><td>anio fuera de dominio (2020-2026)</td></tr>
+            <tr class="fila-rev"><td>7</td><td><span class="mono">-5.00</span> en Emisiones de CO2</td><td>Revision</td><td>valor negativo no permitido</td></tr>
+            <tr class="fila-ok"><td>8</td><td><span class="mono">-3.20</span> en Variacion anual de CO2</td><td>Aceptada</td><td>el indicador admite negativos</td></tr>
+            <tr class="fila-corr"><td>9</td><td><span class="mono">"  Pais Prueba B  "</span>, <span class="mono">" zzb "</span>, <span class="mono">" Terciaria "</span></td><td>Aceptada y corregida</td><td>→ <span class="mono">Pais Prueba B</span>, <span class="mono">ZZB</span>, <span class="mono">Terciaria</span></td></tr>
+            <tr class="fila-corr"><td>10</td><td><span class="mono">TERCIARIA</span>, <span class="mono">NACIONAL</span>, <span class="mono">anual</span></td><td>Aceptada y corregida</td><td>→ <span class="mono">Terciaria</span>, <span class="mono">Nacional</span>, <span class="mono">Anual</span></td></tr>
+            <tr class="fila-rev"><td>11</td><td>Serie nacional sin <span class="mono">iso_code</span></td><td>Revision</td><td>iso_code nulo en serie nacional</td></tr>
+            <tr class="fila-rev"><td>12</td><td>Unidad <span class="mono">kt CO2</span></td><td>Revision</td><td>unidad inconsistente con el indicador</td></tr>
+            <tr class="fila-rev"><td>13</td><td>Indicador "Emisiones de azufre"</td><td>Revision</td><td>indicador fuera de catalogo</td></tr>
+            <tr class="fila-corr"><td>14</td><td>Fecha <span class="mono">2023/12/31</span></td><td>Aceptada y corregida</td><td>→ <span class="mono">2023-12-31</span></td></tr>
+            <tr class="fila-rev"><td>15</td><td>Año 2024 con fecha 2023-12-31</td><td>Revision</td><td>fecha inconsistente con anio</td></tr>
+            <tr class="fila-rev"><td>16</td><td><span class="mono">mes = 13</span></td><td>Revision</td><td>mes fuera de dominio</td></tr>
+            <tr class="fila-rev"><td>17</td><td>Serie mensual sin <span class="mono">mes</span></td><td>Revision</td><td>mes nulo en serie mensual</td></tr>
+            <tr class="fila-corr"><td>18</td><td><span class="mono">mes = 10.0</span></td><td>Aceptada y corregida</td><td>→ <span class="mono">10</span></td></tr>
+            <tr class="fila-rev"><td>19</td><td><span class="mono">fuente_tipo = Cuaternaria</span></td><td>Revision</td><td>fuente_tipo fuera de catalogo</td></tr>
+            <tr class="fila-rev"><td>20</td><td><span class="mono">iso_code = ABCD</span></td><td>Revision</td><td>iso_code con formato invalido</td></tr>
+            <tr class="fila-corr"><td>21</td><td><span class="mono">anio = 2023.0</span>, <span class="mono">valor = " 7.50 "</span></td><td>Aceptada y corregida</td><td>→ <span class="mono">2023</span>, <span class="mono">7.5000</span></td></tr>
+            <tr class="fila-ok"><td>22-26</td><td>Poblacion de cinco paises de prueba</td><td>Aceptadas</td><td>la de 9.999.999 queda marcada como atipico</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="grid grid-2" style="margin-top:1.2rem;">
+    <div class="panel">
+        <p class="kicker">Dato corregido</p>
+        <h3>Fila 9 — Pais Prueba B</h3>
+        <p>Llega como <span class="mono">"  Pais Prueba B  "</span> / <span class="mono">zzb</span> / <span class="mono">" Terciaria "</span>
+        y queda en <span class="mono">clima_limpio</span> como <span class="mono">Pais Prueba B</span> / <span class="mono">ZZB</span> /
+        <span class="mono">Terciaria</span>. El valor original sigue intacto en <span class="mono">stg_clima</span>.</p>
+    </div>
+    <div class="panel">
+        <p class="kicker">Registro enviado a revision</p>
+        <h3>Filas 5 y 7</h3>
+        <p><span class="mono">valor = abc</span> no se puede convertir a numero (<span class="mono">ERROR_CONVERSION</span>) y
+        <span class="mono">-5.00</span> es un negativo en un indicador que no los admite (<span class="mono">REVISION_NEGOCIO</span>).
+        Ambos se guardan en <span class="mono">clima_revision</span> con su valor original y el motivo.</p>
+    </div>
+</div>
+
+<div class="grid grid-2">
+    <figure class="figura-etl">
+        <img src="{{ url_for('static', filename='img/etl/iteracion2_dataflow.png') }}" alt="Data Flow de la prueba controlada" loading="lazy">
+        <figcaption>12 filas aceptadas; 13 por reglas + 1 por error de conversion se unen hacia <span class="mono">clima_revision</span>.</figcaption>
+    </figure>
+    <figure class="figura-etl">
+        <img src="{{ url_for('static', filename='img/etl/iteracion2_sql.png') }}" alt="Registros en revision y datos corregidos del lote 2" loading="lazy">
+        <figcaption>Lote 2 en OK, registros en revision con su regla y motivo, y comparacion original contra limpio.</figcaption>
+    </figure>
+</div>
+
+<h2>Iteracion 3 — recarga del mismo archivo</h2>
+<p>Se volvio a cargar el mismo archivo de la iteracion 2 para comprobar que <strong>repetir un lote no duplica
+eventos</strong>. Las 12 filas que ya se habian aceptado, mas sus 2 duplicados, salen como
+<span class="mono">DUPLICADO</span> con la regla <span class="mono">clave ya cargada</span> (14), y las 12 invalidas vuelven a
+revision con las mismas reglas. <span class="mono">clima_limpio</span> recibio <strong>0 filas nuevas</strong> y no tiene
+ninguna clave repetida.</p>
+<div class="grid grid-2">
+    <figure class="figura-etl">
+        <img src="{{ url_for('static', filename='img/etl/iteracion3_dataflow.png') }}" alt="Data Flow de la recarga sin filas aceptadas" loading="lazy">
+        <figcaption>Ninguna fila llega a <span class="mono">clima_limpio</span>; las 26 van a excepciones.</figcaption>
+    </figure>
+    <figure class="figura-etl">
+        <img src="{{ url_for('static', filename='img/etl/iteracion3_sql.png') }}" alt="Conteos de las tres iteraciones y comprobacion de duplicados" loading="lazy">
+        <figcaption>14 filas como <span class="mono">clave ya cargada</span>, 0 filas nuevas y 0 claves repetidas en <span class="mono">clima_limpio</span>.</figcaption>
+    </figure>
+</div>
+
+<h2>Ajustes realizados durante las iteraciones</h2>
+<div class="tabla-wrap">
+    <table>
+        <thead><tr><th>#</th><th>Problema detectado</th><th>Causa</th><th>Ajuste</th></tr></thead>
+        <tbody>
+            <tr><td>1</td><td>El proveedor <span class="mono">MSOLEDBSQL19</span> no estaba registrado</td><td>El paquete usa el driver OLE DB 19 y el equipo tenia una version anterior</td><td>Instalacion de <em>Microsoft OLE DB Driver 19 for SQL Server</em></td></tr>
+            <tr><td>2</td><td>Expresion invalida en <em>Evaluar reglas</em>: el literal <span class="mono">100000000000000</span> no cabe en DT_I4</td><td>La version de SSIS interpreta el literal como entero de 32 bits</td><td>Literal decimal <span class="mono">100000000000000.0</span>; la regla no cambia</td></tr>
+            <tr><td>3</td><td>La limpieza se quedaba detenida en 7.700 filas</td><td>La lectura de staging consulta <span class="mono">clima_limpio</span> mientras el destino inserta con bloqueo de tabla</td><td><span class="mono">READ_COMMITTED_SNAPSHOT ON</span> en la base: las lecturas no esperan a la escritura</td></tr>
+            <tr><td>4</td><td>Fallo al guardar en <span class="mono">clima_revision</span>: <em>fecha_registro</em> en NULL</td><td>La opcion <em>Keep nulls</em> anulaba el valor por defecto de la columna</td><td>Se desactivo <em>Keep nulls</em> en ese destino, se borro solo el lote fallido y se repitio la iteracion 2</td></tr>
+        </tbody>
+    </table>
+</div>
+<figure class="figura-etl">
+    <img src="{{ url_for('static', filename='img/etl/iteracion2_intento1_progress_error.png') }}" alt="Mensaje de error del primer intento de la iteracion 2" loading="lazy">
+    <figcaption>Primer intento de la iteracion 2: el error que llevo al ajuste 4.</figcaption>
+</figure>
+
+<div class="nota" style="margin-top:1.4rem;">
+    La documentacion completa, con las consultas usadas para obtener cada conteo, esta en
+    <span class="mono">ssis/ITERACIONES.md</span> y las capturas originales en <span class="mono">ssis/evidencias/</span>.
+    La estructura del paquete se describe en <a href="{{ url_for('e3_paquete') }}"><strong>Paquete SSIS y Staging</strong></a>.
 </div>
 
 {% endblock %}
