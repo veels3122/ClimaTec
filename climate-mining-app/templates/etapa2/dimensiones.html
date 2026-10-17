@@ -3,8 +3,9 @@
 {% block contenido %}
 
 <div class="page-hero acento-ok animate-fade-down" data-fondo="e2_dimensiones">
+    <div class="fondo-foto fondo-foto-e2_dimensiones" aria-hidden="true"></div>
+    <div class="fondo-foto-tinte" aria-hidden="true"></div>
     <canvas class="fondo-seccion" aria-hidden="true"></canvas>
-    <div class="icono-hero">📐</div>
     <p class="eyebrow"><span class="paso">03</span> Calidad de datos</p>
     <h1>Dimensiones y metricas evaluadas</h1>
     <p class="lede">Dimensiones de calidad revisadas durante el perfilamiento, con la metrica usada y
@@ -28,11 +29,75 @@
     </table>
 </div>
 
+{% set cs = rep.consistencia %}
+<h2>Consistencia: reglas calculadas</h2>
+<p>La consistencia se mide en el codigo (funcion <code>evaluar_consistencia</code> de
+<span class="mono">scripts/limpieza.py</span>): cada regla se evalua fila por fila y se cuenta cuantas
+la cumplen. Una fila es consistente si cumple todas las reglas que le aplican.</p>
+<div class="grid grid-3" style="margin:1rem 0;">
+    <div class="panel stat cold"><div class="valor">{{ cs.pct }}%</div><div class="etiqueta">filas consistentes</div></div>
+    <div class="panel stat"><div class="valor">{{ "{:,}".format(cs.filas_consistentes).replace(',', '.') }}</div><div class="etiqueta">de {{ "{:,}".format(cs.filas).replace(',', '.') }} filas evaluadas</div></div>
+    <div class="panel stat warm"><div class="valor">{{ cs.filas_inconsistentes }}</div><div class="etiqueta">filas con alguna inconsistencia</div></div>
+</div>
+<div class="tabla-wrap">
+    <table>
+        <thead><tr><th>Regla</th><th>Que verifica</th><th>Filas evaluadas</th><th>Cumplen</th><th>Incumplen</th><th>%</th></tr></thead>
+        <tbody>
+            {% for r in cs.reglas %}
+            <tr>
+                <td class="mono">{{ r.regla }}</td><td>{{ r.descripcion }}</td>
+                <td class="mono">{{ "{:,}".format(r.evaluadas).replace(',', '.') }}</td>
+                <td class="mono">{{ "{:,}".format(r.cumplen).replace(',', '.') }}</td>
+                <td class="mono">{{ r.incumplen }}</td>
+                <td class="mono">{{ r.pct }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<p style="color:var(--ink-soft);font-size:.9rem;">Antes del tratamiento el resultado ya era
+{{ rep.consistencia_antes.pct }}%: el dataset consolidado se genera con reglas fijas en
+<span class="mono">scripts/preparar_datos.py</span>. Para validar que las reglas si detectan fallas se
+probaron con registros alterados a proposito (un anio, un mes, un ISO, una unidad y un tipo de fuente
+cambiados): cada regla marco exactamente el registro que se altero.</p>
+
+<div class="nota" style="margin-top:1.4rem;">
+    <strong>Consistencia no es exactitud.</strong> Que la fecha, el anio y el mes coincidan demuestra
+    que el registro es <em>coherente consigo mismo</em>, no que el valor medido sea <em>verdadero</em>.
+    Un dato puede ser perfectamente consistente y aun asi estar equivocado (por ejemplo, si la fuente
+    publico una cifra errada con la fecha correcta). La exactitud solo se puede estimar comparando contra
+    una referencia externa independiente.
+</div>
+
+{% if rep.concordancia %}
+{% set cc = rep.concordancia %}
+<h2>Exactitud: aproximacion por concordancia entre fuentes</h2>
+<p>El unico indicador del dataset que dos fuentes independientes miden para el mismo periodo es la
+anomalia de temperatura global mensual. Se comparan los {{ cc.meses }} meses comunes de
+<strong>{{ cc.fuente_a }}</strong> y <strong>{{ cc.fuente_b }}</strong> (funcion
+<code>concordancia_fuentes</code>):</p>
+<div class="tabla-wrap">
+    <table>
+        <thead><tr><th>Medida</th><th>Resultado</th><th>Interpretacion</th></tr></thead>
+        <tbody>
+            <tr><td>Correlacion de Pearson</td><td class="mono">{{ cc.correlacion }}</td><td>Ambas series suben y bajan en los mismos meses.</td></tr>
+            <tr><td>Desfase medio</td><td class="mono">{{ cc.desfase }} °C</td><td>Diferencia constante esperada: cada fuente calcula la anomalia contra un periodo base distinto.</td></tr>
+            <tr><td>Error medio absoluto sin desfase</td><td class="mono">{{ cc.mae_sin_desfase }} °C</td><td>Diferencia tipica entre fuentes una vez alineadas.</td></tr>
+            <tr><td>Error maximo sin desfase</td><td class="mono">{{ cc.max_sin_desfase }} °C</td><td>Peor mes de la comparacion.</td></tr>
+        </tbody>
+    </table>
+</div>
+<p style="color:var(--ink-soft);font-size:.9rem;">Alcance: esta medida cubre solo el indicador de
+anomalia de temperatura. Para los indicadores de OWID no hay en el dataset una segunda fuente del mismo
+dato, por lo que su exactitud no se evalua aqui y se asume la de la fuente oficial (limitacion
+declarada).</p>
+{% endif %}
+
 <div class="nota" style="margin-top:1.4rem;">
     <strong>Lectura:</strong> el conjunto llega a esta etapa con alta calidad estructural (sin
-    duplicados ni valores fuera de dominio). El trabajo de limpieza se concentra en la consistencia de
-    tipos, el marcado de observaciones atipicas y la preparacion de variables para el analisis, mas que
-    en corregir errores graves.
+    duplicados, sin valores fuera de dominio y {{ rep.consistencia.pct }}% de filas consistentes). El
+    trabajo de limpieza se concentra en la normalizacion de tipos, el marcado de observaciones atipicas y
+    la preparacion de variables para el analisis, mas que en corregir errores graves.
 </div>
 {% else %}
 <div class="nota">No se pudieron evaluar las dimensiones de calidad.</div>

@@ -35,11 +35,31 @@
         {'num': 5, 'titulo': 'Acciones de tratamiento aplicadas', 'endpoint': 'e2_tratamiento'},
         {'num': 6, 'titulo': 'Comparacion antes y despues', 'endpoint': 'e2_comparacion'},
         {'num': 7, 'titulo': 'Graficas, tablas e indicadores', 'endpoint': 'e2_graficas'},
-        {'num': 8, 'titulo': 'Analisis de causas (punto 7)', 'endpoint': 'e2_causas'},
-        {'num': 9, 'titulo': 'Integracion y homologacion (punto 8)', 'endpoint': 'e2_integracion'},
-        {'num': 10, 'titulo': 'Plan de tratamiento (punto 9)', 'endpoint': 'e2_plan'},
+        {'num': 8, 'titulo': 'Analisis de causas', 'endpoint': 'e2_causas'},
+        {'num': 9, 'titulo': 'Integracion y homologacion', 'endpoint': 'e2_integracion'},
+        {'num': 10, 'titulo': 'Plan de tratamiento', 'endpoint': 'e2_plan'},
     ] %}
     {% set endpoints_etapa2 = secciones_etapa2 | map(attribute='endpoint') | list %}
+
+    {% set secciones_etapa3 = [
+        {'num': 1, 'titulo': 'Diagnostico y Reglas de Tratamiento', 'endpoint': 'e3_diagnostico'},
+        {'num': 2, 'titulo': 'Paquete SSIS y Staging', 'endpoint': 'e3_paquete'},
+        {'num': 3, 'titulo': 'Componentes de Transformacion', 'endpoint': 'e3_componentes'},
+        {'num': 4, 'titulo': 'Limpieza de Datos y Excepciones', 'endpoint': 'e3_limpieza'},
+        {'num': 5, 'titulo': 'Iteraciones y Trazabilidad', 'endpoint': 'e3_iteraciones'},
+        {'num': 6, 'titulo': 'Evaluacion de Calidad e Indicadores', 'endpoint': 'e3_calidad'},
+        {'num': 7, 'titulo': 'Publicacion en App Flask', 'endpoint': 'e3_publicacion'},
+        {'num': 8, 'titulo': 'Video Colaborativo', 'endpoint': 'e3_video'},
+    ] %}
+    {% set endpoints_etapa3 = secciones_etapa3 | map(attribute='endpoint') | list %}
+
+    {% set secciones_etapa4 = [
+        {'num': 1, 'titulo': 'Dimension Poblacional', 'endpoint': 'e4_poblacional'},
+        {'num': 2, 'titulo': 'Dimension Territorial', 'endpoint': 'e4_territorial'},
+        {'num': 3, 'titulo': 'Dimension Temporal', 'endpoint': 'e4_temporal'},
+        {'num': 4, 'titulo': 'Dimension Relacional Multidimensional', 'endpoint': 'e4_relacional'},
+    ] %}
+    {% set endpoints_etapa4 = secciones_etapa4 | map(attribute='endpoint') | list %}
 
     <header class="topbar">
         <div class="contenedor topbar-inner">
@@ -68,6 +88,12 @@
                     Recoleccion de Datos <span class="caret">&#9662;</span>
                 </button>
                 {% endblock %}
+                <button type="button" class="nav-pill-link ruleta-disparador{{ ' activo' if request.endpoint in endpoints_etapa3 }}" data-etapa="etl" aria-haspopup="dialog" aria-expanded="false">
+                    ETL (SSIS) <span class="caret">&#9662;</span>
+                </button>
+                <button type="button" class="nav-pill-link ruleta-disparador{{ ' activo' if request.endpoint in endpoints_etapa4 }}" data-etapa="analisis" aria-haspopup="dialog" aria-expanded="false">
+                    Analisis de Datos <span class="caret">&#9662;</span>
+                </button>
                 <a href="{{ url_for('dataset_etapa1') }}" class="nav-pill-link{{ ' activo' if request.endpoint == 'dataset_etapa1' }}">Dataset</a>
                 <a href="{{ url_for('fuentes_datos') }}" class="nav-pill-link{{ ' activo' if request.endpoint == 'fuentes_datos' }}">Fuentes</a>
             </nav>
@@ -97,6 +123,12 @@
                 </button>
                 <button type="button" class="ruleta-disparador" data-etapa="recoleccion" aria-haspopup="dialog" aria-expanded="false">
                     Recoleccion de Datos <span class="caret">&#9662;</span>
+                </button>
+                <button type="button" class="ruleta-disparador" data-etapa="etl" aria-haspopup="dialog" aria-expanded="false">
+                    ETL (SSIS) <span class="caret">&#9662;</span>
+                </button>
+                <button type="button" class="ruleta-disparador" data-etapa="analisis" aria-haspopup="dialog" aria-expanded="false">
+                    Analisis de Datos <span class="caret">&#9662;</span>
                 </button>
                 <a href="{{ url_for('dataset_etapa1') }}">Dataset</a>
                 <a href="{{ url_for('fuentes_datos') }}">Fuentes</a>
@@ -137,12 +169,21 @@
         {% for s in secciones_etapa2 %}{"num": {{ s.num }}, "titulo": {{ s.titulo|tojson }}, "href": {{ url_for(s.endpoint)|tojson }}, "activo": {{ (request.endpoint == s.endpoint)|tojson }}}{{ ',' if not loop.last }}
         {% endfor %}
     ]}</script>
+    <script type="application/json" id="ruleta-secciones-etl-data">{"titulo": "ETL (SSIS)", "secciones": [
+        {% for s in secciones_etapa3 %}{"num": {{ s.num }}, "titulo": {{ s.titulo|tojson }}, "href": {{ url_for(s.endpoint)|tojson }}, "activo": {{ (request.endpoint == s.endpoint)|tojson }}}{{ ',' if not loop.last }}
+        {% endfor %}
+    ]}</script>
+    <script type="application/json" id="ruleta-secciones-analisis-data">{"titulo": "Analisis de Datos", "secciones": [
+        {% for s in secciones_etapa4 %}{"num": {{ s.num }}, "titulo": {{ s.titulo|tojson }}, "href": {{ url_for(s.endpoint)|tojson }}, "activo": {{ (request.endpoint == s.endpoint)|tojson }}}{{ ',' if not loop.last }}
+        {% endfor %}
+    ]}</script>
     <script type="application/json" id="ruleta-etapas-data">[
         {"num": 1, "titulo": "Definicion", "disponible": true, "clave": "definicion"},
         {"num": 2, "titulo": "Recoleccion de Datos", "disponible": true, "clave": "recoleccion"},
-        {"num": 3, "titulo": "Analisis", "disponible": false},
-        {"num": 4, "titulo": "Verificacion", "disponible": false},
-        {"num": 5, "titulo": "Publicacion", "disponible": false}
+        {"num": 3, "titulo": "ETL (SSIS)", "disponible": true, "clave": "etl"},
+        {"num": 4, "titulo": "Analisis de Datos", "disponible": true, "clave": "analisis"},
+        {"num": 5, "titulo": "Verificacion", "disponible": false},
+        {"num": 6, "titulo": "Publicacion", "disponible": false}
     ]</script>
 
     <main class="contenedor contenido">

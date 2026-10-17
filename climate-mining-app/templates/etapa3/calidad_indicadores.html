@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block titulo %}Etapa 3 · Evaluacion de Calidad e Indicadores · ClimaTec{% endblock %}
+{% block contenido %}
+
+<div class="page-hero acento-ok animate-fade-down">
+    <div class="fondo-foto-tinte" aria-hidden="true"></div>
+    <canvas class="fondo-seccion" aria-hidden="true"></canvas>
+    <p class="eyebrow"><span class="paso">Etapa 3 · 06</span> ETL en SSIS</p>
+    <h1>Evaluacion de Calidad e Indicadores</h1>
+    <p class="lede">Indicadores que se calculan al terminar la carga para medir la calidad del
+    resultado del ETL.</p>
+</div>
+
+<h2>Indicadores de la carga</h2>
+<div class="tabla-wrap">
+    <table>
+        <thead><tr><th>Indicador</th><th>Como se calcula</th></tr></thead>
+        <tbody>
+            <tr><td>Filas leidas</td><td>Total de registros del CSV de origen</td></tr>
+            <tr><td>Filas cargadas</td><td>Registros insertados en <span class="mono">dw_clima_hechos</span></td></tr>
+            <tr><td>Filas rechazadas</td><td>Registros enviados a <span class="mono">err_clima</span></td></tr>
+            <tr><td>Tasa de aceptacion</td><td>cargadas / leidas</td></tr>
+            <tr><td>Completitud efectiva</td><td>% de celdas no nulas (excluye nulos por diseno)</td></tr>
+            <tr><td>Unicidad</td><td>Duplicados por clave logica tras el ETL</td></tr>
+            <tr><td>Validez</td><td>Registros dentro de dominio (anio y signo)</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="nota" style="margin-top:1.4rem;">
+    Estos indicadores se guardan por ejecucion, de modo que cada corrida del paquete deja evidencia
+    medible de la calidad de la carga (enlaza con la trazabilidad del Punto 5).
+</div>
+
+{% endblock %}

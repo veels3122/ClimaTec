@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block titulo %}Etapa 3 · Video Colaborativo · ClimaTec{% endblock %}
+{% block contenido %}
+
+<div class="page-hero acento-warm animate-fade-down">
+    <div class="fondo-foto-tinte" aria-hidden="true"></div>
+    <canvas class="fondo-seccion" aria-hidden="true"></canvas>
+    <p class="eyebrow"><span class="paso">Etapa 3 · 08</span> ETL en SSIS</p>
+    <h1>Video Colaborativo</h1>
+    <p class="lede">Espacio para el video del equipo que muestra el ETL en SSIS de principio a fin.</p>
+</div>
+
+<h2>Contenido del video</h2>
+<div class="tabla-wrap">
+    <table>
+        <thead><tr><th>Momento</th><th>Que se muestra</th></tr></thead>
+        <tbody>
+            <tr><td>Introduccion</td><td>Objetivo del ETL y datos de entrada</td></tr>
+            <tr><td>Paquete SSIS</td><td>Flujo de control y flujo de datos en ejecucion</td></tr>
+            <tr><td>Limpieza</td><td>Transformaciones y manejo de excepciones</td></tr>
+            <tr><td>Resultado</td><td>Indicadores de calidad y publicacion en la app</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="nota" style="margin-top:1.4rem;">
+    <strong>Enlace del video:</strong> pendiente de publicar. Cuando este listo, se coloca aqui el
+    enlace colaborativo del equipo ({{ proyecto.integrantes | join(' · ') }}).
+</div>
+
+{% endblock %}

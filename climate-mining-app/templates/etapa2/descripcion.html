@@ -4,8 +4,9 @@
 {% block contenido %}
 
 <div class="page-hero acento-cold animate-fade-down" data-fondo="e2_descripcion">
+    <div class="fondo-foto fondo-foto-e2_descripcion" aria-hidden="true"></div>
+    <div class="fondo-foto-tinte" aria-hidden="true"></div>
     <canvas class="fondo-seccion" aria-hidden="true"></canvas>
-    <div class="icono-hero">🧾</div>
     <p class="eyebrow"><span class="paso">01</span> Perfilamiento y limpieza</p>
     <h1>Descripción del conjunto de datos</h1>
     <p class="lede">{{ intro.objetivo }}</p>
@@ -43,6 +44,24 @@ terciarias en los niveles global, regional (Sudamérica) y nacional (Colombia).<
 calidad (3), se listan los problemas (4) y se aplica el tratamiento (5). El resultado, con tipos
 normalizados, atípicos marcados y una variable normalizada, se guarda en
 <span class="mono">clima_limpio.csv</span> y se compara con el original (apartado 6).</p>
+
+<h2>Scripts del repositorio usados en esta etapa</h2>
+<p>Nombres exactos de los archivos citados en esta bitacora. La columna <em>En el repositorio</em> se
+verifica al cargar la pagina, comprobando que el archivo exista en la ruta indicada.</p>
+<div class="tabla-wrap">
+    <table>
+        <thead><tr><th>Archivo</th><th>Funcion</th><th>En el repositorio</th></tr></thead>
+        <tbody>
+            {% for s in scripts %}
+            <tr>
+                <td class="mono">climate-mining-app/{{ s.ruta }}</td>
+                <td>{{ s.rol }}</td>
+                <td><span class="chip {{ 'ok' if s.existe else 'no' }}" style="margin:0;"><span class="marca-ico">{{ '✓' if s.existe else '✕' }}</span> {{ 'encontrado' if s.existe else 'no existe' }}</span></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% else %}
 <div class="nota">No se pudo cargar el dataset consolidado.</div>
 {% endif %}

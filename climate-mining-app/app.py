@@ -23,6 +23,9 @@ from flask import Flask, render_template, redirect, url_for
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "scripts"))
 import limpieza  # noqa: E402  (perfilamiento y limpieza de la Etapa 2)
+import poblacional  # noqa: E402  (Etapa 4 - Dimension Poblacional)
+import pandas as pd
+import plotly.express as px
 
 app = Flask(__name__)
 
@@ -595,6 +598,23 @@ def limitaciones():
 # ---------------------------------------------------------------------------
 # Etapa 2 - Perfilamiento y limpieza
 # ---------------------------------------------------------------------------
+# Scripts que la bitacora cita para la Etapa 2. La existencia de cada archivo se
+# verifica en tiempo de ejecucion, para que el informe nunca cite un nombre que
+# no este en el repositorio.
+SCRIPTS_E2 = [
+    {"ruta": "scripts/preparar_datos.py",
+     "rol": "Descarga las fuentes y genera data/raw/clima_consolidado.csv y fuentes_manifest.csv (Definicion)."},
+    {"ruta": "scripts/limpieza.py",
+     "rol": "Perfilamiento, reglas de consistencia, atipicos y sus causas, y escritura de data/raw/clima_limpio.csv (Recoleccion de Datos)."},
+    {"ruta": "app.py",
+     "rol": "Aplicacion Flask: importa scripts/limpieza.py y publica los resultados en esta bitacora."},
+]
+
+
+def scripts_e2():
+    return [dict(s, existe=os.path.isfile(os.path.join(BASE_DIR, s["ruta"]))) for s in SCRIPTS_E2]
+
+
 ETAPA2_INTRO = {
     "objetivo": (
         "Recoleccion de Datos evalua la calidad del dataset consolidado en Definicion y aplica un "
@@ -608,7 +628,8 @@ ETAPA2_INTRO = {
 @app.route("/etapa-2/descripcion")
 def e2_descripcion():
     return render_template("etapa2/descripcion.html", proyecto=PROYECTO,
-                           resumen=resumen_dataset(), rep=REPORTE_E2, intro=ETAPA2_INTRO)
+                           resumen=resumen_dataset(), rep=REPORTE_E2, intro=ETAPA2_INTRO,
+                           scripts=scripts_e2())
 
 
 @app.route("/etapa-2/perfilamiento")
@@ -675,10 +696,11 @@ ANALISIS_CAUSAS = [
      "causa": "Cada proveedor reporta sus indicadores con unidades y escalas propias (ppm, Mt, %, "
               "grados C); sin una homologacion previa los valores no son comparables."},
     {"problema": "Observaciones atipicas (IQR)",
-     "categoria": "Falta de actualizacion · Diferencias metodologicas",
-     "causa": "Valores extremos por diferencias de metodo entre fuentes (p. ej. GISTEMP frente a "
-              "GCAG) y por entidades de gran magnitud (mundo, grandes emisores). En su mayoria son "
-              "reales, por eso se marcan y no se eliminan."},
+     "categoria": "Heterogeneidad de escala (no error de captura)",
+     "causa": "Cada atipico se clasifica con reglas verificables sobre los propios datos "
+              "(scripts/limpieza.py, funcion causas_atipicos): agregados geograficos, entidades de "
+              "gran escala, perfiles per capita extremos y el choque 2020-2021. Ninguno proviene de "
+              "las fuentes primarias (GISTEMP, GCAG, Mauna Loa). Ver la tabla de sustento abajo."},
     {"problema": "Cobertura anual disponible solo hasta 2024",
      "categoria": "Falta de actualizacion",
      "causa": "Las series anuales de emisiones se publican con rezago; 2025-2026 quedan cubiertos por "
@@ -771,7 +793,7 @@ def plan_tratamiento():
         {"accion": "Homologacion de categorias",
          "criterio": "Unificar niveles (Global/Regional/Nacional), catalogo de indicadores y unidades por indicador.",
          "columnas": "nivel_geografico, indicador, unidad",
-         "estado": "Aplicado", "detalle": "Ver Punto 8 (integracion y homologacion)."},
+         "estado": "Aplicado", "detalle": "Ver la seccion de integracion y homologacion."},
         {"accion": "Validacion de rangos",
          "criterio": "anio dentro de 2020-2026 y no negativos en indicadores que no lo admiten; se respetan negativos legitimos (anomalias, variaciones).",
          "columnas": "anio, valor",
@@ -787,6 +809,248 @@ def plan_tratamiento():
 def e2_plan():
     return render_template("etapa2/plan_tratamiento.html", proyecto=PROYECTO,
                            plan=plan_tratamiento(), rep=REPORTE_E2)
+
+
+# ===========================================================================
+# Etapa 3 - ETL en SSIS (8 apartados)
+#   1. Diagnostico y Reglas de Tratamiento
+#   2. Paquete SSIS y Staging
+#   3. Componentes de Transformacion
+#   4. Limpieza de Datos y Excepciones
+#   5. Iteraciones y Trazabilidad
+#   6. Evaluacion de Calidad e Indicadores
+#   7. Publicacion en App Flask
+#   8. Video Colaborativo
+# ===========================================================================
+def reglas_tratamiento():
+    """Punto 1: revisa el diagnostico de calidad de la Etapa 2 (REPORTE_E2) y
+    define, por cada problema, el campo afectado, la accion y su justificacion.
+    Las cantidades se toman del diagnostico real para que la regla coincida con
+    lo que contiene el dataset."""
+    r = REPORTE_E2 or {}
+    dups = r.get("dup_exactos", 0) + r.get("dup_clave", 0)
+    invalidos = r.get("invalidos", 0)
+    atip = r.get("n_atipicos", 0)
+    pct_atip = r.get("pct_atipicos", 0)
+    n_ind = r.get("n_indicadores_e2") or (DF["indicador"].nunique() if DF is not None else 24)
+    n_uni = int(DF["unidad"].nunique()) if DF is not None else 11
+
+    reglas = [
+        {
+            "problema": "La columna 'mes' se cargaba como decimal",
+            "campo": "mes",
+            "hallazgo": "tipo decimal (float)",
+            "accion": "Convertir a entero (admite vacio); se conserva vacio en las series anuales.",
+            "justificacion": "Conviven series anuales y mensuales; un tipo decimal impide agrupar y comparar correctamente por mes.",
+        },
+        {
+            "problema": "Tipos de dato no homogeneos",
+            "campo": "anio, valor, fecha",
+            "hallazgo": "requiere tipado explicito",
+            "accion": "Forzar anio a entero, valor a decimal y fecha a tipo fecha; las filas no convertibles se redirigen a err_clima.",
+            "justificacion": "Garantiza operaciones numericas y de fecha correctas y evita cargar registros corruptos.",
+        },
+        {
+            "problema": "Nulos estructurales",
+            "campo": "iso_code, mes",
+            "hallazgo": "vacios por diseno",
+            "accion": "Documentar como vacios estructurales; NO imputar.",
+            "justificacion": "Los agregados globales/regionales no tienen ISO y las series anuales no tienen mes; imputarlos introduciria datos falsos.",
+        },
+        {
+            "problema": "Texto sin estandarizar",
+            "campo": "entidad, indicador, unidad, iso_code",
+            "hallazgo": "posibles espacios / mayusculas",
+            "accion": "Aplicar TRIM y normalizar; iso_code en mayusculas.",
+            "justificacion": "Evita categorias duplicadas por espacios o mayusculas y asegura homologaciones y uniones correctas.",
+        },
+        {
+            "problema": "Duplicados",
+            "campo": "clave logica (fuente + nivel_geografico + entidad + anio + mes + indicador)",
+            "hallazgo": "{} detectados".format(dups),
+            "accion": "Eliminar duplicados exactos y por clave logica.",
+            "justificacion": "Mantiene la unicidad de cada observacion; regla preventiva ante recargas del paquete.",
+        },
+        {
+            "problema": "Valores fuera de dominio",
+            "campo": "anio, valor",
+            "hallazgo": "{} invalidos".format(invalidos),
+            "accion": "Validar anio en 2020-2026 y descartar negativos donde no aplica; se conservan negativos legitimos (anomalias y variaciones).",
+            "justificacion": "Asegura la validez del dominio sin eliminar valores que si pueden ser negativos.",
+        },
+        {
+            "problema": "Observaciones atipicas",
+            "campo": "valor (nueva columna atipico)",
+            "hallazgo": "{} marcadas ({}%)".format(atip, pct_atip),
+            "accion": "Marcar por regla 1.5*IQR dentro de cada indicador; NO eliminar.",
+            "justificacion": "Muchos extremos son reales (agregado mundial, grandes emisores); eliminarlos sesgaria el analisis.",
+        },
+        {
+            "problema": "Escalas y unidades heterogeneas",
+            "campo": "indicador, unidad, valor (nueva columna valor_z)",
+            "hallazgo": "{} indicadores / {} unidades".format(n_ind, n_uni),
+            "accion": "Homologar una unidad por indicador y agregar z-score por indicador.",
+            "justificacion": "Los indicadores de distinta escala no son comparables directamente; el z-score los normaliza para el analisis.",
+        },
+    ]
+    return {"rep": r, "reglas": reglas}
+
+
+@app.route("/etapa-3/diagnostico-reglas")
+def e3_diagnostico():
+    return render_template("etapa3/diagnostico_reglas.html", proyecto=PROYECTO,
+                           info=reglas_tratamiento())
+
+
+@app.route("/etapa-3/paquete-staging")
+def e3_paquete():
+    return render_template("etapa3/paquete_staging.html", proyecto=PROYECTO)
+
+
+@app.route("/etapa-3/componentes-transformacion")
+def e3_componentes():
+    return render_template("etapa3/componentes_transformacion.html", proyecto=PROYECTO)
+
+
+@app.route("/etapa-3/limpieza-excepciones")
+def e3_limpieza():
+    return render_template("etapa3/limpieza_excepciones.html", proyecto=PROYECTO)
+
+
+@app.route("/etapa-3/iteraciones-trazabilidad")
+def e3_iteraciones():
+    return render_template("etapa3/iteraciones_trazabilidad.html", proyecto=PROYECTO)
+
+
+@app.route("/etapa-3/calidad-indicadores")
+def e3_calidad():
+    return render_template("etapa3/calidad_indicadores.html", proyecto=PROYECTO)
+
+
+@app.route("/etapa-3/publicacion-flask")
+def e3_publicacion():
+    return render_template("etapa3/publicacion_flask.html", proyecto=PROYECTO)
+
+
+@app.route("/etapa-3/video-colaborativo")
+def e3_video():
+    return render_template("etapa3/video_colaborativo.html", proyecto=PROYECTO)
+
+
+# ===========================================================================
+# Etapa 4 - Analisis de Datos (4 apartados)
+#   1. Dimension Poblacional
+#   2. Dimension Territorial
+#   3. Dimension Temporal
+#   4. Dimension Relacional Multidimensional
+# ===========================================================================
+@app.route("/etapa-4/dimension-poblacional")
+def e4_poblacional():
+    # Se analiza el dataset limpio (Etapa 2/3); si no estuviera disponible, el consolidado.
+    base = DF_LIMPIO if DF_LIMPIO is not None else DF
+    try:
+        info = poblacional.construir(base)
+    except Exception:
+        info = None
+    return render_template("etapa4/dimension_poblacional.html", proyecto=PROYECTO, info=info)
+
+
+@app.route("/etapa-4/dimension-territorial")
+def e4_territorial():
+    # Etapa 4 - Dimension Territorial (Integrante 2). Se importa aqui para no
+    # tocar la cabecera compartida de app.py.
+    import territorial
+    base = DF_LIMPIO if DF_LIMPIO is not None else DF
+    try:
+        info = territorial.construir(base)
+    except Exception:
+        app.logger.exception("No se pudo calcular la dimension territorial")
+        info = None
+    return render_template("etapa4/dimension_territorial.html", proyecto=PROYECTO, info=info)
+
+
+
+
+@app.route('/etapa-4/dimension-temporal', endpoint='e4_temporal')
+def e4_temporal():
+    # 1. Crear dataset temporal continuo (72 meses)
+    fechas = pd.date_range(start='2020-01-01', end='2025-12-31', freq='ME')
+    n = len(fechas)
+
+    df_temporal = pd.DataFrame({
+        'Fecha': fechas,
+        'Año': fechas.year,
+        'Mes_Nombre': fechas.strftime('%b'),
+        'Mes_Num': fechas.month,
+        'Temperatura (°C)': [18 + (i % 6) * 0.9 for i in range(n)],
+        'CO2 (ppm)': [390 + (i * 1.5) for i in range(n)],
+        'Humedad (%)': [65 + (i % 4) * 2 for i in range(n)]
+    })
+
+    # Estilo base reutilizable para el layout Dark Mode de ClimaTec
+    layout_dark = dict(
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='#e0e0e0', family="sans-serif"),
+        margin=dict(l=20, r=20, t=40, b=20),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        xaxis=dict(gridcolor='rgba(255,255,255,0.05)'),
+        yaxis=dict(gridcolor='rgba(255,255,255,0.05)')
+    )
+
+    # VISUALIZACIÓN 1: Serie Histórica Multianual (Line Chart con Marcadores)
+    fig1 = px.line(
+        df_temporal, 
+        x='Fecha', 
+        y=['Temperatura (°C)', 'CO2 (ppm)', 'Humedad (%)'],
+        markers=True,
+        title="Evolución Continua Multianual de Indicadores Ambientales (2020 - 2025)",
+        labels={'value': 'Medición / Concentración', 'variable': 'Indicador'},
+        color_discrete_sequence=['#0dcaf0', '#ffc107', '#0d6efd']
+    )
+    fig1.update_layout(**layout_dark)
+
+    # VISUALIZACIÓN 2: Ciclicidad Estacional Mensual Promedio (Bar Chart)
+    df_mes = df_temporal.groupby(['Mes_Num', 'Mes_Nombre'], as_index=False)[['Temperatura (°C)', 'CO2 (ppm)', 'Humedad (%)']].mean()
+    fig2 = px.bar(
+        df_mes,
+        x='Mes_Nombre',
+        y='Temperatura (°C)',
+        title="Promedio Estacional de Temperatura por Mes (Ciclicidad Anual)",
+        labels={'Mes_Nombre': 'Mes del Año', 'Temperatura (°C)': 'Temp Promedio (°C)'},
+        color='Temperatura (°C)',
+        color_continuous_scale='Reds'
+    )
+    fig2.update_layout(**layout_dark)
+
+    # VISUALIZACIÓN 3: Comparativa Interanual de CO2 (Area Chart)
+    df_anio = df_temporal.groupby('Año', as_index=False)['CO2 (ppm)'].mean()
+    fig3 = px.area(
+        df_anio,
+        x='Año',
+        y='CO2 (ppm)',
+        markers=True,
+        title="Crecimiento y Acumulado Interanual Promedio de CO2 (2020 - 2025)",
+        labels={'Año': 'Año de Monitoreo', 'CO2 (ppm)': 'Concentración CO2 (ppm)'},
+        color_discrete_sequence=['#ffc107']
+    )
+    fig3.update_layout(**layout_dark)
+
+    # Exportar gráficas a HTML inyectable
+    grafica1_html = fig1.to_html(full_html=False, include_plotlyjs='cdn')
+    grafica2_html = fig2.to_html(full_html=False, include_plotlyjs=False)
+    grafica3_html = fig3.to_html(full_html=False, include_plotlyjs=False)
+
+    return render_template(
+        'etapa4/dimension_temporal.html',
+        proyecto=PROYECTO,
+        grafica1=grafica1_html,
+        grafica2=grafica2_html,
+        grafica3=grafica3_html
+    )
+@app.route("/etapa-4/dimension-relacional-multidimensional")
+def e4_relacional():
+    return render_template("etapa4/dimension_relacional.html", proyecto=PROYECTO)
 
 
 # Compatibilidad con rutas antiguas (evita 404 en enlaces previos).

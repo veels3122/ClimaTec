@@ -1,0 +1,5 @@
+# Archivos que Visual Studio / SSIS genera en cada PC (no se versionan)
+bin/
+obj/
+.vs/
+*.dtproj.user
