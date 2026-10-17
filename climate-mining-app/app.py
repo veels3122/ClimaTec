@@ -24,8 +24,6 @@ from flask import Flask, render_template, redirect, url_for
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "scripts"))
 import limpieza  # noqa: E402  (perfilamiento y limpieza de la Etapa 2)
 import poblacional  # noqa: E402  (Etapa 4 - Dimension Poblacional)
-import pandas as pd
-import plotly.express as px
 
 app = Flask(__name__)
 
@@ -973,6 +971,9 @@ def e4_territorial():
 
 @app.route('/etapa-4/dimension-temporal', endpoint='e4_temporal')
 def e4_temporal():
+    # plotly se importa aqui: si faltara en el servidor, solo falla esta pagina y no toda la app.
+    import plotly.express as px
+
     # 1. Crear dataset temporal continuo (72 meses)
     fechas = pd.date_range(start='2020-01-01', end='2025-12-31', freq='ME')
     n = len(fechas)
@@ -1050,7 +1051,15 @@ def e4_temporal():
     )
 @app.route("/etapa-4/dimension-relacional-multidimensional")
 def e4_relacional():
-    return render_template("etapa4/dimension_relacional.html", proyecto=PROYECTO)
+    # Etapa 4 - Dimension Relacional: cruza poblacion, territorio, tiempo y eventos externos.
+    import relacional
+    base = DF_LIMPIO if DF_LIMPIO is not None else DF
+    try:
+        info = relacional.construir(base, DF_EVENTOS)
+    except Exception:
+        app.logger.exception("No se pudo calcular la dimension relacional")
+        info = None
+    return render_template("etapa4/dimension_relacional.html", proyecto=PROYECTO, info=info)
 
 
 # Compatibilidad con rutas antiguas (evita 404 en enlaces previos).
