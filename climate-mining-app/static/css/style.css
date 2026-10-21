@@ -767,3 +767,15 @@ ol.preguntas li { margin: .6rem 0; padding-left: .3rem; color: var(--ink-soft); 
     .pob-barras .barra-h-fill, .pob-arco { transition: none; }
     .pob-col { animation: none; }
 }
+
+/* ==========================================================================
+   Etapa 4 · Dimension Relacional (prefijo rel-). Reutiliza las clases pob-*.
+   ========================================================================== */
+.rel-grafico { width: 100%; max-width: 780px; }
+.rel-punto { cursor: pointer; outline: none; transition: r .15s ease; }
+.rel-punto:hover, .rel-punto:focus-visible { stroke: #fff; stroke-width: 1.6; }
+.rel-evento { cursor: pointer; outline: none; }
+.rel-evento:hover, .rel-evento:focus-visible { stroke: #fff; stroke-width: 1.5; }
+.rel-recta { display: inline-block; width: 20px; border-top: 2px dashed #ffb454; vertical-align: middle; }
+.rel-rombo { display: inline-block; width: 11px; height: 11px; background: #ffb454; transform: rotate(45deg); border-radius: 2px; }
+tr.rel-fila-sel td { background: rgba(255,106,77,.1); color: #fff; }
