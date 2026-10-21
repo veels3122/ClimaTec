@@ -1,0 +1,241 @@
+{% extends 'base.html' %}
+{% block titulo %}Etapa 4 · Dimension Temporal · ClimaTec{% endblock %}
+{% block contenido %}
+
+<div class="page-hero acento-amber animate-fade-down">
+    <div class="fondo-foto-tinte" aria-hidden="true"></div>
+    <canvas class="fondo-seccion" aria-hidden="true"></canvas>
+    <p class="eyebrow"><span class="paso">Etapa 4 · 03</span> Analisis de Datos</p>
+    <h1>Dimension Temporal</h1>
+    <p class="lede">Analisis del dataset en el tiempo: evolucion multianual, estacionalidad mensual y comportamiento interanual del CO2 atmosferico y de la anomalia de temperatura global, con las series mensuales reales del dataset.</p>
+</div>
+
+{% if info %}
+<nav class="pob-indice animate-fade-up" aria-label="Contenido de la dimension" style="animation-delay:120ms;">
+    <a href="#tem-titulo"><span>1</span> Titulo</a>
+    <a href="#tem-pregunta"><span>2</span> Pregunta</a>
+    <a href="#tem-variables"><span>3</span> Variables</a>
+    <a href="#tem-indicadores"><span>4</span> Indicadores</a>
+    <a href="#tem-visualizaciones"><span>5</span> Visualizaciones</a>
+    <a href="#tem-filtros"><span>6</span> Filtros</a>
+    <a href="#tem-viz-1"><span>7</span> Interpretacion</a>
+    <a href="#tem-conocimientos"><span>8</span> Conocimientos</a>
+    <a href="#tem-limitacion"><span>9</span> Limitacion</a>
+    <a href="#tem-decision"><span>10</span> Decision</a>
+</nav>
+
+<section class="pob-bloque" id="tem-titulo">
+    <p class="pob-kicker">1 · Titulo de la dimension</p>
+    <h2>Evolucion temporal y patrones estacionales del clima</h2>
+    <p>Esta dimension describe como cambian en el tiempo el CO2 atmosferico y la temperatura global entre
+    {{ info.anio_min }} y {{ info.anio_max }}: tendencia, ciclo estacional y diferencias entre anios. Usa
+    <strong>{{ info.n_registros_mensuales }} registros mensuales reales</strong> de tres series del dataset
+    (<span class="mono">clima_limpio.csv</span>) y los <strong>{{ info.n_eventos }} eventos externos</strong> documentados.</p>
+</section>
+
+<section class="pob-bloque" id="tem-pregunta">
+    <p class="pob-kicker">2 · Pregunta de analisis</p>
+    <blockquote>¿Como han evolucionado el CO2 y la temperatura global a lo largo de {{ info.anio_min }}-{{ info.anio_max }} y que patrones estacionales e interanuales los caracterizan?</blockquote>
+    <p class="pob-mini">Para responderla se analiza:</p>
+    <div class="pob-chips">
+        <a class="chip" href="#tem-viz-1">Tendencia mensual y eventos</a>
+        <a class="chip" href="#tem-viz-2">Ciclo estacional</a>
+        <a class="chip" href="#tem-viz-3">Comparacion entre anios</a>
+        <a class="chip" href="#tem-apoyo">Resumen anual por serie</a>
+    </div>
+</section>
+
+<section class="pob-bloque" id="tem-variables">
+    <p class="pob-kicker">3 · Descripcion de las variables utilizadas</p>
+    <h2>Variables del analisis temporal</h2>
+    <div class="tabla-wrap">
+        <table>
+            <thead><tr><th>Variable</th><th>Tipo</th><th>Que aporta a esta dimension</th></tr></thead>
+            <tbody>
+                {% for v in info.variables %}
+                {% set c = 'num' if v.tipo == 'Numerica' else ('tmp' if 'Temporal' in v.tipo else 'cat') %}
+                <tr>
+                    <td class="mono">{{ v.variable }}</td>
+                    <td><span class="tag {{ c }}">{{ v.tipo }}</span></td>
+                    <td>{{ v.uso }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="pob-bloque" id="tem-indicadores">
+    <p class="pob-kicker">4 · Indicadores</p>
+    <h2>Tres indicadores clave</h2>
+
+    <div class="pob-filtros panel" id="tem-filtros" role="group" aria-label="Filtros interactivos">
+        <div class="pob-filtros-tit">
+            <span class="pob-kicker" style="margin:0;">6 · Filtros interactivos</span>
+            <span class="pob-mini">Controlan los indicadores y las tres visualizaciones.</span>
+        </div>
+        <div class="pob-filtros-campos">
+            <label class="pob-campo">
+                <span>Filtro 1 · Anio</span>
+                <select id="tem-f-anio" aria-controls="tem-ind tem-viz-1 tem-viz-2 tem-viz-3"></select>
+            </label>
+            <label class="pob-campo">
+                <span>Filtro 2 · Serie / indicador</span>
+                <select id="tem-f-ind" aria-controls="tem-ind tem-viz-1 tem-viz-2 tem-viz-3"></select>
+            </label>
+            <button type="button" class="pob-reset" id="tem-f-reset">Restablecer</button>
+        </div>
+        <p class="pob-mini" id="tem-nota" aria-live="polite"></p>
+    </div>
+
+    <div class="grid grid-3 pob-ind" id="tem-ind" aria-live="polite">
+        <div class="panel stat cold">
+            <div class="valor" id="tem-i1-valor">-</div>
+            <div class="etiqueta">meses con dato en el filtro</div>
+            <p class="pob-ind-sub" id="tem-i1-sub"></p>
+        </div>
+        <div class="panel stat warm">
+            <div class="valor" id="tem-i2-valor">-</div>
+            <div class="etiqueta" id="tem-i2-etq">cambio del promedio anual</div>
+            <p class="pob-ind-sub" id="tem-i2-sub"></p>
+        </div>
+        <div class="panel stat">
+            <div class="valor" id="tem-i3-valor">-</div>
+            <div class="etiqueta">valor mensual mas alto del filtro</div>
+            <p class="pob-ind-sub" id="tem-i3-sub"></p>
+        </div>
+    </div>
+</section>
+
+<section class="pob-bloque" id="tem-visualizaciones">
+    <p class="pob-kicker">5 · Visualizaciones</p>
+    <h2>Tres visualizaciones generadas desde el dataset</h2>
+    <p>Las graficas se dibujan en el navegador con las series que calcula <span class="mono">scripts/temporal.py</span>
+    sobre el CSV; no son imagenes ni datos de terceros. Pasa el cursor sobre cada elemento para ver su valor.</p>
+
+    <article class="panel pob-viz" id="tem-viz-1">
+        <header>
+            <p class="pob-viz-num">Visualizacion 1 · Serie mensual</p>
+            <h3 id="tem-v1-titulo">Evolucion mensual</h3>
+            <p class="pob-mini" id="tem-v1-sub"></p>
+        </header>
+        <div class="pob-leyenda-h">
+            <span><i class="pob-sw cold" id="tem-v1-sw"></i> Serie mensual</span>
+            <span><i class="rel-recta"></i> Tendencia lineal</span>
+            <span><i class="rel-rombo"></i> Evento externo</span>
+        </div>
+        <div class="rel-grafico" id="tem-v1" role="img" aria-label="Serie mensual con linea de tendencia y eventos externos"></div>
+        <p class="pob-lectura" id="tem-v1-lectura" aria-live="polite"></p>
+        <div class="pob-interp">
+            <h4>7 · Interpretacion <span>(CO2, todos los anios)</span></h4>
+            <p>{{ info.interpretaciones.v1 }}</p>
+        </div>
+    </article>
+
+    <article class="panel pob-viz" id="tem-viz-2">
+        <header>
+            <p class="pob-viz-num">Visualizacion 2 · Ciclo estacional</p>
+            <h3 id="tem-v2-titulo">Perfil estacional</h3>
+            <p class="pob-mini" id="tem-v2-sub"></p>
+        </header>
+        <div class="rel-grafico" id="tem-v2" role="img" aria-label="Barras con la desviacion media de cada mes respecto al promedio de su anio"></div>
+        <p class="pob-lectura" id="tem-v2-lectura" aria-live="polite"></p>
+        <div class="pob-interp">
+            <h4>7 · Interpretacion <span>(CO2, todos los anios)</span></h4>
+            <p>{{ info.interpretaciones.v2 }}</p>
+        </div>
+    </article>
+
+    <article class="panel pob-viz" id="tem-viz-3">
+        <header>
+            <p class="pob-viz-num">Visualizacion 3 · Entre anios</p>
+            <h3 id="tem-v3-titulo">Promedio anual</h3>
+            <p class="pob-mini" id="tem-v3-sub"></p>
+        </header>
+        <div class="rel-grafico" id="tem-v3" role="img" aria-label="Barras con el promedio anual y su cambio frente al anio anterior"></div>
+        <p class="pob-lectura" id="tem-v3-lectura" aria-live="polite"></p>
+        <div class="pob-interp">
+            <h4>7 · Interpretacion <span>(CO2, todos los anios)</span></h4>
+            <p>{{ info.interpretaciones.v3 }}</p>
+        </div>
+    </article>
+
+    <article class="panel pob-viz" id="tem-apoyo">
+        <header>
+            <p class="pob-viz-num">Tabla de apoyo</p>
+            <h3>Resumen anual de las tres series</h3>
+            <p class="pob-mini">Promedio por anio y cambio frente al anio anterior. Los anios con menos de 12 meses se marcan como parciales.</p>
+        </header>
+        <div class="tabla-wrap">
+            <table>
+                <thead><tr><th>Anio</th><th>Meses (CO2)</th><th>CO2 prom. (ppm)</th><th>Δ CO2</th><th>GISTEMP prom. (°C)</th><th>GCAG prom. (°C)</th></tr></thead>
+                <tbody id="tem-a-tabla"></tbody>
+            </table>
+        </div>
+    </article>
+</section>
+
+<section class="pob-bloque" id="tem-conocimientos">
+    <p class="pob-kicker">8 · Conocimientos evidentes</p>
+    <h2>Tres conocimientos evidentes</h2>
+    <p>Cada conocimiento sigue la estructura pregunta, variables, procedimiento, evidencia, hallazgo,
+    interpretacion, utilidad y limitacion. Las cifras corresponden a todo el periodo {{ info.anio_min }}-{{ info.anio_max }}.</p>
+
+    {% for k in info.conocimientos %}
+    <article class="panel pob-conoc">
+        <header>
+            <span class="pob-conoc-num">{{ k.numero }}</span>
+            <h3>{{ k.titulo }}</h3>
+        </header>
+        <dl class="pob-dl">
+            <div><dt>1 · Pregunta</dt><dd>{{ k.pregunta }}</dd></div>
+            <div><dt>2 · Variables</dt><dd>{{ k.variables }}</dd></div>
+            <div><dt>3 · Procedimiento</dt><dd>{{ k.procedimiento }}</dd></div>
+            <div class="pob-evid">
+                <dt>4 · Evidencia</dt>
+                <dd>
+                    <p class="pob-mini" style="margin:0 0 .4rem;">{{ k.evidencia_titulo }}</p>
+                    {% for e in k.evidencia %}
+                    <div class="barra-h-fila">
+                        <div class="barra-h-label">{{ e.etiqueta }}</div>
+                        <div class="barra-h-track"><div class="barra-h-fill" style="width: {{ [e.pct, 0.6] | max }}%;"></div></div>
+                        <div class="barra-h-val">{{ e.valor }}</div>
+                    </div>
+                    {% endfor %}
+                </dd>
+            </div>
+            <div><dt>5 · Hallazgo</dt><dd>{{ k.hallazgo }}</dd></div>
+            <div><dt>6 · Interpretacion</dt><dd>{{ k.interpretacion }}</dd></div>
+            <div><dt>7 · Utilidad</dt><dd>{{ k.utilidad }}</dd></div>
+            <div><dt>8 · Limitacion</dt><dd>{{ k.limitacion }}</dd></div>
+        </dl>
+    </article>
+    {% endfor %}
+</section>
+
+<section class="pob-bloque" id="tem-limitacion">
+    <p class="pob-kicker">9 · Limitacion del analisis</p>
+    <h2>{{ info.limitacion.titulo }}</h2>
+    <div class="nota"><p style="margin:0;max-width:none;">{{ info.limitacion.texto }}</p></div>
+</section>
+
+<section class="pob-bloque" id="tem-decision">
+    <p class="pob-kicker">10 · Posible decision sustentada en los datos</p>
+    <h2>{{ info.decision.titulo }}</h2>
+    <div class="panel pob-decision">
+        <p style="max-width:none;">{{ info.decision.texto }}</p>
+        <p class="pob-mini" style="margin-bottom:0;">{{ info.decision.sustento }}</p>
+    </div>
+</section>
+
+<script type="application/json" id="tem-datos">{{ info.graficos | tojson }}</script>
+<script src="{{ url_for('static', filename='js/dimension_temporal.js') }}"></script>
+
+{% else %}
+<div class="nota" style="margin-top:1.4rem;">
+    No se pudo calcular el analisis temporal: verifica que <span class="mono">data/raw/clima_consolidado.csv</span>
+    contenga las series mensuales (CO2 de Mauna Loa y anomalias de temperatura).
+</div>
+{% endif %}
+
+{% endblock %}

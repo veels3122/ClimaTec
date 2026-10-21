@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+{% block titulo %}Etapa 4 · Dimension Relacional Multidimensional · ClimaTec{% endblock %}
+{% block contenido %}
+
+<div class="page-hero acento-warm animate-fade-down">
+    <div class="fondo-foto-tinte" aria-hidden="true"></div>
+    <canvas class="fondo-seccion" aria-hidden="true"></canvas>
+    <p class="eyebrow"><span class="paso">Etapa 4 · 04</span> Analisis de Datos</p>
+    <h1>Dimension Relacional Multidimensional</h1>
+    <p class="lede">Analisis cruzado de las dimensiones poblacional, territorial y temporal para identificar relaciones entre indicadores y eventos externos.</p>
+</div>
+
+{% if info %}
+<nav class="pob-indice animate-fade-up" aria-label="Contenido de la dimension" style="animation-delay:120ms;">
+    <a href="#rel-titulo"><span>1</span> Titulo</a>
+    <a href="#rel-pregunta"><span>2</span> Pregunta</a>
+    <a href="#rel-variables"><span>3</span> Variables</a>
+    <a href="#rel-indicadores"><span>4</span> Indicadores</a>
+    <a href="#rel-visualizaciones"><span>5</span> Visualizaciones</a>
+    <a href="#rel-filtros"><span>6</span> Filtros</a>
+    <a href="#rel-viz-1"><span>7</span> Interpretacion</a>
+    <a href="#rel-conocimientos"><span>8</span> Conocimientos</a>
+    <a href="#rel-limitacion"><span>9</span> Limitacion</a>
+    <a href="#rel-decision"><span>10</span> Decision</a>
+</nav>
+
+<section class="pob-bloque" id="rel-titulo">
+    <p class="pob-kicker">1 · Titulo de la dimension</p>
+    <h2>Relaciones entre poblacion, territorio, tiempo y eventos externos</h2>
+    <p>Esta dimension cruza lo que ya se analizo por separado: cuantas personas tiene cada pais (poblacional), como se reparten
+    los indicadores entre territorios (territorial) y como cambian entre {{ info.graficos.anios[0] }} y {{ info.graficos.anios[-1] }} (temporal),
+    y los compara con los <strong>{{ info.n_eventos }} eventos externos</strong> documentados. Se calcula en vivo sobre
+    <span class="mono">clima_limpio.csv</span> ({{ '{:,}'.format(info.total_registros).replace(',', '.') }} registros) y
+    <span class="mono">eventos_externos_muestra.csv</span>.</p>
+</section>
+
+<section class="pob-bloque" id="rel-pregunta">
+    <p class="pob-kicker">2 · Pregunta de analisis</p>
+    <blockquote>¿Que relaciones existen entre el tamano poblacional, el territorio y el tiempo en los indicadores climaticos, y como se situan frente a los eventos externos documentados?</blockquote>
+    <p class="pob-mini">Para responderla se analiza:</p>
+    <div class="pob-chips">
+        <a class="chip" href="#rel-viz-1">Poblacion frente a emisiones y energia</a>
+        <a class="chip" href="#rel-viz-2">Evolucion por region (territorio x tiempo)</a>
+        <a class="chip" href="#rel-viz-3">CO2 mundial frente a eventos externos</a>
+        <a class="chip" href="#rel-conocimientos">Relaciones evidentes y sus limites</a>
+    </div>
+</section>
+
+<section class="pob-bloque" id="rel-variables">
+    <p class="pob-kicker">3 · Descripcion de las variables utilizadas</p>
+    <h2>Variables del analisis relacional</h2>
+    <div class="tabla-wrap">
+        <table>
+            <thead><tr><th>Variable</th><th>Tipo</th><th>Que aporta a esta dimension</th></tr></thead>
+            <tbody>
+                {% for v in info.variables %}
+                {% set c = 'num' if v.tipo == 'Numerica' else ('tmp' if v.tipo == 'Temporal' else 'cat') %}
+                <tr>
+                    <td class="mono">{{ v.variable }}</td>
+                    <td><span class="tag {{ c }}">{{ v.tipo }}</span></td>
+                    <td>{{ v.uso }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="pob-bloque" id="rel-indicadores">
+    <p class="pob-kicker">4 · Indicadores</p>
+    <h2>Tres indicadores clave</h2>
+
+    <div class="pob-filtros panel" id="rel-filtros" role="group" aria-label="Filtros interactivos">
+        <div class="pob-filtros-tit">
+            <span class="pob-kicker" style="margin:0;">6 · Filtros interactivos</span>
+            <span class="pob-mini">Controlan los indicadores y las tres visualizaciones.</span>
+        </div>
+        <div class="pob-filtros-campos">
+            <label class="pob-campo">
+                <span>Filtro 1 · Anio</span>
+                <select id="rel-f-anio" aria-controls="rel-ind rel-viz-1 rel-viz-2 rel-viz-3"></select>
+            </label>
+            <label class="pob-campo">
+                <span>Filtro 2 · Indicador a relacionar con la poblacion</span>
+                <select id="rel-f-ind" aria-controls="rel-viz-1 rel-viz-2"></select>
+            </label>
+            <button type="button" class="pob-reset" id="rel-f-reset">Restablecer</button>
+        </div>
+    </div>
+
+    <div class="grid grid-3 pob-ind" id="rel-ind" aria-live="polite">
+        <div class="panel stat cold">
+            <div class="valor" id="rel-i1-valor">-</div>
+            <div class="etiqueta">correlacion entre poblacion e indicador (Spearman)</div>
+            <p class="pob-ind-sub" id="rel-i1-sub"></p>
+        </div>
+        <div class="panel stat warm">
+            <div class="valor" id="rel-i2-valor">-</div>
+            <div class="etiqueta" id="rel-i2-etq">posicion de Colombia</div>
+            <p class="pob-ind-sub" id="rel-i2-sub"></p>
+        </div>
+        <div class="panel stat">
+            <div class="valor" id="rel-i3-valor">-</div>
+            <div class="etiqueta" id="rel-i3-etq">eventos externos del anio</div>
+            <p class="pob-ind-sub" id="rel-i3-sub"></p>
+        </div>
+    </div>
+</section>
+
+<section class="pob-bloque" id="rel-visualizaciones">
+    <p class="pob-kicker">5 · Visualizaciones</p>
+    <h2>Tres visualizaciones generadas desde el dataset</h2>
+    <p>Las graficas se dibujan en el navegador con los datos que calcula <span class="mono">scripts/relacional.py</span>
+    sobre el CSV; no son imagenes ni datos de terceros. Pasa el cursor sobre cada elemento para ver su valor.</p>
+
+    <article class="panel pob-viz" id="rel-viz-1">
+        <header>
+            <p class="pob-viz-num">Visualizacion 1 · Poblacion x indicador</p>
+            <h3 id="rel-v1-titulo">Poblacion frente al indicador, por pais</h3>
+            <p class="pob-mini" id="rel-v1-sub"></p>
+        </header>
+        <div class="pob-leyenda-h" id="rel-v1-ley"></div>
+        <div class="rel-grafico" id="rel-v1" role="img" aria-label="Dispersion log-log de poblacion frente al indicador seleccionado, un punto por pais"></div>
+        <p class="pob-lectura" id="rel-v1-lectura" aria-live="polite"></p>
+        <div class="pob-interp">
+            <h4>7 · Interpretacion <span>(CO2 total, {{ info.anio_ref }})</span></h4>
+            <p>{{ info.interpretaciones.v1 }}</p>
+        </div>
+    </article>
+
+    <article class="panel pob-viz" id="rel-viz-2">
+        <header>
+            <p class="pob-viz-num">Visualizacion 2 · Territorio x tiempo</p>
+            <h3 id="rel-v2-titulo">Evolucion de cada region (base 100 = 2020)</h3>
+            <p class="pob-mini" id="rel-v2-sub"></p>
+        </header>
+        <div class="pob-leyenda-h" id="rel-v2-ley"></div>
+        <div class="rel-grafico" id="rel-v2" role="img" aria-label="Lineas por region en base 100"></div>
+        <p class="pob-lectura" id="rel-v2-lectura" aria-live="polite"></p>
+        <div class="pob-interp">
+            <h4>7 · Interpretacion <span>(CO2 total, 2020-{{ info.anio_ref }})</span></h4>
+            <p>{{ info.interpretaciones.v2 }}</p>
+        </div>
+    </article>
+
+    <article class="panel pob-viz" id="rel-viz-3">
+        <header>
+            <p class="pob-viz-num">Visualizacion 3 · Tiempo x eventos</p>
+            <h3>Variacion anual del CO2 mundial y eventos externos</h3>
+            <p class="pob-mini" id="rel-v3-sub"></p>
+        </header>
+        <div class="pob-leyenda-h">
+            <span><i class="pob-sw cold"></i> Variacion anual del CO2 (%)</span>
+            <span><i class="pob-sw warm"></i> Anio seleccionado</span>
+            <span><i class="rel-rombo"></i> Evento externo</span>
+        </div>
+        <div class="rel-grafico" id="rel-v3" role="img" aria-label="Barras de variacion anual del CO2 mundial con marcadores de eventos"></div>
+        <div class="tabla-wrap" style="margin-top:1rem;">
+            <table>
+                <thead><tr><th>Fecha</th><th>Evento</th><th>Tipo</th><th>Ambito</th></tr></thead>
+                <tbody id="rel-v3-tabla"></tbody>
+            </table>
+        </div>
+        <p class="pob-lectura" id="rel-v3-lectura" aria-live="polite"></p>
+        <div class="pob-interp">
+            <h4>7 · Interpretacion <span>(todos los anios)</span></h4>
+            <p>{{ info.interpretaciones.v3 }}</p>
+        </div>
+    </article>
+
+    <article class="panel pob-viz" id="rel-apoyo">
+        <header>
+            <p class="pob-viz-num">Tabla de apoyo</p>
+            <h3>Relacion con la poblacion en cada indicador</h3>
+            <p class="pob-mini" id="rel-a-sub"></p>
+        </header>
+        <div class="tabla-wrap">
+            <table>
+                <thead><tr><th>Indicador</th><th>Paises</th><th>Spearman</th><th>Pearson (log-log)</th><th>Pendiente log-log</th><th>Colombia (esperado)</th></tr></thead>
+                <tbody id="rel-a-tabla"></tbody>
+            </table>
+        </div>
+        <p class="pob-mini" style="margin-top:.7rem;">Pendiente log-log: por cada 10 veces mas habitantes, el indicador se multiplica por 10 elevado a la pendiente.</p>
+    </article>
+</section>
+
+<section class="pob-bloque" id="rel-conocimientos">
+    <p class="pob-kicker">8 · Conocimientos evidentes</p>
+    <h2>Tres conocimientos evidentes</h2>
+    <p>Cada conocimiento sigue la estructura pregunta, variables, procedimiento, evidencia, hallazgo,
+    interpretacion, utilidad y limitacion. Las cifras corresponden a {{ info.anio_ref }} (relaciones entre paises) y al periodo {{ info.graficos.anios[0] }}-{{ info.graficos.anios[-1] }}.</p>
+
+    {% for k in info.conocimientos %}
+    <article class="panel pob-conoc">
+        <header>
+            <span class="pob-conoc-num">{{ k.numero }}</span>
+            <h3>{{ k.titulo }}</h3>
+        </header>
+        <dl class="pob-dl">
+            <div><dt>1 · Pregunta</dt><dd>{{ k.pregunta }}</dd></div>
+            <div><dt>2 · Variables</dt><dd>{{ k.variables }}</dd></div>
+            <div><dt>3 · Procedimiento</dt><dd>{{ k.procedimiento }}</dd></div>
+            <div class="pob-evid">
+                <dt>4 · Evidencia</dt>
+                <dd>
+                    <p class="pob-mini" style="margin:0 0 .4rem;">{{ k.evidencia_titulo }}</p>
+                    {% for e in k.evidencia %}
+                    <div class="barra-h-fila">
+                        <div class="barra-h-label">{{ e.etiqueta }}</div>
+                        <div class="barra-h-track"><div class="barra-h-fill" style="width: {{ [e.pct, 0.6] | max }}%;"></div></div>
+                        <div class="barra-h-val">{{ e.valor }}</div>
+                    </div>
+                    {% endfor %}
+                </dd>
+            </div>
+            <div><dt>5 · Hallazgo</dt><dd>{{ k.hallazgo }}</dd></div>
+            <div><dt>6 · Interpretacion</dt><dd>{{ k.interpretacion }}</dd></div>
+            <div><dt>7 · Utilidad</dt><dd>{{ k.utilidad }}</dd></div>
+            <div><dt>8 · Limitacion</dt><dd>{{ k.limitacion }}</dd></div>
+        </dl>
+    </article>
+    {% endfor %}
+</section>
+
+<section class="pob-bloque" id="rel-limitacion">
+    <p class="pob-kicker">9 · Limitacion del analisis</p>
+    <h2>{{ info.limitacion.titulo }}</h2>
+    <div class="nota"><p style="margin:0;max-width:none;">{{ info.limitacion.texto }}</p></div>
+</section>
+
+<section class="pob-bloque" id="rel-decision">
+    <p class="pob-kicker">10 · Posible decision sustentada en los datos</p>
+    <h2>{{ info.decision.titulo }}</h2>
+    <div class="panel pob-decision">
+        <p style="max-width:none;">{{ info.decision.texto }}</p>
+        <p class="pob-mini" style="margin-bottom:0;">{{ info.decision.sustento }}</p>
+    </div>
+</section>
+
+<script type="application/json" id="rel-datos">{{ info.graficos | tojson }}</script>
+<script src="{{ url_for('static', filename='js/dimension_relacional.js') }}"></script>
+
+{% else %}
+<div class="nota" style="margin-top:1.4rem;">
+    No se pudo calcular el analisis relacional: verifica que exista
+    <span class="mono">data/raw/clima_consolidado.csv</span> con el indicador <em>Poblacion</em>.
+</div>
+{% endif %}
+
+{% endblock %}
