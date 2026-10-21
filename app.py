@@ -973,27 +973,29 @@ def e4_territorial():
 def e4_temporal():
     # Etapa 4 - Dimension Temporal: series mensuales REALES del dataset (CO2 de Mauna Loa y
     # anomalias de temperatura GISTEMP y GCAG) y eventos externos. No usa plotly ni datos simulados.
-    import temporal
-    base = DF_LIMPIO if DF_LIMPIO is not None else DF
+    info, error = None, None
     try:
+        import temporal
+        base = DF_LIMPIO if DF_LIMPIO is not None else DF
         info = temporal.construir(base, DF_EVENTOS)
-    except Exception:
+    except Exception as exc:  # la pagina muestra el motivo en vez de un error 500
         app.logger.exception("No se pudo calcular la dimension temporal")
-        info = None
-    return render_template("etapa4/dimension_temporal.html", proyecto=PROYECTO, info=info)
+        error = "{}: {}".format(type(exc).__name__, exc)
+    return render_template("etapa4/dimension_temporal.html", proyecto=PROYECTO, info=info, error=error)
 
 
 @app.route("/etapa-4/dimension-relacional-multidimensional")
 def e4_relacional():
     # Etapa 4 - Dimension Relacional: cruza poblacion, territorio, tiempo y eventos externos.
-    import relacional
-    base = DF_LIMPIO if DF_LIMPIO is not None else DF
+    info, error = None, None
     try:
+        import relacional
+        base = DF_LIMPIO if DF_LIMPIO is not None else DF
         info = relacional.construir(base, DF_EVENTOS)
-    except Exception:
+    except Exception as exc:  # la pagina muestra el motivo en vez de un error 500
         app.logger.exception("No se pudo calcular la dimension relacional")
-        info = None
-    return render_template("etapa4/dimension_relacional.html", proyecto=PROYECTO, info=info)
+        error = "{}: {}".format(type(exc).__name__, exc)
+    return render_template("etapa4/dimension_relacional.html", proyecto=PROYECTO, info=info, error=error)
 
 
 # Compatibilidad con rutas antiguas (evita 404 en enlaces previos).

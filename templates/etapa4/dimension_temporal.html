@@ -235,6 +235,7 @@
 <div class="nota" style="margin-top:1.4rem;">
     No se pudo calcular el analisis temporal: verifica que <span class="mono">data/raw/clima_consolidado.csv</span>
     contenga las series mensuales (CO2 de Mauna Loa y anomalias de temperatura).
+    {% if error %}<p class="pob-mini" style="margin:.6rem 0 0;">Detalle tecnico: <span class="mono">{{ error }}</span></p>{% endif %}
 </div>
 {% endif %}
 

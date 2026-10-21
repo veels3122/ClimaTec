@@ -244,6 +244,7 @@
 <div class="nota" style="margin-top:1.4rem;">
     No se pudo calcular el analisis relacional: verifica que exista
     <span class="mono">data/raw/clima_consolidado.csv</span> con el indicador <em>Poblacion</em>.
+    {% if error %}<p class="pob-mini" style="margin:.6rem 0 0;">Detalle tecnico: <span class="mono">{{ error }}</span></p>{% endif %}
 </div>
 {% endif %}
 
