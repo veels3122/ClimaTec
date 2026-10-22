@@ -19,7 +19,7 @@ import os
 import sys
 
 import pandas as pd
-from flask import Flask, render_template, redirect, url_for
+from flask import Flask, render_template, redirect, url_for, jsonify
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "scripts"))
 import limpieza  # noqa: E402  (perfilamiento y limpieza de la Etapa 2)
@@ -982,6 +982,32 @@ def e4_temporal():
         app.logger.exception("No se pudo calcular la dimension temporal")
         error = "{}: {}".format(type(exc).__name__, exc)
     return render_template("etapa4/dimension_temporal.html", proyecto=PROYECTO, info=info, error=error)
+@app.route("/api/temporal-data", endpoint="api_temporal_data")
+def api_temporal_data():
+    # Datos de la Dimension Temporal (Etapa 4): meses en que existen a la vez el CO2 de Mauna Loa (NOAA GML)
+    # y la anomalia de temperatura global de NASA GISTEMP. Son series REALES del dataset; no hay datos simulados.
+    base = DF_LIMPIO if DF_LIMPIO is not None else DF
+    if base is None:
+        return jsonify({"data": [], "error": "Dataset no disponible"}), 503
+    try:
+        import temporal
+        S = temporal._extraer(base)
+        if "co2" not in S or "gis" not in S:
+            return jsonify({"data": [], "error": "Faltan las series de CO2 o de anomalia de temperatura"}), 404
+        co2 = {(a, m): v for a, m, v in S["co2"]["puntos"]}
+        tem = {(a, m): v for a, m, v in S["gis"]["puntos"]}
+        filas = [{"fecha": "{:04d}-{:02d}-01".format(a, m), "temperatura": tem[(a, m)], "co2": co2[(a, m)]}
+                 for (a, m) in sorted(set(co2) & set(tem))]
+        return jsonify({
+            "data": filas,
+            "fuentes": {"co2": S["co2"]["fuente"], "temperatura": S["gis"]["fuente"]},
+            "unidades": {"co2": "ppm", "temperatura": "grados C (anomalia vs. base)"},
+        })
+    except Exception as exc:
+        app.logger.exception("No se pudieron armar los datos temporales")
+        return jsonify({"data": [], "error": "{}: {}".format(type(exc).__name__, exc)}), 500
+
+
 @app.route("/etapa-4/dimension-relacional-multidimensional", endpoint="e4_relacional")
 def e4_relacional():
     # Etapa 4 - Dimension Relacional: cruza poblacion, territorio, tiempo y eventos externos.
