@@ -36,12 +36,13 @@
 
 <section class="pob-bloque" id="rel-pregunta">
     <p class="pob-kicker">2 · Pregunta de analisis</p>
-    <blockquote>¿Que relaciones existen entre el tamano poblacional, el territorio y el tiempo en los indicadores climaticos, y como se situan frente a los eventos externos documentados?</blockquote>
+    <blockquote>¿Que perfiles de paises resultan de combinar tamano de poblacion, emisiones per capita y participacion de renovables, cuales son frecuentes, como se relacionan esas variables con el tiempo y los eventos externos y que paises son casos inusuales?</blockquote>
     <p class="pob-mini">Para responderla se analiza:</p>
     <div class="pob-chips">
         <a class="chip" href="#rel-viz-1">Poblacion frente a emisiones y energia</a>
         <a class="chip" href="#rel-viz-2">Evolucion por region (territorio x tiempo)</a>
         <a class="chip" href="#rel-viz-3">CO2 mundial frente a eventos externos</a>
+        <a class="chip" href="#rel-perfiles">Perfiles multivariados y casos inusuales</a>
         <a class="chip" href="#rel-conocimientos">Relaciones evidentes y sus limites</a>
     </div>
 </section>
@@ -183,6 +184,32 @@
         <p class="pob-mini" style="margin-top:.7rem;">Pendiente log-log: por cada 10 veces mas habitantes, el indicador se multiplica por 10 elevado a la pendiente.</p>
     </article>
 </section>
+
+{% if info.perfiles %}
+{% set pf = info.perfiles %}
+<section class="pob-bloque" id="rel-perfiles">
+    <p class="pob-kicker">5b · Analisis multivariado ({{ pf.anio }})</p>
+    <h2>Perfiles de paises: poblacion x CO2 per capita x renovables</h2>
+    <p>Se cruzan tres variables para los <strong>{{ pf.n }} paises</strong> que las tienen completas en {{ pf.anio }}. Cada pais se clasifica por tamano de poblacion, nivel de CO2 per capita (tercil bajo, medio o alto) y participacion de renovables en la energia (tercil).
+    Relaciones (Spearman): poblacion y CO2 per capita <strong>{{ pf.r_pob_pc }}</strong>; poblacion y renovables <strong>{{ pf.r_pob_ren }}</strong>; CO2 per capita y renovables <strong>{{ pf.r_pc_ren }}</strong>.</p>
+    <h3>Combinaciones mas frecuentes</h3>
+    <div class="tabla-wrap"><table>
+        <thead><tr><th>Poblacion</th><th>CO2 per capita</th><th>Renovables</th><th>Paises</th><th>%</th><th>Mediana CO2 pc / % renov.</th><th>Ejemplos</th></tr></thead>
+        <tbody>{% for f in pf.frecuentes %}<tr><td>{{ f.tam }}</td><td>{{ f.pc }}</td><td>{{ f.ren }}</td><td>{{ f.n }}</td><td>{{ f.pct }} %</td><td>{{ f.pc_med }} t / {{ f.ren_med }} %</td><td>{{ f.ej }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+    <h3>Diferencias entre perfiles de emision</h3>
+    <div class="tabla-wrap"><table>
+        <thead><tr><th>CO2 per capita</th><th>Paises</th><th>Mediana de renovables</th><th>Mediana de poblacion</th></tr></thead>
+        <tbody>{% for r in pf.por_pc %}<tr><td>{{ r.nivel }}</td><td>{{ r.n }}</td><td>{{ r.ren_med }} %</td><td>{{ '{:,.0f}'.format(r.pob_med).replace(',', '.') }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+    <h3>Casos inusuales</h3>
+    <div class="tabla-wrap"><table>
+        <thead><tr><th>Pais</th><th>Variable mas extrema</th><th>Poblacion</th><th>CO2 per capita</th><th>% renovables</th></tr></thead>
+        <tbody>{% for c in pf.raros %}<tr><td>{{ c.entidad }}</td><td>{{ c.var }} {{ 'muy alta' if c.alto else 'muy baja' }}</td><td>{{ '{:,.0f}'.format(c.pob).replace(',', '.') }}</td><td>{{ c.pc }} t</td><td>{{ c.ren }} %</td></tr>{% endfor %}</tbody>
+    </table></div>
+    <p class="pob-mini">Son asociaciones entre variables de un solo anio, no causas. Los casos inusuales se detectan con puntajes z de las tres variables (|z| &ge; 1,8).</p>
+</section>
+{% endif %}
 
 <section class="pob-bloque" id="rel-conocimientos">
     <p class="pob-kicker">8 · Conocimientos evidentes</p>

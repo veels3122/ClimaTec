@@ -942,6 +942,18 @@ def e3_video():
 #   3. Dimension Temporal
 #   4. Dimension Relacional Multidimensional
 # ===========================================================================
+@app.route("/etapa-4/marco-del-analisis", endpoint="e4_marco")
+def e4_marco():
+    import marco
+    base = DF_LIMPIO if DF_LIMPIO is not None else DF
+    try:
+        info = marco.construir(base, REPORTE_E2, DF_EVENTOS)
+    except Exception:
+        app.logger.exception("No se pudo construir el marco del analisis")
+        info = None
+    return render_template("etapa4/marco_analisis.html", proyecto=PROYECTO, info=info)
+
+
 @app.route("/etapa-4/dimension-poblacional")
 def e4_poblacional():
     # Se analiza el dataset limpio (Etapa 2/3); si no estuviera disponible, el consolidado.

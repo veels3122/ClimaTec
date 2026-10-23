@@ -292,6 +292,51 @@ def _decision(disp, regs, anio):
     }
 
 
+# ---------------------------------------------------------------------------
+# Analisis multivariado: tamano de poblacion x CO2 per capita x renovables
+# ---------------------------------------------------------------------------
+IND_REN = "Participacion de renovables en energia"
+IND_PC = "Emisiones de CO2 per capita"
+
+
+def _perfiles(df, anio):
+    nac = df[(df["nivel_geografico"] == "Nacional") & (df["anio"] == anio)]
+    w = nac.pivot_table(index="entidad", columns="indicador", values="valor", aggfunc="first")
+    if not {IND_POB, IND_PC, IND_REN} <= set(w.columns):
+        return None
+    w = w[[IND_POB, IND_PC, IND_REN]].dropna()
+    w = w[(w[IND_POB] > 0) & (w[IND_PC] > 0)]
+    if len(w) < 15:
+        return None
+    w.columns = ["pob", "pc", "ren"]
+    w["tam"] = w["pob"].map(_asignar_grupo)
+    niv = lambda s, a: pd.qcut(s, 3, labels=a)
+    w["n_pc"] = niv(w["pc"], ["bajo", "medio", "alto"]).astype(str)
+    w["n_ren"] = niv(w["ren"], ["baja", "media", "alta"]).astype(str)
+    frec = []
+    for (t, a, b), g in w.groupby(["tam", "n_pc", "n_ren"]):
+        frec.append({"tam": t, "pc": a, "ren": b, "n": int(len(g)), "pct": round(100 * len(g) / len(w), 1),
+                     "pc_med": round(float(g["pc"].median()), 1), "ren_med": round(float(g["ren"].median()), 1),
+                     "ej": ", ".join(list(g.sort_values("pob", ascending=False).index[:3]))})
+    frec = sorted(frec, key=lambda x: -x["n"])[:6]
+    z = pd.DataFrame({"pob": np.log10(w["pob"]), "pc": np.log10(w["pc"]), "ren": w["ren"]})
+    z = (z - z.median()) / z.std(ddof=0)
+    et = {"pob": "poblacion", "pc": "CO2 per capita", "ren": "% renovables"}
+    raros = []
+    for e in z.abs().max(axis=1).sort_values(ascending=False).index[:6]:
+        v = z.loc[e].abs().idxmax()
+        if abs(z.loc[e, v]) < 1.8:
+            continue
+        raros.append({"entidad": e, "var": et[v], "alto": bool(z.loc[e, v] > 0), "pob": float(w.loc[e, "pob"]),
+                      "pc": round(float(w.loc[e, "pc"]), 1), "ren": round(float(w.loc[e, "ren"]), 1)})
+    sp = w[["pob", "pc", "ren"]].corr(method="spearman")
+    por_pc = [{"nivel": n, "n": int((w["n_pc"] == n).sum()), "ren_med": round(float(w[w["n_pc"] == n]["ren"].median()), 1),
+               "pob_med": float(w[w["n_pc"] == n]["pob"].median())} for n in ["bajo", "medio", "alto"]]
+    return {"anio": int(anio), "n": int(len(w)), "frecuentes": frec, "raros": raros, "por_pc": por_pc,
+            "r_pob_pc": round(float(sp.loc["pob", "pc"]), 2), "r_pob_ren": round(float(sp.loc["pob", "ren"]), 2),
+            "r_pc_ren": round(float(sp.loc["pc", "ren"]), 2)}
+
+
 def construir(df, eventos=None):
     if df is None or df.empty:
         return None
@@ -330,5 +375,5 @@ def construir(df, eventos=None):
         "limitacion": _limitacion(disp, anios_pob, len(lista_ev)),
         "decision": _decision(disp, regs, anio_ref),
         "graficos": graficos,
-        "total_registros": int(len(df)),
+        "total_registros": int(len(df)), "perfiles": _perfiles(df, anio_ref),
     }

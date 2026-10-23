@@ -54,6 +54,7 @@
     {% set endpoints_etapa3 = secciones_etapa3 | map(attribute='endpoint') | list %}
 
     {% set secciones_etapa4 = [
+        {'num': 0, 'titulo': 'Marco del analisis', 'endpoint': 'e4_marco'},
         {'num': 1, 'titulo': 'Dimension Poblacional', 'endpoint': 'e4_poblacional'},
         {'num': 2, 'titulo': 'Dimension Territorial', 'endpoint': 'e4_territorial'},
         {'num': 3, 'titulo': 'Dimension Temporal', 'endpoint': 'e4_temporal'},

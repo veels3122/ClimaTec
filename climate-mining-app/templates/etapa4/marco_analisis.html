@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block titulo %}Etapa 4 · Marco del analisis · ClimaTec{% endblock %}
+{% block contenido %}
+
+<div class="page-hero acento-cold animate-fade-down">
+    <div class="fondo-foto-tinte" aria-hidden="true"></div>
+    <canvas class="fondo-seccion" aria-hidden="true"></canvas>
+    <p class="eyebrow"><span class="paso">Etapa 4 · 00</span> Analisis de Datos</p>
+    <h1>Marco del analisis</h1>
+    <p class="lede">Con que datos se analiza, que significa cada registro y cuales son las cuatro preguntas que guian los tableros de esta etapa.</p>
+</div>
+
+{% if info %}
+<section class="pob-bloque" id="marco-datos">
+    <p class="pob-kicker">1 · Datos de partida (resultado del tratamiento previo)</p>
+    <h2>{{ '{:,}'.format(info.n).replace(',', '.') }} registros disponibles</h2>
+    <p>El analisis usa <span class="mono">clima_limpio.csv</span>, la salida de la Etapa 2: {{ '{:,}'.format(info.n_antes).replace(',', '.') }} registros antes y
+    {{ '{:,}'.format(info.n).replace(',', '.') }} despues del tratamiento (no se elimino ninguno), {{ info.cols }} columnas, {{ info.n_ind }} indicadores, {{ info.n_ent }} entidades y los anios {{ info.anios[0] }}-{{ info.anios[1] }}.</p>
+
+    <h3>Tratamientos aplicados</h3>
+    <div class="tabla-wrap"><table>
+        <thead><tr><th>Tratamiento</th><th>Columna</th><th>Resultado</th></tr></thead>
+        <tbody>{% for a in info.acciones %}<tr><td>{{ a.accion }}</td><td class="mono">{{ a.columna }}</td><td>{{ a.resultado }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+
+    <div class="grid grid-2" style="margin-top:16px;">
+        <div class="tabla-wrap"><table>
+            <thead><tr><th>Nivel geografico</th><th>Registros</th><th>%</th><th>Entidades</th></tr></thead>
+            <tbody>{% for r in info.por_nivel %}<tr><td>{{ r.nivel }}</td><td>{{ r.registros }}</td><td>{{ r.pct }} %</td><td>{{ r.entidades }}</td></tr>{% endfor %}</tbody>
+        </table></div>
+        <div class="tabla-wrap"><table>
+            <thead><tr><th>Fuente</th><th>Tipo</th><th>Registros</th><th>%</th></tr></thead>
+            <tbody>{% for r in info.por_fuente %}<tr><td>{{ r.fuente }}</td><td>{{ r.tipo }}</td><td>{{ r.registros }}</td><td>{{ r.pct }} %</td></tr>{% endfor %}</tbody>
+        </table></div>
+    </div>
+
+    <h3>Problemas de calidad que todavia pueden afectar los resultados</h3>
+    <div class="tabla-wrap"><table>
+        <thead><tr><th>Problema</th><th>Magnitud</th><th>Como afecta y como se maneja</th></tr></thead>
+        <tbody>{% for p in info.problemas %}<tr><td>{{ p[0] }}</td><td>{{ p[1] }}</td><td>{{ p[2] }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+</section>
+
+<section class="pob-bloque" id="marco-unidad">
+    <p class="pob-kicker">2 · Unidad de analisis</p>
+    <h2>Cada registro es una medicion</h2>
+    <p>Un registro es el valor de <strong>un indicador</strong> para <strong>un territorio</strong> (mundo, region o pais), en <strong>un anio o mes</strong> y de <strong>una fuente</strong>.
+    Su clave logica es <span class="mono">{{ info.clave }}</span>.
+    {% if info.ejemplo is not none %}Ejemplo real: {{ info.ejemplo.entidad }}, {{ info.ejemplo.anio }}, {{ info.ejemplo.indicador }} = {{ info.ejemplo.valor }} {{ info.ejemplo.unidad }}.{% endif %}</p>
+    <div class="tabla-wrap"><table>
+        <thead><tr><th>Podria ser...</th><th>¿Lo es aqui?</th><th>Por que</th></tr></thead>
+        <tbody>{% for t in info.tipos %}<tr><td>{{ t[0] }}</td><td>{{ t[1] }}</td><td>{{ t[2] }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+</section>
+
+<section class="pob-bloque" id="marco-preguntas">
+    <p class="pob-kicker">3 · Las cuatro preguntas del analisis</p>
+    <h2>Un tablero por pregunta</h2>
+    <p>Cada pregunta se responde en una pagina propia con titulo, variables, indicadores, filtros, visualizaciones, conocimientos, limitacion y decision.</p>
+    {% for q in info.preguntas %}
+    <div class="panel" style="margin-top:12px;">
+        <p class="pob-kicker">Pregunta {{ q.n }} · Dimension {{ q.dim }}</p>
+        <blockquote>{{ q.q }}</blockquote>
+        <p class="pob-mini">Identifica: {{ q.ident }}</p>
+        <a class="chip" href="{{ url_for(q.ep) }}">Abrir el tablero →</a>
+    </div>
+    {% endfor %}
+</section>
+{% else %}
+<div class="panel"><p>No se pudo cargar el dataset limpio para construir el marco del analisis.</p></div>
+{% endif %}
+
+{% endblock %}
