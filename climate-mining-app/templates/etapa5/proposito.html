@@ -52,9 +52,10 @@
         <div class="panel stat"><div class="valor">{{ mod.n_dim }}</div><div class="etiqueta">dimensiones con {{ mod.dimensiones | sum(attribute='filas') }} miembros en total</div></div>
         <div class="panel stat warm"><div class="valor">{{ vistas|length }}</div><div class="etiqueta">vistas interactivas sobre el mismo cubo</div></div>
     </div>
-    <p style="margin-top:1rem;">El insumo es <span class="mono">clima_limpio.csv</span> (Etapas 2 y 3). El cubo lo arma en vivo
-    <span class="mono">scripts/multidimensional.py</span>, y el script <span class="mono">ssis/sql/04_modelo_estrella.sql</span>
-    deja el mismo modelo en la base <span class="mono">ClimaTec_ETL</span> de SQL Server, a continuacion del paquete SSIS de la Etapa 3.</p>
+    <p style="margin-top:1rem;">El insumo es <span class="mono">clima_limpio.csv</span> (Etapas 2 y 3). <span class="mono">scripts/cargar_modelo.py</span>
+    lo carga en el almacen SQLite <span class="mono">data/dw/climatec_dw.sqlite</span>, que la app consulta para armar el cubo; el script
+    <span class="mono">ssis/sql/04_modelo_estrella.sql</span> deja el mismo modelo en la base <span class="mono">ClimaTec_ETL</span> de SQL Server.
+    Ver <a href="{{ url_for('e5_implementacion') }}">Implementacion y carga</a>.</p>
 </section>
 
 {{ m.pie(None, ('e5_continuidad', 'Continuidad del proyecto')) }}

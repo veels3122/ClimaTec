@@ -3,7 +3,7 @@
 {% block titulo %}Etapa 5 · Vistas interactivas · ClimaTec{% endblock %}
 {% block contenido %}
 
-{{ m.hero(7, 'Acceso a las cuatro vistas interactivas',
+{{ m.hero(9, 'Acceso a las cuatro vistas interactivas',
    'Cuatro formas de recorrer el mismo cubo. Todas leen la misma tabla de hechos; cambian las dimensiones que ponen en primer plano y las operaciones que permiten.') }}
 
 {% if info %}
@@ -37,6 +37,6 @@
     <p class="pob-mini">Las vistas se calculan en el navegador con los datos que entrega <span class="mono">scripts/multidimensional.py</span>; no usan librerias externas.</p>
 </section>
 
-{{ m.pie(('e5_dimensiones', 'Dimensiones, medidas y jerarquias'), ('e5_vista', 'Vista 1 · Evolucion en el tiempo', {'num': 1})) }}
+{{ m.pie(('e5_verificacion', 'Verificacion del modelo'), ('e5_vista', 'Vista 1 · Evolucion en el tiempo', {'num': 1})) }}
 {% else %}{{ m.sin_datos() }}{% endif %}
 {% endblock %}

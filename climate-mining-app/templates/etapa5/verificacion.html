@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% import 'etapa5/_macros.html' as m %}
+{% block titulo %}Etapa 5 · Verificacion del modelo · ClimaTec{% endblock %}
+{% block contenido %}
+
+{{ m.hero(8, 'Verificacion del modelo cargado',
+   'Comprobaciones de integridad sobre el almacen y comparaciones entre el modelo multidimensional y los datos tratados. Todas se ejecutan en vivo cada vez que cambia la carga.') }}
+
+{% if ver %}
+<div class="grid grid-3" style="margin-top:1.4rem;">
+    <div class="panel stat cold"><div class="valor">{{ ver.n_ok }} / {{ ver.n_checks }}</div><div class="etiqueta">comprobaciones de integridad superadas</div></div>
+    <div class="panel stat"><div class="valor">{{ ver.n_comp_ok }} / {{ ver.comparaciones|length }}</div><div class="etiqueta">comparaciones modelo vs. datos tratados que coinciden</div></div>
+    <div class="panel stat warm"><div class="valor">{{ ver.carga.fecha[:10] if ver.carga else '—' }}</div><div class="etiqueta">fecha de la carga verificada</div></div>
+</div>
+
+<nav class="pob-indice" aria-label="Contenido" style="margin-top:1.4rem;">
+    {% for g in ver.grupos %}<a href="#v-{{ loop.index }}"><span>{{ loop.index }}</span> {{ g.grupo }}</a>{% endfor %}
+    <a href="#v-comparaciones"><span>6</span> Comparaciones</a>
+</nav>
+
+<section class="pob-bloque">
+    <h2>Integridad del modelo</h2>
+    {% for g in ver.grupos %}
+    <article class="panel e5-check-grupo" id="v-{{ loop.index }}">
+        <h3>{{ g.grupo }} <span class="{{ 'e5-ok' if g.ok else 'e5-x' }}">{{ '✓ Correcto' if g.ok else '✗ Revisar' }}</span></h3>
+        <div class="tabla-wrap">
+            <table>
+                <thead><tr><th>Comprobacion</th><th>Esperado</th><th>Obtenido</th><th>Que significa</th></tr></thead>
+                <tbody>
+                {% for c in g.checks %}
+                    <tr>
+                        <td>{{ c.nombre }}
+                            <details class="e5-sql"><summary>SQL</summary><pre class="e5-codigo"><code>{{ c.sql }}</code></pre></details></td>
+                        <td class="mono">{{ c.esperado }}</td>
+                        <td class="mono {{ 'e5-ok' if c.ok else 'e5-x' }}">{{ c.obtenido }}</td>
+                        <td>{{ c.explicacion }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </article>
+    {% endfor %}
+</section>
+
+<section class="pob-bloque" id="v-comparaciones">
+    <h2>Comparaciones entre el modelo y los datos tratados</h2>
+    <p>Cada resultado se calcula dos veces: con una consulta en estrella sobre SQLite y con pandas directamente sobre
+    <span class="mono">clima_limpio.csv</span>. Si el modelo esta bien cargado y las reglas de agregacion son correctas, deben coincidir.</p>
+    {% for c in ver.comparaciones %}
+    <article class="panel e5-comp">
+        <h3>{{ loop.index }} · {{ c.titulo }} <span class="{{ 'e5-ok' if c.ok else 'e5-x' }}">{{ '✓ Coincide' if c.ok else '✗ Diferencia' }}</span></h3>
+        <p class="pob-mini" style="margin-top:0;">Medida: {{ c.medida }}</p>
+        <div class="tabla-wrap">
+            <table>
+                <thead><tr>{% for col in c.cols %}<th>{{ col }}</th>{% endfor %}</tr></thead>
+                <tbody>
+                {% for f in c.filas %}
+                    <tr><td>{{ f.clave }}</td><td class="mono">{{ f.modelo }}</td><td class="mono">{{ f.origen }}</td><td class="mono">{{ f.dif }}</td>{% if c.cols|length > 4 %}<td class="mono">{{ f.extra }}</td>{% endif %}</tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p class="pob-lectura" style="margin-top:.8rem;">{{ c.explicacion }}</p>
+        <details class="e5-sql"><summary>Consulta en el modelo y calculo en los datos tratados</summary>
+            <pre class="e5-codigo"><code>-- Modelo (SQLite)
+{{ c.sql }}
+
+# Datos tratados (pandas)
+{{ c.pandas }}</code></pre>
+        </details>
+    </article>
+    {% endfor %}
+</section>
+
+{{ m.pie(('e5_implementacion', 'Implementacion y carga'), ('e5_vistas', 'Vistas interactivas')) }}
+{% else %}
+<div class="nota" style="margin-top:1.4rem;">No se pudo verificar el modelo: ejecuta <span class="mono">python scripts/cargar_modelo.py</span> y recarga la pagina.</div>
+{% endif %}
+{% endblock %}

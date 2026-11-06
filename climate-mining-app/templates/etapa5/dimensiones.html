@@ -38,6 +38,10 @@
                 </tbody>
             </table>
         </div>
+        <dl class="pob-dl" style="margin-top:.8rem;">
+            <div><dt>Perspectiva</dt><dd>{{ d.perspectiva }}</dd></div>
+            <div><dt>Jerarquia valida</dt><dd>{{ d.validez }}</dd></div>
+        </dl>
         <p class="pob-mini" style="margin:.8rem 0 0;">{{ d.nota }}</p>
     </article>
     {% endfor %}
@@ -94,18 +98,24 @@
 
 <section class="pob-bloque" id="medidas">
     <h2>Medidas</h2>
-    <p>Las medidas base viven en la tabla de hechos; las derivadas se recalculan en cada celda del cubo a partir de las base,
-    nunca sumando porcentajes ya calculados.</p>
-    <div class="tabla-wrap">
-        <table>
-            <thead><tr><th>Medida</th><th>Origen</th><th>Calculo</th><th>Agregacion</th><th>Aditividad</th></tr></thead>
-            <tbody>
-            {% for me in mod.medidas %}
-                <tr><td><strong>{{ me.nombre }}</strong></td><td class="mono">{{ me.columna }}</td><td>{{ me.formula }}</td><td>{{ me.agregacion }}</td><td>{{ me.aditividad }}</td></tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    </div>
+    <p>Tres medidas base viven en la tabla de hechos (<span class="mono">valor</span>, <span class="mono">n_registros</span> y
+    <span class="mono">atipico</span>, mas <span class="mono">valor_z</span>); las demas se derivan en cada celda del cubo a partir de ellas,
+    nunca sumando porcentajes o promedios ya calculados.</p>
+    {% for me in mod.medidas %}
+    <article class="panel e5-medida">
+        <header class="e5-dim-cab">
+            <h3>{{ me.nombre }} <span class="mono">{{ me.columna }}</span></h3>
+            <span class="tag {{ 'num' if me.aditividad == 'Aditiva' else ('tmp' if me.aditividad == 'Semiaditiva' else 'cat') }}">{{ me.aditividad }}</span>
+        </header>
+        <dl class="pob-dl">
+            <div><dt>Significado</dt><dd>{{ me.significado }}</dd></div>
+            <div><dt>Unidad</dt><dd>{{ me.unidad }}</dd></div>
+            <div><dt>Formula</dt><dd class="mono">{{ me.formula }}</dd></div>
+            <div><dt>Agregacion</dt><dd>{{ me.agregacion }}</dd></div>
+            <div><dt>Cuando se suma</dt><dd>{{ me.cuando }}</dd></div>
+        </dl>
+    </article>
+    {% endfor %}
 </section>
 
 <section class="pob-bloque" id="reglas">
@@ -117,6 +127,6 @@
     </div>
 </section>
 
-{{ m.pie(('e5_modelo', 'Modelo estrella'), ('e5_vistas', 'Vistas interactivas')) }}
+{{ m.pie(('e5_modelo', 'Diseno del modelo estrella'), ('e5_implementacion', 'Implementacion y carga')) }}
 {% else %}{{ m.sin_datos() }}{% endif %}
 {% endblock %}

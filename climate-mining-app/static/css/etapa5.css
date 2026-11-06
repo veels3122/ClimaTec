@@ -220,3 +220,21 @@
 .e5-unidad:hover { transform: none; }
 .e5-unidad h3 { margin: .2rem 0 .5rem; }
 @media (max-width: 820px) { .e5-pregunta-grid { grid-template-columns: 1fr; } }
+.e5-medida { margin-top: .9rem; }
+.e5-medida:hover { transform: none; }
+.e5-medida .e5-dim-cab { margin-bottom: .5rem; align-items: center; }
+.e5-ok { color: var(--ok); font-weight: 600; }
+.e5-x { color: var(--warm); font-weight: 600; }
+.e5-check-grupo { margin-top: 1rem; }
+.e5-check-grupo:hover { transform: none; }
+.e5-check-grupo h3 { display: flex; justify-content: space-between; gap: 1rem; align-items: baseline; margin-top: 0; }
+.e5-sql { margin: .3rem 0 0; }
+.e5-sql summary { font-size: .78rem; }
+.e5-sql .e5-codigo { margin-top: .4rem; font-size: .76rem; }
+.e5-comp { margin-top: 1.2rem; }
+.e5-comp:hover { transform: none; }
+.e5-pasos { counter-reset: paso; list-style: none; padding: 0; margin: 0; display: grid; gap: .7rem; }
+.e5-pasos li { counter-increment: paso; padding: .9rem 1rem .9rem 3.2rem; position: relative; border: 1px solid var(--glass-border); border-radius: 12px; background: var(--glass); }
+.e5-pasos li::before { content: counter(paso); position: absolute; left: 1rem; top: .9rem; width: 1.6rem; height: 1.6rem; border-radius: 50%; display: grid; place-items: center; background: var(--cold); color: #04202a; font: 600 .8rem "IBM Plex Mono", monospace; }
+.e5-pasos h4 { margin: 0 0 .25rem; color: #fff; font-size: .98rem; }
+.e5-pasos p { margin: 0; color: var(--ink-soft); font-size: .9rem; max-width: none; }

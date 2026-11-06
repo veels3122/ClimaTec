@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% import 'etapa5/_macros.html' as m %}
+{% block titulo %}Etapa 5 · Implementacion y carga · ClimaTec{% endblock %}
+{% block contenido %}
+
+{{ m.hero(7, 'Implementacion y carga del modelo',
+   'El modelo estrella vive en un almacen SQLite que la aplicacion consulta directamente. Un procedimiento reproducible transforma los datos tratados y los carga en las dimensiones y la tabla de hechos.') }}
+
+{% if info %}
+{% macro fmt(x) %}{{ '{:,}'.format(x).replace(',', '.') }}{% endmacro %}
+
+<nav class="pob-indice" aria-label="Contenido">
+    <a href="#i-tecnologia"><span>1</span> Tecnologias</a>
+    <a href="#i-procedimiento"><span>2</span> Procedimiento</a>
+    <a href="#i-carga"><span>3</span> Ultima carga</a>
+    <a href="#i-correspondencia"><span>4</span> Correspondencia</a>
+    <a href="#i-transformaciones"><span>5</span> Transformaciones</a>
+    <a href="#i-flask"><span>6</span> Consulta desde Flask</a>
+</nav>
+
+<section class="pob-bloque" id="i-tecnologia">
+    <h2>Tecnologias elegidas</h2>
+    <div class="tabla-wrap">
+        <table>
+            <thead><tr><th>Pieza</th><th>Tecnologia</th><th>Por que</th></tr></thead>
+            <tbody>
+                <tr><td><strong>Almacen del modelo</strong></td><td>SQLite · <span class="mono">data/dw/climatec_dw.sqlite</span></td><td>Es una base relacional en un solo archivo, viene incluida en Python y no necesita servidor. Soporta claves primarias, foraneas, restricciones UNIQUE e indices, y se despliega junto con la app en Render.</td></tr>
+                <tr><td><strong>Transformacion</strong></td><td>Python + pandas · <span class="mono">scripts/cargar_modelo.py</span></td><td>Es la misma herramienta de la limpieza (Etapa 2) y del analisis (Etapa 4): las reglas no se reescriben en otro lenguaje.</td></tr>
+                <tr><td><strong>Consulta desde Flask</strong></td><td>Modulo <span class="mono">sqlite3</span> de la biblioteca estandar</td><td>No agrega dependencias a <span class="mono">requirements.txt</span>; las paginas y vistas de esta etapa leen el modelo con SQL.</td></tr>
+                <tr><td><strong>Version equivalente en SQL Server</strong></td><td><span class="mono">ssis/sql/04_modelo_estrella.sql</span></td><td>Crea el mismo modelo en el esquema <span class="mono">dw</span> de <span class="mono">ClimaTec_ETL</span>, a continuacion del paquete SSIS de la Etapa 3. No es el almacen de la app publicada porque Render no tiene acceso a la instancia local de SQL Server.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="pob-bloque" id="i-procedimiento">
+    <h2>Procedimiento reproducible de transformacion y carga</h2>
+    <ol class="e5-pasos">
+        <li><h4>Extraer los datos tratados</h4><p>Se lee <span class="mono">data/raw/clima_limpio.csv</span> (salida de las Etapas 2 y 3) y se calcula su huella MD5.</p></li>
+        <li><h4>Construir las dimensiones</h4><p>Se obtienen los miembros distintos de tiempo, geografia, indicador y fuente, se asignan claves sustitutas y se agregan los atributos derivados (region, categoria, regla de agregacion, proveedor).</p></li>
+        <li><h4>Tratar faltantes y desconocidos</h4><p>Cada dimension recibe el miembro «Desconocido» (clave -1); los nulos estructurales se reemplazan por «No aplica» o por 0 en el mes de las series anuales.</p></li>
+        <li><h4>Resolver las claves de los hechos</h4><p>Cada registro tratado se convierte en un hecho con sus cuatro claves foraneas; si una no se encuentra, apunta al miembro -1 en lugar de descartarse.</p></li>
+        <li><h4>Cargar con restricciones</h4><p>Se recrean las tablas con PK, FK, UNIQUE e indices, se insertan las filas en una transaccion y se registra la carga en <span class="mono">etl_carga_modelo</span>.</p></li>
+        <li><h4>Verificar</h4><p>Se ejecutan las comprobaciones de integridad y las comparaciones con los datos tratados (<span class="mono">scripts/verificar_modelo.py</span>).</p></li>
+    </ol>
+<pre class="e5-codigo"><code># Cargar o recargar el modelo
+python scripts/cargar_modelo.py
+
+# Verificar integridad y comparar con los datos tratados
+python scripts/verificar_modelo.py</code></pre>
+    <p class="pob-mini">La app tambien ejecuta la carga al arrancar si el almacen no existe o si la huella del archivo de origen cambio. Volver a cargar
+    siempre produce el mismo modelo a partir del mismo origen.</p>
+</section>
+
+<section class="pob-bloque" id="i-carga">
+    <h2>Ultima carga</h2>
+    {% if carga %}
+    <div class="grid grid-3">
+        <div class="panel stat cold"><div class="valor">{{ fmt(carga.filas_hechos) }}</div><div class="etiqueta">hechos cargados de {{ fmt(carga.filas_origen) }} registros de origen</div></div>
+        <div class="panel stat"><div class="valor">{{ carga.hechos_fk_desconocida }}</div><div class="etiqueta">hechos asignados a un miembro «Desconocido»</div></div>
+        <div class="panel stat warm"><div class="valor">{{ carga.duracion_seg }} s</div><div class="etiqueta">duracion de la carga</div></div>
+    </div>
+    <div class="tabla-wrap" style="margin-top:1rem;">
+        <table><tbody>
+            <tr><th scope="row">Fecha</th><td>{{ carga.fecha }}</td></tr>
+            <tr><th scope="row">Origen</th><td class="mono">{{ carga.origen }}</td></tr>
+            <tr><th scope="row">Huella MD5 del origen</th><td class="mono">{{ carga.huella_md5 }}</td></tr>
+            <tr><th scope="row">Cargas registradas</th><td>{{ carga.n_cargas }}</td></tr>
+        </tbody></table>
+    </div>
+    {% else %}<div class="nota">El almacen todavia no tiene cargas registradas. Ejecuta <span class="mono">python scripts/cargar_modelo.py</span>.</div>{% endif %}
+
+    {% if ver %}
+    <h3 class="e5-subtit">Filas por tabla</h3>
+    <div class="tabla-wrap">
+        <table>
+            <thead><tr><th>Tabla</th><th>Filas</th><th>Nota</th></tr></thead>
+            <tbody>
+            {% for t, n in ver.tablas.items() %}
+                <tr><td class="mono">{{ t }}</td><td class="mono">{{ fmt(n) }}</td><td>{{ 'Incluye el miembro «Desconocido» (-1)' if t.startswith('dim_') else 'Un hecho por registro tratado' }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <details class="e5-detalle">
+        <summary>Ver la definicion (DDL) de la tabla de hechos en el almacen</summary>
+        <pre class="e5-codigo"><code>{{ ver.ddl_hechos }}</code></pre>
+    </details>
+    {% endif %}
+</section>
+
+<section class="pob-bloque" id="i-correspondencia">
+    <h2>Correspondencia entre variables originales y campos del modelo</h2>
+    <div class="tabla-wrap">
+        <table>
+            <thead><tr><th>Variable de clima_limpio</th><th>Campo del modelo</th><th>Transformacion</th></tr></thead>
+            <tbody>
+            {% for o, c, t in correspondencia %}
+                <tr><td class="mono">{{ o }}</td><td class="mono">{{ c }}</td><td>{{ t }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="pob-bloque" id="i-transformaciones">
+    <h2>Transformaciones adicionales a las de las Etapas 2 y 3</h2>
+    <div class="grid grid-2">
+        <div class="panel"><h3>Claves sustitutas</h3><p>Geografia, indicador y fuente reciben claves numericas; el tiempo usa <span class="mono">AAAAMM</span> para que anual y mensual compartan el nivel Anio.</p></div>
+        <div class="panel"><h3>Atributos derivados</h3><p>Region del pais (por ISO3), nombre en espanol, pais foco, semestre y trimestre, categoria, tipo de medida, regla de agregacion y proveedor.</p></div>
+        <div class="panel"><h3>Nulos estructurales explicitos</h3><p>ISO vacio en agregados → «No aplica»; pais en agregados → «No aplica»; mes vacio en series anuales → 0. No se imputa ningun valor numerico.</p></div>
+        <div class="panel"><h3>Medidas listas para agregar</h3><p><span class="mono">atipico</span> pasa de booleano a 0/1 y se agrega <span class="mono">n_registros = 1</span>, para contar y calcular proporciones con SUM.</p></div>
+    </div>
+</section>
+
+<section class="pob-bloque" id="i-flask">
+    <h2>Como lo consulta Flask</h2>
+    <ol class="e5-pasos">
+        <li><h4>Al arrancar</h4><p><span class="mono">app.py</span> llama a <span class="mono">cargar_modelo.asegurar_modelo()</span>, que carga el almacen si hace falta.</p></li>
+        <li><h4>En cada pagina de la etapa</h4><p><span class="mono">multidimensional.construir(ruta_db=…)</span> lee las cinco tablas con SQL y arma las vistas, los conocimientos y los ejemplos. Fuente actual del cubo: <strong>{{ info.origen }}</strong>.</p></li>
+        <li><h4>En la verificacion</h4><p><span class="mono">verificar_modelo.verificar()</span> ejecuta las consultas de control directamente sobre el almacen.</p></li>
+    </ol>
+</section>
+
+{{ m.pie(('e5_dimensiones', 'Dimensiones, medidas y jerarquias'), ('e5_verificacion', 'Verificacion del modelo')) }}
+{% else %}{{ m.sin_datos() }}{% endif %}
+{% endblock %}

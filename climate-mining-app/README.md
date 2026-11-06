@@ -116,13 +116,18 @@ Procfile y render.yaml incluidos. El servicio arranca con gunicorn app:app.
 
 ## Etapa 5 — analisis multidimensional
 
-Menu **Multidimensional** con 9 apartados: proposito, continuidad del proyecto
+Menu **Multidimensional** con 11 apartados: proposito, continuidad del proyecto
 (registros usados, limitaciones de calidad, unidad de analisis vs granularidad),
 relacion con el conocimiento evidente, 4 preguntas de analisis (una por vista),
-modelo estrella, dimensiones/medidas/jerarquias, 4 vistas interactivas,
+diseno del modelo estrella, dimensiones/medidas/jerarquias, implementacion y carga,
+verificacion del modelo, 4 vistas interactivas,
 operaciones OLAP (slice, dice, roll-up, drill-down, pivot) y conclusiones.
 
+    python scripts/cargar_modelo.py      # carga el modelo estrella en data/dw/climatec_dw.sqlite
+    python scripts/verificar_modelo.py   # integridad + comparaciones con los datos tratados
     python scripts/multidimensional.py   # resumen del cubo y conocimientos
+
+La app carga el almacen al arrancar si no existe o si cambio clima_limpio.csv.
 
 - `scripts/multidimensional.py`: modelo estrella en memoria sobre `clima_limpio.csv`.
 - `data/raw/dim_pais_region.csv`: pais (ISO3) -> continente, para la jerarquia Region > Pais.
