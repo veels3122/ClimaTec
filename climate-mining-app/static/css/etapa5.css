@@ -205,3 +205,18 @@
 @media (prefers-reduced-motion: reduce) {
     .e5-pie-link, .e5-tabs a { transition: none; }
 }
+
+/* ---- Preguntas de analisis --------------------------------------------- */
+.e5-pregunta { padding: 1.4rem 1.5rem; }
+.e5-pregunta:hover { transform: none; }
+.e5-pregunta-cab { display: flex; align-items: flex-start; gap: .9rem; }
+.e5-pregunta-cab h2 { margin: 0; font-size: 1.35rem; line-height: 1.35; max-width: 62ch; }
+.e5-pregunta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-top: .6rem; }
+.e5-pregunta-vista { margin-top: 1.2rem; border-color: rgba(73,199,224,.35); }
+.e5-pregunta-vista h2 { margin: .2rem 0 .6rem; font-size: 1.25rem; line-height: 1.4; max-width: 70ch; }
+.e5-pregunta-meta { display: flex; flex-direction: column; gap: .3rem; font-size: .88rem; color: var(--ink-soft); }
+.e5-pregunta-meta strong { color: #fff; font-weight: 500; }
+.e5-vista-preg { color: var(--ink-soft); font-size: .95rem; }
+.e5-unidad:hover { transform: none; }
+.e5-unidad h3 { margin: .2rem 0 .5rem; }
+@media (max-width: 820px) { .e5-pregunta-grid { grid-template-columns: 1fr; } }

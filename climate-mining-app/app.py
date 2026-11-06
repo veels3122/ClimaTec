@@ -1062,16 +1062,48 @@ def e4_relacional():
 VISTAS_E5 = [
     {"num": 1, "clave": "temporal", "titulo": "Evolucion en el tiempo",
      "resumen": "Sube y baja por Anio, Semestre, Trimestre y Mes en las series mensuales; compara Mundo, Sudamerica y Colombia en las anuales.",
-     "operaciones": ["Drill-down", "Roll-up", "Slice"]},
+     "operaciones": ["Drill-down", "Roll-up", "Slice"],
+     "pregunta": "¿En que anios y meses se concentran las mayores anomalias de temperatura global y el mayor aumento del CO2 atmosferico, y coinciden las fuentes primarias cuando se baja del nivel Anio al nivel Mes?",
+     "dimensiones": ["Tiempo (Anio → Semestre → Trimestre → Mes)", "Fuente (NASA GISS, NOAA NCEI, NOAA GML)", "Indicador (slice)"],
+     "medida": "Valor promedio de la anomalia (°C) y de la concentracion de CO2 (ppm)",
+     "proposito": ["Explorar cambios entre niveles de detalle", "Comparar grupos (fuentes)"],
+     "e4": ("Dimension Temporal", "e4_temporal"),
+     "e4_hallazgo": "La Etapa 4 describio la evolucion de los indicadores a nivel anual, como una sola serie por indicador.",
+     "profundiza": "Baja de Anio a Mes con las series reales del dataset y separa la medida por fuente. Asi se ve si el anio mas calido contiene tambien el mes mas calido y si dos instituciones distintas cuentan la misma historia.",
+     "nuevo": "Nivel de detalle mensual y comparacion entre fuentes, que no existian en la Etapa 4."},
     {"num": 2, "clave": "territorial", "titulo": "Del mundo al pais",
      "resumen": "Parte del Mundo, abre una region y llega a sus paises, con Colombia resaltada.",
-     "operaciones": ["Drill-down", "Roll-up", "Slice"]},
+     "operaciones": ["Drill-down", "Roll-up", "Slice"],
+     "pregunta": "¿Como se concentran las emisiones de CO2 y otros indicadores absolutos dentro de cada region, y que lugar ocupa Colombia entre los paises de Sudamerica al pasar del nivel Region al nivel Pais?",
+     "dimensiones": ["Geografia (Mundo → Region → Pais)", "Indicador (slice)", "Tiempo (slice por anio)"],
+     "medida": "Valor sumado (Mt CO2, TWh, personas) y participacion % dentro del nivel",
+     "proposito": ["Identificar concentraciones", "Explorar cambios entre niveles de detalle"],
+     "e4": ("Dimension Territorial", "e4_territorial"),
+     "e4_hallazgo": "Tres regiones concentran casi todo el CO2 y diez paises emiten mas de dos tercios del total mundial; Sudamerica aporta cerca del 3%.",
+     "profundiza": "La Etapa 4 midio la concentracion en dos fotos separadas (entre regiones y entre todos los paises del mundo). Aqui se mide dentro de cada region: si Sudamerica tambien esta concentrada y quienes son los pares reales de Colombia.",
+     "nuevo": "Concentracion intrarregional y validacion de que la suma de los paises reproduce el agregado oficial (roll-up)."},
     {"num": 3, "clave": "mapa", "titulo": "Territorios por anio",
      "resumen": "Matriz territorio x anio para un indicador; elige que territorios y anios quedan en el corte.",
-     "operaciones": ["Slice", "Dice"]},
+     "operaciones": ["Slice", "Dice"],
+     "pregunta": "¿Que territorios aumentaron o redujeron sus emisiones y su participacion de energias renovables entre 2020 y 2024, en que anios ocurrio el cambio y como se compara Colombia con Sudamerica y el mundo?",
+     "dimensiones": ["Geografia (6 regiones, Mundo y Colombia)", "Tiempo (Anio)", "Indicador (slice)"],
+     "medida": "Variacion % frente al anio base, valor del indicador o indice mundo = 100",
+     "proposito": ["Comparar grupos", "Reconocer combinaciones relevantes (territorio × anio)"],
+     "e4": ("Dimension Territorial", "e4_territorial"),
+     "e4_hallazgo": "Colombia emite poco CO2 por habitante pero pesa mas en metano (foto de un solo anio, 2024).",
+     "profundiza": "Convierte la comparacion de un anio en una trayectoria: ya no solo cuanto emite cada territorio, sino hacia donde va y en que anio cambio la tendencia.",
+     "nuevo": "Eje del tiempo cruzado con el territorio y medida de cambio (variacion), en lugar de un valor estatico."},
     {"num": 4, "clave": "pivot", "titulo": "Tabla dinamica del cubo",
      "resumen": "Elige filas, columnas, medida y filtros; intercambia ejes con un clic.",
-     "operaciones": ["Pivot", "Dice", "Roll-up"]},
+     "operaciones": ["Pivot", "Dice", "Roll-up"],
+     "pregunta": "¿Como se reparten los registros y los valores atipicos entre niveles geograficos, categorias de indicador y tipos de fuente, y que combinaciones concentran los posibles problemas de calidad?",
+     "dimensiones": ["Geografia (nivel geografico)", "Indicador (categoria)", "Fuente (tipo y proveedor)"],
+     "medida": "% de registros atipicos (y numero de registros)",
+     "proposito": ["Reconocer combinaciones relevantes", "Comparar grupos"],
+     "e4": ("Dimension Poblacional", "e4_poblacional"),
+     "e4_hallazgo": "El analisis descansa casi por completo en registros nacionales (95,3%) y de fuentes terciarias (98,9%).",
+     "profundiza": "La Etapa 4 conto cuantos registros hay de cada tipo. Aqui se cruza esa composicion con la marca de atipico de la limpieza para saber en que combinaciones de nivel, categoria y fuente es menos confiable el dato.",
+     "nuevo": "Cruce de tres dimensiones con una medida de calidad, y lectura en ambos sentidos con pivot."},
 ]
 
 
@@ -1079,7 +1111,7 @@ def _info_e5():
     import multidimensional
     base = DF_LIMPIO if DF_LIMPIO is not None else DF
     try:
-        return multidimensional.construir(base)
+        return multidimensional.construir(base, n_consolidado=len(DF) if DF is not None else None)
     except Exception:
         app.logger.exception("No se pudo construir el cubo de la Etapa 5")
         return None
@@ -1105,6 +1137,17 @@ def _conocimientos_e4():
 @app.route("/etapa-5/proposito")
 def e5_proposito():
     return render_template("etapa5/proposito.html", proyecto=PROYECTO, info=_info_e5(), vistas=VISTAS_E5)
+
+
+@app.route("/etapa-5/continuidad-del-proyecto")
+def e5_continuidad():
+    return render_template("etapa5/continuidad.html", proyecto=PROYECTO, info=_info_e5(),
+                           e4=_conocimientos_e4(), vistas=VISTAS_E5)
+
+
+@app.route("/etapa-5/preguntas-de-analisis")
+def e5_preguntas():
+    return render_template("etapa5/preguntas.html", proyecto=PROYECTO, info=_info_e5(), vistas=VISTAS_E5)
 
 
 @app.route("/etapa-5/relacion-conocimiento-evidente")

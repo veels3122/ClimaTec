@@ -64,12 +64,14 @@
 
     {% set secciones_etapa5 = [
         {'num': 1, 'titulo': 'Proposito de la etapa', 'endpoint': 'e5_proposito'},
-        {'num': 2, 'titulo': 'Relacion con el conocimiento evidente', 'endpoint': 'e5_relacion'},
-        {'num': 3, 'titulo': 'Modelo estrella', 'endpoint': 'e5_modelo'},
-        {'num': 4, 'titulo': 'Dimensiones, medidas y jerarquias', 'endpoint': 'e5_dimensiones'},
-        {'num': 5, 'titulo': 'Vistas interactivas', 'endpoint': 'e5_vistas'},
-        {'num': 6, 'titulo': 'Operaciones multidimensionales', 'endpoint': 'e5_operaciones'},
-        {'num': 7, 'titulo': 'Conocimientos, limitaciones y conclusiones', 'endpoint': 'e5_conclusiones'},
+        {'num': 2, 'titulo': 'Continuidad del proyecto', 'endpoint': 'e5_continuidad'},
+        {'num': 3, 'titulo': 'Relacion con el conocimiento evidente', 'endpoint': 'e5_relacion'},
+        {'num': 4, 'titulo': 'Preguntas de analisis', 'endpoint': 'e5_preguntas'},
+        {'num': 5, 'titulo': 'Modelo estrella', 'endpoint': 'e5_modelo'},
+        {'num': 6, 'titulo': 'Dimensiones, medidas y jerarquias', 'endpoint': 'e5_dimensiones'},
+        {'num': 7, 'titulo': 'Vistas interactivas', 'endpoint': 'e5_vistas'},
+        {'num': 8, 'titulo': 'Operaciones multidimensionales', 'endpoint': 'e5_operaciones'},
+        {'num': 9, 'titulo': 'Conocimientos, limitaciones y conclusiones', 'endpoint': 'e5_conclusiones'},
     ] %}
     {% set endpoints_etapa5 = (secciones_etapa5 | map(attribute='endpoint') | list) + ['e5_vista'] %}
 

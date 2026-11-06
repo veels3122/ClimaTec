@@ -3,7 +3,7 @@
 {% block titulo %}Etapa 5 · Relacion con el conocimiento evidente · ClimaTec{% endblock %}
 {% block contenido %}
 
-{{ m.hero(2, 'Relacion con los resultados de conocimiento evidente',
+{{ m.hero(3, 'Relacion con los resultados de conocimiento evidente',
    'Cada conocimiento evidente de la Etapa 4 se convierte aqui en un punto de partida: el cubo lo reproduce, lo cruza con otra dimension y lo abre a un nivel de detalle que antes no estaba disponible.') }}
 
 {% if info %}
@@ -80,9 +80,9 @@
     <h2>De evidente a descubierto</h2>
     <div class="nota"><p style="margin:0;max-width:none;">El conocimiento evidente responde «¿que hay?». El conocimiento que se
     busca en esta etapa responde «¿que cambia cuando cruzo o cambio de nivel?». Los cuatro resultados de la
-    <a href="{{ url_for('e5_conclusiones') }}">seccion 7</a> salen de ese paso: ninguno era visible mirando una sola dimension.</p></div>
+    <a href="{{ url_for('e5_conclusiones') }}">seccion 9</a> salen de ese paso: ninguno era visible mirando una sola dimension.</p></div>
 </section>
 
-{{ m.pie(('e5_proposito', 'Proposito de la etapa'), ('e5_modelo', 'Modelo estrella')) }}
+{{ m.pie(('e5_continuidad', 'Continuidad del proyecto'), ('e5_preguntas', 'Preguntas de analisis')) }}
 {% else %}{{ m.sin_datos() }}{% endif %}
 {% endblock %}

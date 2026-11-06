@@ -3,7 +3,7 @@
 {% block titulo %}Etapa 5 · Vistas interactivas · ClimaTec{% endblock %}
 {% block contenido %}
 
-{{ m.hero(5, 'Acceso a las cuatro vistas interactivas',
+{{ m.hero(7, 'Acceso a las cuatro vistas interactivas',
    'Cuatro formas de recorrer el mismo cubo. Todas leen la misma tabla de hechos; cambian las dimensiones que ponen en primer plano y las operaciones que permiten.') }}
 
 {% if info %}
@@ -13,7 +13,7 @@
         <a class="panel enlace e5-vista-card" href="{{ url_for('e5_vista', num=v.num) }}">
             <span class="e5-vista-num">Vista {{ v.num }}</span>
             <h3>{{ v.titulo }}</h3>
-            <p>{{ v.resumen }}</p>
+            <p class="e5-vista-preg">{{ v.pregunta }}</p>
             <div class="e5-ops">{% for o in v.operaciones %}<span class="chip">{{ o }}</span>{% endfor %}</div>
             <span class="e5-abrir">Abrir la vista</span>
         </a>

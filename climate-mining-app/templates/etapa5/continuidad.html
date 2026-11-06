@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% import 'etapa5/_macros.html' as m %}
+{% block titulo %}Etapa 5 · Continuidad del proyecto · ClimaTec{% endblock %}
+{% block contenido %}
+
+{{ m.hero(2, 'Continuidad del proyecto',
+   'La Etapa 5 trabaja con el mismo tema, la misma poblacion y los mismos datos tratados en las etapas anteriores. Aqui se indica cuantos registros entran al analisis, que limitaciones de calidad arrastran y que se analiza en cada fila del cubo.') }}
+
+{% if info %}
+{% set c = info.continuidad %}
+{% macro fmt(x) %}{{ '{:,}'.format(x).replace(',', '.') }}{% endmacro %}
+
+<nav class="pob-indice" aria-label="Contenido de la pagina">
+    <a href="#c-base"><span>1</span> Tema, poblacion y datos</a>
+    <a href="#c-registros"><span>2</span> Registros utilizados</a>
+    <a href="#c-calidad"><span>3</span> Limitaciones de calidad</a>
+    <a href="#c-profundidad"><span>4</span> Conocimientos a profundizar</a>
+    <a href="#c-unidad"><span>5</span> Unidad de analisis y granularidad</a>
+</nav>
+
+{# ------------------------------------------------------------------ #}
+<section class="pob-bloque" id="c-base">
+    <h2>Mismo tema, misma poblacion, mismos datos</h2>
+    <p>No se selecciona un conjunto de datos nuevo. El cubo se construye sobre el resultado del tratamiento de las Etapas 2 y 3.</p>
+    <div class="tabla-wrap">
+        <table>
+            <tbody>
+                <tr><th scope="row">Tema</th><td>{{ proyecto.tema }}: analisis global, regional y nacional.</td></tr>
+                <tr><th scope="row">Poblacion</th><td>{{ c.unidad.n_paises }} paises (con Colombia como foco), 6 regiones continentales y el agregado mundial, entre {{ info.anio_min }} y {{ info.anio_max }}.</td></tr>
+                <tr><th scope="row">Conjunto de datos</th><td><span class="mono">clima_consolidado.csv</span> (Etapa 1), tratado en las Etapas 2 y 3 y guardado como <span class="mono">clima_limpio.csv</span> / <span class="mono">dbo.clima_limpio</span>.</td></tr>
+                <tr><th scope="row">Tratamiento heredado</th><td>Tipos normalizados, verificacion de duplicados y dominio, marca de atipicos por 1,5 × IQR (columna <span class="mono">atipico</span>) y valor normalizado por indicador (<span class="mono">valor_z</span>).</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+{# ------------------------------------------------------------------ #}
+<section class="pob-bloque" id="c-registros">
+    <h2>Registros que se utilizan</h2>
+    <div class="grid grid-3">
+        <div class="panel stat cold"><div class="valor">{{ fmt(c.n_limpio) }}</div><div class="etiqueta">registros tratados que entran al cubo, todos como hechos</div></div>
+        <div class="panel stat"><div class="valor">{{ fmt(c.n_eliminados) }}</div><div class="etiqueta">registros eliminados frente a los {{ fmt(c.n_consolidado) }} del consolidado</div></div>
+        <div class="panel stat warm"><div class="valor">{{ fmt(c.n_atipicos) }}</div><div class="etiqueta">registros marcados como atipicos ({{ c.pct_atipicos }}); se conservan y se analizan</div></div>
+    </div>
+
+    <h3 class="e5-subtit">Por anio</h3>
+    <div class="pob-barras">
+        {% for a in c.anios %}
+        <div class="barra-h-fila{{ ' warm' if a.parcial }}">
+            <div class="barra-h-label">{{ a.anio }}{{ ' · cobertura parcial' if a.parcial }}</div>
+            <div class="barra-h-track"><div class="barra-h-fill" style="width: {{ [a.pct, 0.6] | max }}%;"></div></div>
+            <div class="barra-h-val pob-val">{{ fmt(a.n) }} registros</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <h3 class="e5-subtit">Por pregunta de analisis</h3>
+    <div class="tabla-wrap">
+        <table>
+            <thead><tr><th>Pregunta</th><th>Vista</th><th>Registros (hechos) que usa</th><th>Subconjunto</th></tr></thead>
+            <tbody>
+                <tr><td>1 · Tiempo y fuentes</td><td><a href="{{ url_for('e5_vista', num=1) }}">Vista 1</a></td><td class="mono">{{ fmt(c.por_vista[1]) }}</td><td>{{ fmt(c.n_mensuales) }} registros mensuales y las series anuales de Mundo, Sudamerica y Colombia.</td></tr>
+                <tr><td>2 · Concentracion dentro de cada region</td><td><a href="{{ url_for('e5_vista', num=2) }}">Vista 2</a></td><td class="mono">{{ fmt(c.por_vista[2]) }}</td><td>Registros nacionales de los indicadores absolutos (sumables).</td></tr>
+                <tr><td>3 · Cambio por territorio y anio</td><td><a href="{{ url_for('e5_vista', num=3) }}">Vista 3</a></td><td class="mono">{{ fmt(c.por_vista[3]) }}</td><td>Agregados oficiales de las 6 regiones y del Mundo, y los registros de Colombia.</td></tr>
+                <tr><td>4 · Calidad por combinacion</td><td><a href="{{ url_for('e5_vista', num=4) }}">Vista 4</a></td><td class="mono">{{ fmt(c.por_vista[4]) }}</td><td>Todos los hechos del cubo.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+{# ------------------------------------------------------------------ #}
+<section class="pob-bloque" id="c-calidad">
+    <h2>Limitaciones de calidad que pueden afectar los resultados</h2>
+    <div class="tabla-wrap">
+        <table>
+            <thead><tr><th>Limitacion</th><th>Evidencia en los datos</th><th>Como afecta el analisis</th></tr></thead>
+            <tbody>
+            {% for l in c.limitaciones %}
+                <tr><td><strong>{{ l.titulo }}</strong></td><td>{{ l.detalle }}</td><td>{{ l.efecto }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+{# ------------------------------------------------------------------ #}
+{% set prioridad = {
+  'Dimension Poblacional': [
+    ('Media', 'Describe la composicion del dataset, pero no dice si esa composicion afecta la calidad del dato.', 'Cruzar nivel geografico × categoria × tipo de fuente con la marca de atipico.', 4),
+    ('Baja', 'Esta resuelto como contexto: se usa para comparar el peso en emisiones con el peso en poblacion.', 'Se consulta con el indicador Poblacion en el nivel Region.', 2),
+    ('Media', 'Mide la concentracion a escala mundial; no dice si se repite dentro de cada continente.', 'Bajar de Region a Pais con el indicador Poblacion.', 2),
+  ],
+  'Dimension Territorial': [
+    ('Alta', 'Trata cada region como un bloque y oculta las diferencias entre sus paises.', 'Drill-down Region → Pais, con Colombia frente a sus pares.', 2),
+    ('Alta', 'La concentracion entre todos los paises del mundo no dice quienes son los pares reales de Colombia.', 'Concentracion dentro de Sudamerica y posicion de Colombia.', 2),
+    ('Alta', 'Es la foto de un solo anio: no muestra si la situacion de Colombia mejora o empeora.', 'Cruce Territorio × Anio con variacion frente a 2020.', 3),
+  ],
+} %}
+<section class="pob-bloque" id="c-profundidad">
+    <h2>Conocimientos evidentes que requieren mayor profundidad</h2>
+    <p>Se retoman los conocimientos publicados en la Etapa 4 (leidos en vivo) y se valora cuales necesitan cruzar dimensiones o
+    cambiar de nivel de detalle. El detalle completo de la correspondencia esta en <a href="{{ url_for('e5_relacion') }}">Relacion con el conocimiento evidente</a>.</p>
+    <div class="tabla-wrap">
+        <table class="e5-tabla-rel">
+            <thead><tr><th>Conocimiento evidente (Etapa 4)</th><th>Profundidad requerida</th><th>Por que</th><th>Cruce o nivel que se explora</th><th>Pregunta</th></tr></thead>
+            <tbody>
+            {% for bloque in e4 %}
+                {% for k in bloque.conocimientos %}
+                {% set r = prioridad[bloque.dimension][loop.index0] if loop.index0 < prioridad[bloque.dimension]|length else None %}
+                <tr>
+                    <td><span class="pob-mini">{{ bloque.dimension.replace('Dimension ', '') }} · {{ k.numero }}</span><br><strong>{{ k.titulo }}</strong></td>
+                    <td>{% if r %}<span class="tag {{ 'tmp' if r[0] == 'Alta' else ('cat' if r[0] == 'Media' else 'geo') }}">{{ r[0] }}</span>{% endif %}</td>
+                    <td>{{ r[1] if r else '' }}</td>
+                    <td>{{ r[2] if r else '' }}</td>
+                    <td>{% if r %}<a href="{{ url_for('e5_vista', num=r[3]) }}">Pregunta {{ r[3] }}</a>{% endif %}</td>
+                </tr>
+                {% endfor %}
+            {% endfor %}
+                <tr>
+                    <td><span class="pob-mini">Temporal</span><br><strong>Evolucion anual de temperatura y CO2</strong></td>
+                    <td><span class="tag tmp">Alta</span></td>
+                    <td>El nivel anual suaviza los episodios cortos (El Nino) y no distingue entre fuentes.</td>
+                    <td>Drill-down Anio → Mes y slice por fuente.</td>
+                    <td><a href="{{ url_for('e5_vista', num=1) }}">Pregunta 1</a></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+{# ------------------------------------------------------------------ #}
+{% set u = c.unidad %}
+<section class="pob-bloque" id="c-unidad">
+    <h2>Unidad de analisis y granularidad del modelo</h2>
+    <div class="grid grid-2">
+        <div class="panel e5-unidad">
+            <p class="e5-vista-num">Unidad de analisis</p>
+            <h3>Un territorio en un anio</h3>
+            <p>Es aquello sobre lo que se quieren sacar conclusiones: un <strong>pais en un anio</strong> (Colombia en 2024, Brasil en 2021),
+            y como referencia una region o el mundo en un anio. Para el clima global, la unidad es el <strong>mundo en un mes</strong>.</p>
+            <p class="pob-mini" style="margin-bottom:0;">En los datos hay {{ fmt(u.n_pais_anio) }} combinaciones pais-anio de {{ u.n_paises }} paises.</p>
+        </div>
+        <div class="panel e5-unidad">
+            <p class="e5-vista-num">Granularidad de la tabla de hechos</p>
+            <h3>Un indicador, para un territorio, en una fecha, segun una fuente</h3>
+            <p>Cada fila de <span class="mono">hechos_observacion</span> guarda <strong>un solo numero</strong>: por ejemplo, las emisiones
+            de CO2 de Colombia en 2024 segun Our World in Data. Es mas fina que la unidad de analisis.</p>
+            <p class="pob-mini" style="margin-bottom:0;">Una unidad pais-anio reune en promedio {{ u.hechos_por_pais_anio }} hechos (hasta {{ u.max_hechos }}), uno por indicador disponible.</p>
+        </div>
+    </div>
+
+    <h3 class="e5-subtit">Ejemplo: la unidad «Colombia, 2024» esta formada por {{ u.n_col_2024 }} hechos</h3>
+    <div class="tabla-wrap">
+        <table>
+            <thead><tr><th>Hecho (fila de la tabla de hechos)</th><th>Valor</th><th>Unidad</th><th>Fuente</th></tr></thead>
+            <tbody>
+            {% for e in u.ejemplo %}<tr><td>{{ e.indicador }}</td><td class="mono">{{ e.valor }}</td><td>{{ e.unidad }}</td><td>{{ e.fuente }}</td></tr>{% endfor %}
+                <tr><td colspan="4" class="pob-mini">… y {{ u.n_col_2024 - u.ejemplo|length }} hechos mas de la misma unidad.</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="nota" style="margin-top:1rem;"><p style="margin:0;max-width:none;"><strong>Por que importa la diferencia:</strong>
+    los hechos de una misma unidad tienen unidades de medida distintas (Mt, %, personas), asi que nunca se suman entre si. Para
+    analizar una unidad se fija un indicador (slice) o se ponen los indicadores en columnas (pivot); para subir de nivel
+    (pais → region, mes → anio) se agregan hechos del <em>mismo</em> indicador con su regla de suma o promedio.</p></div>
+</section>
+
+{{ m.pie(('e5_proposito', 'Proposito de la etapa'), ('e5_relacion', 'Relacion con el conocimiento evidente')) }}
+{% else %}{{ m.sin_datos() }}{% endif %}
+{% endblock %}

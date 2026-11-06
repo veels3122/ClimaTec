@@ -116,8 +116,10 @@ Procfile y render.yaml incluidos. El servicio arranca con gunicorn app:app.
 
 ## Etapa 5 — analisis multidimensional
 
-Menu **Multidimensional** con 7 apartados: proposito, relacion con el conocimiento
-evidente, modelo estrella, dimensiones/medidas/jerarquias, 4 vistas interactivas,
+Menu **Multidimensional** con 9 apartados: proposito, continuidad del proyecto
+(registros usados, limitaciones de calidad, unidad de analisis vs granularidad),
+relacion con el conocimiento evidente, 4 preguntas de analisis (una por vista),
+modelo estrella, dimensiones/medidas/jerarquias, 4 vistas interactivas,
 operaciones OLAP (slice, dice, roll-up, drill-down, pivot) y conclusiones.
 
     python scripts/multidimensional.py   # resumen del cubo y conocimientos
