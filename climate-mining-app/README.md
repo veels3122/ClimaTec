@@ -151,3 +151,10 @@ Render no hace falta un paso extra: `gunicorn app:app` basta.
 - `scripts/olap.py`: motor de consultas OLAP; lo usan las vistas a traves de `/api/etapa5/olap`.
 - `scripts/verificar_modelo.py`: verificaciones de integridad, comparaciones y condiciones del analisis.
 - `ssis/sql/04_modelo_estrella.sql`: el mismo modelo en SQL Server (esquema `dw` de ClimaTec_ETL).
+
+### Estructura del Modelo Estrella
+- **Tabla de Hechos (`fact_clima`):** Almacena las métricas numéricas principales (temperatura, emisiones, variables climáticas).
+- **Dimensiones:**
+  - `dim_tiempo`: Jerarquía temporal (Año → Mes → Día).
+  - `dim_pais_region`: Jerarquía geográfica (Región/Continente → País - ISO3).
+  - `dim_clima`: Atributos descriptivos de las mediciones.
