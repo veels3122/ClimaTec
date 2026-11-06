@@ -507,7 +507,7 @@
                     if (posCol >= 0) kpi(3, '#' + (posCol + 1) + ' de ' + items.length, 'posicion de Colombia', pct(items[posCol].v / tot * 100) + ' del total de la region');
                     else {
                         var ac = 0, n50 = 0; for (var i = 0; i < items.length; i++) { ac += items[i].v; n50 = i + 1; if (ac >= tot / 2) break; }
-                        kpi(3, String(n50), (E.region ? 'paises' : 'continentes') + ' reunen la mitad del total', 'de ' + items.length + ' con dato');
+                        kpi(3, String(n50), (n50 === 1 ? (E.region ? 'pais reune' : 'continente reune') : (E.region ? 'paises reunen' : 'continentes reunen')) + ' la mitad del total', 'de ' + items.length + ' con dato');
                     }
                     // Visualizacion 1: barras del nivel (drill-down al hacer clic en una region)
                     var g1 = grafica(1, E.ind + ' por ' + (E.region ? 'pais de ' + E.region : 'region') + ', ' + E.anio,
