@@ -1,0 +1,207 @@
+/* ==========================================================================
+   ClimaTec - Etapa 5 / Analisis multidimensional (prefijo e5-).
+   Reutiliza los tokens de style.css (--cold, --warm, --glass...) y las
+   clases pob-* de la Etapa 4. No modifica ninguna clase existente.
+   ========================================================================== */
+
+.e5-subtit { margin: 1.8rem 0 .6rem; font-size: 1.15rem; }
+.e5-subtit a { color: #fff; text-decoration: none; border-bottom: 1px solid rgba(73,199,224,.4); }
+.e5-subtit a:hover { border-bottom-color: var(--cold); }
+.e5-lista { margin: .3rem 0 0; padding-left: 1.1rem; }
+.e5-lista li { margin: .3rem 0; color: var(--ink-soft); }
+
+/* ---- Navegacion entre apartados ---------------------------------------- */
+.e5-pie {
+    display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+    margin-top: 3rem; padding-top: 1.2rem; border-top: 1px solid var(--line-soft);
+}
+.e5-pie-link {
+    display: flex; flex-direction: column; gap: .15rem; text-decoration: none; color: #fff;
+    padding: .7rem 1rem; border: 1px solid var(--glass-border); border-radius: 12px;
+    background: var(--glass); max-width: 48%; transition: border-color .2s ease, background .2s ease;
+}
+.e5-pie-link span { font-size: .74rem; color: var(--ink-mute); }
+.e5-pie-link.sig { text-align: right; margin-left: auto; }
+.e5-pie-link:hover, .e5-pie-link:focus-visible { border-color: rgba(73,199,224,.5); background: rgba(255,255,255,.08); outline: none; }
+
+/* ---- Pestanas entre vistas --------------------------------------------- */
+.e5-tabs { display: flex; flex-wrap: wrap; gap: .4rem; margin: 1.4rem 0 0; }
+.e5-tabs a {
+    display: inline-flex; align-items: center; gap: .5rem; padding: .5rem .85rem;
+    border-radius: 999px; border: 1px solid var(--glass-border); background: var(--glass);
+    color: var(--ink-soft); text-decoration: none; font-size: .86rem;
+}
+.e5-tabs a span {
+    display: inline-grid; place-items: center; width: 1.4rem; height: 1.4rem; border-radius: 50%;
+    background: rgba(255,255,255,.08); font-family: "IBM Plex Mono", monospace; font-size: .74rem;
+}
+.e5-tabs a:hover { color: #fff; border-color: rgba(73,199,224,.45); }
+.e5-tabs a.activo { color: #04202a; background: var(--cold); border-color: var(--cold); }
+.e5-tabs a.activo span { background: rgba(4,32,42,.18); }
+
+/* ---- Hub de vistas ----------------------------------------------------- */
+.e5-vistas { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+.e5-vista-card { display: flex !important; flex-direction: column; gap: .3rem; min-height: 220px; color: var(--ink-soft); }
+.e5-vista-card h3 { color: #fff; font-size: 1.35rem; margin: .1rem 0 .2rem; }
+.e5-vista-card p { margin: 0; }
+.e5-vista-num { font-size: .8rem; color: var(--cold); }
+.e5-ops { display: flex; flex-wrap: wrap; gap: .1rem; margin-top: auto; padding-top: .6rem; }
+.e5-abrir { font-size: .86rem; color: #fff; margin-top: .4rem; }
+.e5-vista-card:hover .e5-abrir { color: var(--cold); }
+.e5-matriz td { text-align: center; }
+.e5-matriz td:first-child { text-align: left; }
+.e5-matriz a { color: #fff; }
+
+/* ---- Diagrama del modelo estrella ------------------------------------- */
+.e5-estrella { padding: 1rem; }
+.e5-estrella:hover { transform: none; }
+.e5-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.e5-estrella-svg { display: block; width: 100%; min-width: 720px; height: auto; }
+.e5-caja-fondo { fill: rgba(13,18,36,.92); stroke: rgba(255,255,255,.14); }
+.e5-caja-cab { fill: rgba(73,199,224,.18); }
+.e5-caja.hechos .e5-caja-fondo { stroke: rgba(255,106,77,.6); stroke-width: 1.5; }
+.e5-caja.hechos .e5-caja-cab { fill: rgba(255,106,77,.25); }
+.e5-caja-tit { fill: #fff; font: 600 14px "IBM Plex Mono", monospace; }
+.e5-caja-n { fill: var(--ink-mute); font: 400 11px Inter, sans-serif; }
+.e5-campo { fill: var(--ink-soft); font: 400 13px "IBM Plex Mono", monospace; }
+.e5-campo.pk { fill: var(--amber); }
+.e5-campo.fk { fill: var(--cold); }
+.e5-campo.m { fill: var(--ok); }
+.e5-campo-tipo { font-size: 10px; opacity: .8; }
+.e5-lineas path { fill: none; stroke: rgba(255,255,255,.28); stroke-width: 1.6; stroke-dasharray: 5 4; }
+.e5-card text { fill: var(--ink-mute); font: 600 12px "IBM Plex Mono", monospace; }
+.e5-leyenda { display: flex; flex-wrap: wrap; gap: 1.2rem; font-size: .82rem; color: var(--ink-soft); margin-top: .6rem; }
+.e5-leyenda span { display: inline-flex; align-items: center; gap: .45rem; }
+.e5-sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; }
+.e5-sw.pk { background: var(--amber); }
+.e5-sw.fk { background: var(--cold); }
+.e5-sw.med { background: var(--ok); }
+.e5-codigo {
+    margin: 1rem 0 0; padding: 1rem 1.1rem; overflow-x: auto; border-radius: 12px;
+    background: rgba(5,7,15,.75); border: 1px solid var(--glass-border);
+    font: 400 .82rem/1.6 "IBM Plex Mono", monospace; color: #d6e6f5; white-space: pre;
+}
+.e5-codigo code { color: inherit; font-size: inherit; }
+
+/* ---- Dimensiones --------------------------------------------------------- */
+.e5-dim { margin-top: 1rem; scroll-margin-top: 90px; }
+.e5-dim:hover { transform: none; }
+.e5-dim-cab { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: .8rem 1.5rem; margin-bottom: .9rem; }
+.e5-dim-cab h3 { margin: 0; }
+.e5-dim-cab h3 .mono { font-size: .8rem; margin-left: .4rem; }
+.e5-jerarquia { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem; list-style: none; margin: 0; padding: 0; }
+.e5-jerarquia li {
+    padding: .3rem .7rem; border-radius: 8px; font-size: .82rem; color: #fff;
+    background: var(--cold-soft); border: 1px solid rgba(73,199,224,.3);
+}
+.e5-jerarquia li + li::before { content: "›"; margin: 0 .55rem 0 -.1rem; color: var(--ink-mute); }
+.e5-jerarquia li + li { position: relative; }
+.e5-miembros .panel:hover, .e5-objetivos .panel:hover, .e5-conclusiones .panel:hover { transform: none; }
+.e5-tabla-rel td { vertical-align: top; }
+.e5-tabla-rel td:first-child { min-width: 260px; }
+
+/* ---- Operaciones ------------------------------------------------------- */
+.e5-op { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 1.4rem; align-items: start; }
+.e5-op:hover { transform: none; }
+.e5-op h2 { margin-top: 0; }
+.e5-op-h { margin: 1rem 0 .2rem; font-size: .95rem; color: #fff; }
+.e5-op .e5-codigo { margin-top: 0; }
+
+/* ---- Conclusiones ------------------------------------------------------ */
+.e5-conclusiones { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+
+/* ---- Controles de las vistas ------------------------------------------- */
+.e5-seg { display: inline-flex; border: 1px solid var(--glass-border); border-radius: 10px; overflow: hidden; }
+.e5-seg button {
+    background: rgba(255,255,255,.04); color: var(--ink-soft); border: 0; padding: .55rem .8rem;
+    font: inherit; font-size: .84rem; cursor: pointer; border-right: 1px solid var(--glass-border);
+}
+.e5-seg button:last-child { border-right: 0; }
+.e5-seg button:hover:not(:disabled) { color: #fff; background: rgba(255,255,255,.08); }
+.e5-seg button.activo { background: var(--cold); color: #04202a; }
+.e5-seg button:disabled { opacity: .35; cursor: not-allowed; }
+.e5-seg button:focus-visible { outline: 2px solid var(--cold); outline-offset: -2px; }
+.e5-campo-seg { max-width: none !important; flex: 0 1 auto !important; }
+.e5-checks { display: flex; flex-wrap: wrap; gap: .35rem; }
+.e5-check {
+    display: inline-flex; align-items: center; gap: .35rem; padding: .35rem .65rem; border-radius: 8px;
+    border: 1px solid var(--glass-border); background: rgba(255,255,255,.04); font-size: .82rem;
+    color: var(--ink-soft); cursor: pointer; user-select: none;
+}
+.e5-check input { accent-color: var(--cold); margin: 0; }
+.e5-check:has(input:checked) { color: #fff; border-color: rgba(73,199,224,.45); background: var(--cold-soft); }
+.e5-check:has(input:focus-visible) { box-shadow: 0 0 0 3px var(--cold-soft); }
+.e5-dice { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+.e5-dice .pob-mini { display: block; margin-bottom: .35rem; }
+.e5-filtro { min-width: 160px !important; flex: 1 1 160px !important; }
+.e5-swap { align-self: flex-end; }
+.e5-aviso { color: var(--amber) !important; }
+.e5-aviso:empty { display: none; }
+
+/* ---- Ruta (migas) ------------------------------------------------------ */
+.e5-migas { display: flex; flex-wrap: wrap; gap: .2rem; list-style: none; margin: 0 0 .5rem; padding: 0; font-size: .82rem; }
+.e5-migas li { color: var(--ink-mute); }
+.e5-migas li + li::before { content: "›"; margin: 0 .45rem; }
+.e5-migas [aria-current] { color: #fff; }
+.e5-miga {
+    background: none; border: 0; padding: 0; color: var(--cold); font: inherit; cursor: pointer;
+    text-decoration: underline; text-underline-offset: 3px;
+}
+.e5-miga:focus-visible { outline: 2px solid var(--cold); outline-offset: 2px; border-radius: 3px; }
+
+/* ---- Graficas ---------------------------------------------------------- */
+.e5-graf { width: 100%; }
+.e5-grid { stroke: rgba(255,255,255,.07); }
+.e5-eje { fill: var(--ink-mute); font: 400 11px Inter, sans-serif; }
+.e5-punto { stroke: #0b0f1e; stroke-width: 1.5; outline: none; }
+.e5-punto.drill { cursor: pointer; }
+.e5-punto:hover, .e5-punto:focus-visible { stroke: #fff; stroke-width: 2; }
+.e5-detalle { margin-top: 1rem; }
+.e5-detalle summary { cursor: pointer; color: var(--cold); font-size: .86rem; }
+.e5-detalle .tabla-wrap { margin-top: .6rem; max-height: 320px; overflow: auto; }
+.e5-kpis { margin-bottom: 1rem; }
+.e5-kpis .panel:hover { transform: none; }
+.e5-kpis .valor { font-size: 1.6rem; }
+.e5-drill { cursor: pointer; }
+.e5-drill:hover .barra-h-label, .e5-drill:focus-visible .barra-h-label { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
+.e5-resto .barra-h-fill { background: rgba(255,255,255,.25) !important; }
+.e5-resto .barra-h-label { font-style: italic; }
+
+/* ---- Mapa de calor y tabla dinamica ----------------------------------- */
+.e5-calor, .e5-pivot { font-variant-numeric: tabular-nums; }
+.e5-calor th, .e5-calor td, .e5-pivot th, .e5-pivot td { white-space: nowrap; }
+.e5-calor td, .e5-pivot td { text-align: right; color: #fff; }
+.e5-calor tbody th, .e5-pivot tbody th { text-align: left; font-weight: 500; color: var(--ink-soft); }
+.e5-calor .e5-foco { color: var(--warm); }
+.e5-pivot .e5-total { border-left: 1px solid var(--line); font-weight: 600; }
+.e5-pivot tfoot td, .e5-pivot tfoot th { border-top: 1px solid var(--line); font-weight: 600; color: #fff; }
+.e5-escala { display: flex; align-items: center; gap: .6rem; margin-top: .8rem; font-size: .76rem; color: var(--ink-mute); font-family: "IBM Plex Mono", monospace; }
+.e5-escala i { display: block; height: 10px; flex: 0 1 240px; border-radius: 5px; }
+.e5-escala i.sec { background: linear-gradient(90deg, rgba(73,199,224,.08), rgba(73,199,224,.8)); }
+.e5-escala i.div { background: linear-gradient(90deg, rgba(73,199,224,.8), rgba(255,255,255,.04), rgba(255,106,77,.8)); }
+
+/* ---- Responsive -------------------------------------------------------- */
+@media (max-width: 820px) {
+    .e5-vistas, .e5-conclusiones, .e5-dice { grid-template-columns: 1fr; }
+    .e5-op { grid-template-columns: 1fr; }
+    .e5-pie-link { max-width: 100%; flex: 1 1 100%; }
+    .e5-pie-link.sig { text-align: left; }
+    .e5-kpis { grid-template-columns: 1fr; }
+}
+/* Con cinco etapas en el menu la pastilla central necesita menos aire. */
+@media (min-width: 1024px) and (max-width: 1599px) {
+    .nav-pill { gap: 12px !important; padding: 0 14px !important; }
+    .nav-pill-link { font-size: 13px !important; }
+}
+@media (min-width: 1024px) and (max-width: 1379px) {
+    /* Dataset y Fuentes siguen accesibles desde "Ver el dataset" y la Etapa 1. */
+    .nav-pill > a.nav-pill-link:not(:first-child) { display: none !important; }
+    .nav-auth .nav-auth-link.ghost { display: none !important; }
+}
+@media (min-width: 1024px) and (max-width: 1139px) {
+    .nav-pill { gap: 9px !important; padding: 0 10px !important; }
+    .nav-pill-link { font-size: 12px !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .e5-pie-link, .e5-tabs a { transition: none; }
+}

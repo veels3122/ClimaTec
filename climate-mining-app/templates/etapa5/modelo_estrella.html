@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% import 'etapa5/_macros.html' as m %}
+{% block titulo %}Etapa 5 · Modelo estrella · ClimaTec{% endblock %}
+{% block contenido %}
+
+{{ m.hero(3, 'Diagrama y explicacion del modelo estrella',
+   'Una tabla de hechos con las observaciones y cuatro dimensiones que las describen. Toda consulta del cubo es una union de la tabla central con las dimensiones que necesita.') }}
+
+{% if info %}
+{% set mod = info.modelo %}
+{% set D = {} %}{% for d in mod.dimensiones %}{% set _ = D.update({d.clave: d}) %}{% endfor %}
+
+{# Caja de una tabla dentro del SVG. #}
+{% macro caja(x, y, w, titulo, filas_tabla, pk, campos, clase) -%}
+<g class="e5-caja {{ clase }}" transform="translate({{ x }},{{ y }})">
+    <rect class="e5-caja-fondo" width="{{ w }}" height="{{ 44 + campos|length * 22 + 10 }}" rx="10"/>
+    <rect class="e5-caja-cab" width="{{ w }}" height="34" rx="10"/>
+    <rect class="e5-caja-cab" y="20" width="{{ w }}" height="14"/>
+    <text class="e5-caja-tit" x="14" y="22">{{ titulo }}</text>
+    <text class="e5-caja-n" x="{{ w }}" y="-8" text-anchor="end">{{ "{:,}".format(filas_tabla).replace(",", ".") }} filas</text>
+    {% for c in campos %}
+    {% set partes = c.split(' ', 1) %}
+    {% set tipo = partes[0] if partes[0] in ['PK', 'FK', 'M'] else '' %}
+    {% set nombre = partes[1] if tipo else c %}
+    <text class="e5-campo {{ tipo|lower }}" x="14" y="{{ 56 + loop.index0 * 22 }}">{% if tipo in ['PK', 'FK'] %}<tspan class="e5-campo-tipo">{{ tipo }}</tspan> {% elif tipo == 'M' %}<tspan class="e5-campo-tipo">Σ</tspan> {% endif %}{{ nombre }}</text>
+    {% endfor %}
+</g>
+{%- endmacro %}
+
+<section class="pob-bloque">
+    <h2>Diagrama</h2>
+    <p class="pob-mini">Cada dimension se une a la tabla de hechos por su clave (relacion 1 a muchos). Los numeros sobre cada tabla
+    son las filas reales que tiene cada tabla con el dataset actual.</p>
+    <figure class="panel e5-estrella">
+        <div class="e5-scroll">
+        <svg viewBox="0 0 980 600" role="img" aria-labelledby="e5-estrella-tit e5-estrella-desc" class="e5-estrella-svg">
+            <title id="e5-estrella-tit">Modelo estrella de ClimaTec</title>
+            <desc id="e5-estrella-desc">La tabla hechos_observacion esta en el centro y se une con dim_tiempo, dim_geografia, dim_indicador y dim_fuente.</desc>
+            {# Conectores: de cada dimension a la tabla de hechos #}
+            <g class="e5-lineas">
+                <path d="M250 120 C 320 120, 330 230, 380 230"/>
+                <path d="M250 450 C 320 450, 330 330, 380 330"/>
+                <path d="M730 120 C 660 120, 670 230, 620 230"/>
+                <path d="M730 450 C 660 450, 670 330, 620 330"/>
+            </g>
+            <g class="e5-card">
+                <text x="258" y="112">1</text><text x="346" y="222">N</text>
+                <text x="258" y="442">1</text><text x="346" y="322">N</text>
+                <text x="716" y="112">1</text><text x="628" y="222">N</text>
+                <text x="716" y="442">1</text><text x="628" y="322">N</text>
+            </g>
+            {{ caja(20, 30, 230, 'dim_tiempo', D.tiempo.filas,
+                    'PK id_tiempo', ['PK id_tiempo', 'anio', 'semestre', 'trimestre', 'mes · nombre_mes', 'periodicidad'], 'dim') }}
+            {{ caja(20, 350, 230, 'dim_geografia', D.geografia.filas,
+                    'PK id_geo', ['PK id_geo', 'nivel_geografico', 'region', 'pais · entidad', 'iso_code', 'es_foco'], 'dim') }}
+            {{ caja(730, 30, 230, 'dim_indicador', D.indicador.filas,
+                    'PK id_indicador', ['PK id_indicador', 'categoria', 'indicador', 'unidad', 'tipo_medida', 'agregacion'], 'dim') }}
+            {{ caja(730, 380, 230, 'dim_fuente', D.fuente.filas,
+                    'PK id_fuente', ['PK id_fuente', 'fuente_tipo', 'proveedor', 'fuente'], 'dim') }}
+            {{ caja(360, 150, 260, 'hechos_observacion', mod.n_hechos,
+                    '', ['FK id_tiempo', 'FK id_geo', 'FK id_indicador', 'FK id_fuente', 'M valor', 'M valor_z', 'M atipico', 'M n_registros (=1)'], 'hechos') }}
+        </svg>
+        </div>
+        <figcaption class="e5-leyenda">
+            <span><i class="e5-sw pk"></i> Clave primaria</span>
+            <span><i class="e5-sw fk"></i> Clave foranea</span>
+            <span><i class="e5-sw med"></i> Medida</span>
+        </figcaption>
+    </figure>
+</section>
+
+<section class="pob-bloque">
+    <h2>Como se lee el modelo</h2>
+    <div class="grid grid-2">
+        <div class="panel">
+            <h3>Granularidad de la tabla de hechos</h3>
+            <p>Una fila de <span class="mono">hechos_observacion</span> es <strong>un indicador, medido para una entidad, en una
+            fecha, por una fuente</strong>. Es la misma granularidad del dataset limpio, por eso el cubo tiene exactamente
+            {{ '{:,}'.format(mod.n_hechos).replace(',', '.') }} hechos y ninguna observacion se pierde ni se duplica al cargarlo.</p>
+        </div>
+        <div class="panel">
+            <h3>Las cuatro preguntas de cada dato</h3>
+            <p>Cada dimension responde una pregunta: <strong>¿cuando?</strong> (Tiempo), <strong>¿donde?</strong> (Geografia),
+            <strong>¿que?</strong> (Indicador) y <strong>¿quien lo reporta?</strong> (Fuente). La tabla central solo guarda las
+            claves y los numeros.</p>
+        </div>
+        <div class="panel">
+            <h3>Por que estrella y no copo de nieve</h3>
+            <p>La region del pais, la categoria del indicador y el proveedor de la fuente podrian ir en tablas aparte (copo de
+            nieve). Se dejaron dentro de cada dimension porque son pocas filas ({{ mod.dimensiones | sum(attribute='filas') }} en
+            total) y asi cada consulta necesita una sola union por dimension.</p>
+        </div>
+        <div class="panel">
+            <h3>Claves sustitutas</h3>
+            <p>Las dimensiones usan claves numericas propias. La de tiempo es legible (<span class="mono">AAAAMM</span>, con
+            <span class="mono">MM = 00</span> en las series anuales), asi un dato anual y uno mensual del mismo anio comparten el
+            nivel Anio de la jerarquia.</p>
+        </div>
+    </div>
+</section>
+
+<section class="pob-bloque">
+    <h2>Donde vive el modelo</h2>
+    <p>El modelo se construye de dos formas equivalentes:</p>
+    <div class="tabla-wrap">
+        <table>
+            <thead><tr><th>Archivo</th><th>Que hace</th></tr></thead>
+            <tbody>
+                <tr><td class="mono">scripts/multidimensional.py</td><td>Arma las cuatro dimensiones y la tabla de hechos en memoria a partir del dataset limpio, y calcula los datos de las vistas y los conocimientos de esta etapa.</td></tr>
+                <tr><td class="mono">ssis/sql/04_modelo_estrella.sql</td><td>Crea el esquema <span class="mono">dw</span> en la base <span class="mono">ClimaTec_ETL</span> y lo carga desde <span class="mono">dbo.clima_limpio</span>, la tabla destino del paquete SSIS de la Etapa 3.</td></tr>
+                <tr><td class="mono">data/raw/dim_pais_region.csv</td><td>Asigna cada pais (codigo ISO3) a su continente: es lo que permite la jerarquia Region → Pais.</td></tr>
+            </tbody>
+        </table>
+    </div>
+<pre class="e5-codigo"><code>-- Consulta en estrella: CO2 por region y anio
+SELECT g.region, t.anio, SUM(h.valor) AS co2_mt
+FROM dw.hechos_observacion h
+JOIN dw.dim_tiempo    t ON t.id_tiempo    = h.id_tiempo
+JOIN dw.dim_geografia g ON g.id_geo       = h.id_geo
+JOIN dw.dim_indicador i ON i.id_indicador = h.id_indicador
+WHERE i.indicador = N'Emisiones de CO2 (total)'
+  AND g.nivel_geografico = N'Nacional'
+GROUP BY g.region, t.anio;</code></pre>
+</section>
+
+{{ m.pie(('e5_relacion', 'Relacion con el conocimiento evidente'), ('e5_dimensiones', 'Dimensiones, medidas y jerarquias')) }}
+{% else %}{{ m.sin_datos() }}{% endif %}
+{% endblock %}

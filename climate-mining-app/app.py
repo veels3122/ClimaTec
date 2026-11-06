@@ -1053,6 +1053,100 @@ def e4_relacional():
     return render_template("etapa4/dimension_relacional.html", proyecto=PROYECTO)
 
 
+# ===========================================================================
+# Etapa 5 - Analisis multidimensional (7 apartados)
+#   Modelo estrella + cubo construidos en vivo por scripts/multidimensional.py
+#   sobre el dataset limpio. Las 4 vistas interactivas aplican slice, dice,
+#   roll-up, drill-down y pivot en el navegador.
+# ===========================================================================
+VISTAS_E5 = [
+    {"num": 1, "clave": "temporal", "titulo": "Evolucion en el tiempo",
+     "resumen": "Sube y baja por Anio, Semestre, Trimestre y Mes en las series mensuales; compara Mundo, Sudamerica y Colombia en las anuales.",
+     "operaciones": ["Drill-down", "Roll-up", "Slice"]},
+    {"num": 2, "clave": "territorial", "titulo": "Del mundo al pais",
+     "resumen": "Parte del Mundo, abre una region y llega a sus paises, con Colombia resaltada.",
+     "operaciones": ["Drill-down", "Roll-up", "Slice"]},
+    {"num": 3, "clave": "mapa", "titulo": "Territorios por anio",
+     "resumen": "Matriz territorio x anio para un indicador; elige que territorios y anios quedan en el corte.",
+     "operaciones": ["Slice", "Dice"]},
+    {"num": 4, "clave": "pivot", "titulo": "Tabla dinamica del cubo",
+     "resumen": "Elige filas, columnas, medida y filtros; intercambia ejes con un clic.",
+     "operaciones": ["Pivot", "Dice", "Roll-up"]},
+]
+
+
+def _info_e5():
+    import multidimensional
+    base = DF_LIMPIO if DF_LIMPIO is not None else DF
+    try:
+        return multidimensional.construir(base)
+    except Exception:
+        app.logger.exception("No se pudo construir el cubo de la Etapa 5")
+        return None
+
+
+def _conocimientos_e4():
+    """Conocimientos evidentes publicados en la Etapa 4 (calculados en vivo)."""
+    import territorial
+    base = DF_LIMPIO if DF_LIMPIO is not None else DF
+    salida = []
+    for nombre, modulo, endpoint in [("Dimension Poblacional", poblacional, "e4_poblacional"),
+                                     ("Dimension Territorial", territorial, "e4_territorial")]:
+        try:
+            info = modulo.construir(base)
+            ks = info.get("conocimientos", []) if info else []
+        except Exception:
+            app.logger.exception("No se pudieron leer los conocimientos de %s", nombre)
+            ks = []
+        salida.append({"dimension": nombre, "endpoint": endpoint, "conocimientos": ks})
+    return salida
+
+
+@app.route("/etapa-5/proposito")
+def e5_proposito():
+    return render_template("etapa5/proposito.html", proyecto=PROYECTO, info=_info_e5(), vistas=VISTAS_E5)
+
+
+@app.route("/etapa-5/relacion-conocimiento-evidente")
+def e5_relacion():
+    return render_template("etapa5/relacion.html", proyecto=PROYECTO, info=_info_e5(),
+                           e4=_conocimientos_e4(), vistas=VISTAS_E5)
+
+
+@app.route("/etapa-5/modelo-estrella")
+def e5_modelo():
+    return render_template("etapa5/modelo_estrella.html", proyecto=PROYECTO, info=_info_e5())
+
+
+@app.route("/etapa-5/dimensiones-medidas-jerarquias")
+def e5_dimensiones():
+    return render_template("etapa5/dimensiones.html", proyecto=PROYECTO, info=_info_e5())
+
+
+@app.route("/etapa-5/vistas-interactivas")
+def e5_vistas():
+    return render_template("etapa5/vistas.html", proyecto=PROYECTO, info=_info_e5(), vistas=VISTAS_E5)
+
+
+@app.route("/etapa-5/vistas-interactivas/<int:num>")
+def e5_vista(num):
+    vista = next((v for v in VISTAS_E5 if v["num"] == num), None)
+    if vista is None:
+        return redirect(url_for("e5_vistas"))
+    return render_template("etapa5/vista.html", proyecto=PROYECTO, info=_info_e5(),
+                           vista=vista, vistas=VISTAS_E5)
+
+
+@app.route("/etapa-5/operaciones-multidimensionales")
+def e5_operaciones():
+    return render_template("etapa5/operaciones.html", proyecto=PROYECTO, info=_info_e5(), vistas=VISTAS_E5)
+
+
+@app.route("/etapa-5/conocimientos-conclusiones")
+def e5_conclusiones():
+    return render_template("etapa5/conclusiones.html", proyecto=PROYECTO, info=_info_e5(), vistas=VISTAS_E5)
+
+
 # Compatibilidad con rutas antiguas (evita 404 en enlaces previos).
 @app.route("/problema")
 def problema():

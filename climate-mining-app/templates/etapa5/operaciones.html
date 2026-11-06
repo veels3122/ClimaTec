@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% import 'etapa5/_macros.html' as m %}
+{% block titulo %}Etapa 5 · Operaciones multidimensionales · ClimaTec{% endblock %}
+{% block contenido %}
+
+{{ m.hero(6, 'Explicacion de las operaciones multidimensionales implementadas',
+   'Cinco operaciones OLAP, que control las activa en cada vista y que resultado producen con los datos actuales.') }}
+
+{% if info %}
+{% set ej = info.ejemplos %}
+{% set ops = [
+  {'id': 'slice', 'nombre': 'Slice (rebanar)',
+   'que': 'Fija UN miembro de una dimension y deja las demas libres. El cubo pierde una dimension: queda una «rebanada».',
+   'donde': [('Vista 1', 'el selector de serie fija el indicador y las casillas fijan la fuente o el territorio', 1),
+             ('Vista 2', 'los selectores de indicador y anio', 2),
+             ('Vista 3', 'el selector de indicador', 3),
+             ('Vista 4', 'cualquier filtro con un solo valor', 4)],
+   'ejemplo': ej.slice,
+   'sql': "WHERE t.anio = 2024"},
+  {'id': 'dice', 'nombre': 'Dice (cortar en dados)',
+   'que': 'Selecciona un SUBCONJUNTO de miembros en dos o mas dimensiones a la vez. El resultado es un subcubo con las mismas dimensiones, pero mas pequeno.',
+   'donde': [('Vista 3', 'las casillas de territorios y de anios definen el subcubo que se pinta en el mapa de calor', 3),
+             ('Vista 4', 'combinar varios filtros (anio, region, categoria, tipo de fuente)', 4)],
+   'ejemplo': ej.dice,
+   'sql': "WHERE t.anio BETWEEN 2022 AND 2024\n  AND g.region = N'South America'\n  AND i.categoria = N'Energia'"},
+  {'id': 'rollup', 'nombre': 'Roll-up (consolidar)',
+   'que': 'Sube un nivel en una jerarquia y agrega las medidas: de Pais a Region, de Mes a Trimestre o a Anio. Las medidas aditivas se suman; las no aditivas se promedian.',
+   'donde': [('Vista 1', 'pasar de Mes a Trimestre, Semestre o Anio, o volver por la ruta', 1),
+             ('Vista 2', 'el nivel Mundo suma los paises de cada region; la ruta o «Volver al Mundo» suben de nivel', 2),
+             ('Vista 4', 'poner en el eje un nivel mas alto (Region en lugar de Indicador, Categoria en lugar de Indicador)', 4)],
+   'ejemplo': ej.get('rollup', ''),
+   'sql': "GROUP BY g.region          -- en lugar de g.pais"},
+  {'id': 'drilldown', 'nombre': 'Drill-down (desagregar)',
+   'que': 'La operacion inversa: baja un nivel para ver el detalle que formaba un total. De Region a Pais, de Anio a Mes.',
+   'donde': [('Vista 1', 'clic en un anio de la grafica o el boton Mes (solo series mensuales)', 1),
+             ('Vista 2', 'clic en una region para ver sus paises', 2)],
+   'ejemplo': ej.get('drilldown', ''),
+   'sql': "WHERE g.region = N'South America'\nGROUP BY g.pais            -- un nivel mas abajo"},
+  {'id': 'pivot', 'nombre': 'Pivot (rotar)',
+   'que': 'Cambia la orientacion de la consulta: intercambia las dimensiones de filas y columnas, o cambia cual dimension va en cada eje. No cambia los datos, cambia la forma de leerlos.',
+   'donde': [('Vista 4', 'los selectores Filas y Columnas y el boton «Pivot», que los intercambia', 4)],
+   'ejemplo': ej.pivot,
+   'sql': "-- misma consulta, columnas rotadas con PIVOT (anio IN ([2020],[2021],…))"},
+] %}
+
+<nav class="pob-indice" aria-label="Operaciones">
+    {% for o in ops %}<a href="#op-{{ o.id }}">{{ o.nombre.split(' (')[0] }}</a>{% endfor %}
+    <a href="#op-matriz">Matriz vista × operacion</a>
+</nav>
+
+{% for o in ops %}
+<section class="pob-bloque" id="op-{{ o.id }}">
+    <article class="panel e5-op">
+        <div class="e5-op-txt">
+            <h2>{{ o.nombre }}</h2>
+            <p>{{ o.que }}</p>
+            <h4 class="e5-op-h">Donde esta implementada</h4>
+            <ul class="e5-lista">
+                {% for d in o.donde %}<li><a href="{{ url_for('e5_vista', num=d[2]) }}">{{ d[0] }}</a>: {{ d[1] }}.</li>{% endfor %}
+            </ul>
+            {% if o.ejemplo %}<p class="pob-lectura" style="margin-top:.8rem;">Con los datos actuales: {{ o.ejemplo }}</p>{% endif %}
+        </div>
+        <pre class="e5-codigo"><code>{{ o.sql }}</code></pre>
+    </article>
+</section>
+{% endfor %}
+
+<section class="pob-bloque" id="op-matriz">
+    <h2>Matriz vista × operacion</h2>
+    <div class="tabla-wrap">
+        <table class="e5-matriz">
+            <thead><tr><th>Vista</th><th>Slice</th><th>Dice</th><th>Roll-up</th><th>Drill-down</th><th>Pivot</th></tr></thead>
+            <tbody>
+                <tr><td><a href="{{ url_for('e5_vista', num=1) }}">1 · Evolucion en el tiempo</a></td><td>✓</td><td></td><td>✓</td><td>✓</td><td></td></tr>
+                <tr><td><a href="{{ url_for('e5_vista', num=2) }}">2 · Del mundo al pais</a></td><td>✓</td><td></td><td>✓</td><td>✓</td><td></td></tr>
+                <tr><td><a href="{{ url_for('e5_vista', num=3) }}">3 · Territorios por anio</a></td><td>✓</td><td>✓</td><td></td><td></td><td></td></tr>
+                <tr><td><a href="{{ url_for('e5_vista', num=4) }}">4 · Tabla dinamica</a></td><td>✓</td><td>✓</td><td>✓</td><td></td><td>✓</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="nota" style="margin-top:1rem;"><p style="margin:0;max-width:none;"><strong>Como se calcula:</strong> el servidor
+    entrega a cada vista las celdas del cubo con sus medidas base (conteo, atipicos, suma de z y suma de valor). El navegador
+    agrega esas celdas segun la operacion; asi un porcentaje o un promedio se recalcula en cada nivel en lugar de sumarse.
+    El codigo esta en <span class="mono">static/js/etapa5_vistas.js</span>.</p></div>
+</section>
+
+{{ m.pie(('e5_vista', 'Vista 4 · Tabla dinamica', {'num': 4}), ('e5_conclusiones', 'Conocimientos, limitaciones y conclusiones')) }}
+{% else %}{{ m.sin_datos() }}{% endif %}
+{% endblock %}

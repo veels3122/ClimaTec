@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% import 'etapa5/_macros.html' as m %}
+{% block titulo %}Etapa 5 · Proposito de la etapa · ClimaTec{% endblock %}
+{% block contenido %}
+
+{{ m.hero(1, 'Proposito de la etapa',
+   'Pasar de mirar cada dimension por separado a cruzarlas: un mismo dato visto por tiempo, territorio, indicador y fuente, y la posibilidad de subir o bajar de detalle sin rehacer el analisis.') }}
+
+{% if info %}
+{% set mod = info.modelo %}
+
+<section class="pob-bloque">
+    <h2>Que busca la Etapa 5</h2>
+    <p>En la Etapa 4 cada integrante analizo una dimension: poblacional, territorial y temporal. Cada analisis respondio
+    su propia pregunta, pero ninguno podia contestar preguntas que mezclan dimensiones, por ejemplo <em>«¿como cambio
+    entre {{ info.anio_min }} y 2024 el CO2 de los paises de Sudamerica frente al resto de regiones?»</em>.</p>
+    <p>La Etapa 5 organiza el dataset limpio como un <strong>cubo de datos</strong> sobre un <strong>modelo estrella</strong>:
+    una tabla de hechos con {{ '{:,}'.format(mod.n_hechos).replace(',', '.') }} observaciones rodeada por cuatro dimensiones
+    (Tiempo, Geografia, Indicador y Fuente). Sobre ese cubo se aplican las operaciones OLAP —slice, dice, roll-up,
+    drill-down y pivot— desde cuatro vistas interactivas.</p>
+</section>
+
+<section class="pob-bloque">
+    <h2>Objetivos</h2>
+    <div class="grid grid-2 e5-objetivos">
+        <div class="panel"><h3>Integrar las dimensiones</h3><p>Reunir en un solo modelo lo que la Etapa 4 analizo por separado, con claves comunes para cruzar tiempo, territorio, indicador y fuente.</p></div>
+        <div class="panel"><h3>Navegar por niveles de detalle</h3><p>Definir jerarquias (Anio → Mes, Mundo → Pais, Categoria → Indicador) para resumir o detallar sin perder consistencia.</p></div>
+        <div class="panel"><h3>Respetar como se agrega cada medida</h3><p>Sumar solo lo que se puede sumar (emisiones, poblacion) y promediar lo que no (per capita, porcentajes, anomalias).</p></div>
+        <div class="panel"><h3>Descubrir conocimiento nuevo</h3><p>Encontrar patrones que solo aparecen al cruzar dimensiones o al cambiar de nivel, y dejar registradas sus limitaciones.</p></div>
+    </div>
+</section>
+
+<section class="pob-bloque">
+    <h2>Preguntas multidimensionales que guian la etapa</h2>
+    <div class="tabla-wrap">
+        <table>
+            <thead><tr><th>Pregunta</th><th>Dimensiones que cruza</th><th>Donde se responde</th></tr></thead>
+            <tbody>
+                <tr><td>¿Como se reparte una medida dentro de una region y en que lugar queda Colombia?</td><td>Geografia × Indicador × Tiempo</td><td><a href="{{ url_for('e5_vista', num=2) }}">Vista 2</a></td></tr>
+                <tr><td>¿Que territorios aumentaron o redujeron sus emisiones en el periodo?</td><td>Geografia × Tiempo × Indicador</td><td><a href="{{ url_for('e5_vista', num=3) }}">Vista 3</a></td></tr>
+                <tr><td>¿Que se ve en el nivel Mes que el promedio anual esconde, y coinciden las fuentes?</td><td>Tiempo × Fuente × Indicador</td><td><a href="{{ url_for('e5_vista', num=1) }}">Vista 1</a></td></tr>
+                <tr><td>¿La calidad del dato (atipicos) es igual en todo el cubo?</td><td>Geografia × Indicador × Fuente</td><td><a href="{{ url_for('e5_vista', num=4) }}">Vista 4</a></td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="pob-bloque">
+    <h2>Insumos y producto</h2>
+    <div class="grid grid-3">
+        <div class="panel stat cold"><div class="valor">{{ '{:,}'.format(mod.n_hechos).replace(',', '.') }}</div><div class="etiqueta">hechos en la tabla central, uno por observacion del dataset limpio</div></div>
+        <div class="panel stat"><div class="valor">{{ mod.n_dim }}</div><div class="etiqueta">dimensiones con {{ mod.dimensiones | sum(attribute='filas') }} miembros en total</div></div>
+        <div class="panel stat warm"><div class="valor">{{ vistas|length }}</div><div class="etiqueta">vistas interactivas sobre el mismo cubo</div></div>
+    </div>
+    <p style="margin-top:1rem;">El insumo es <span class="mono">clima_limpio.csv</span> (Etapas 2 y 3). El cubo lo arma en vivo
+    <span class="mono">scripts/multidimensional.py</span>, y el script <span class="mono">ssis/sql/04_modelo_estrella.sql</span>
+    deja el mismo modelo en la base <span class="mono">ClimaTec_ETL</span> de SQL Server, a continuacion del paquete SSIS de la Etapa 3.</p>
+</section>
+
+{{ m.pie(None, ('e5_relacion', 'Relacion con el conocimiento evidente')) }}
+{% else %}{{ m.sin_datos() }}{% endif %}
+{% endblock %}

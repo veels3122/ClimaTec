@@ -1,0 +1,57 @@
+{# Piezas comunes de la Etapa 5 (Analisis multidimensional). #}
+
+{% macro hero(num, titulo, lede) -%}
+<div class="page-hero acento-cold animate-fade-down e5-hero">
+    <div class="fondo-foto-tinte" aria-hidden="true"></div>
+    <canvas class="fondo-seccion" aria-hidden="true"></canvas>
+    <p class="eyebrow"><span class="paso">Etapa 5 · 0{{ num }}</span> Analisis multidimensional</p>
+    <h1>{{ titulo }}</h1>
+    <p class="lede">{{ lede }}</p>
+</div>
+{%- endmacro %}
+
+{% macro pie(anterior=None, siguiente=None) -%}
+<nav class="e5-pie" aria-label="Navegacion entre apartados de la Etapa 5">
+    {% if anterior %}<a class="e5-pie-link" href="{{ url_for(anterior[0], **(anterior[2] if anterior|length > 2 else {})) }}"><span>Anterior</span>{{ anterior[1] }}</a>{% else %}<span></span>{% endif %}
+    {% if siguiente %}<a class="e5-pie-link sig" href="{{ url_for(siguiente[0], **(siguiente[2] if siguiente|length > 2 else {})) }}"><span>Siguiente</span>{{ siguiente[1] }}</a>{% endif %}
+</nav>
+{%- endmacro %}
+
+{% macro sin_datos() -%}
+<div class="nota" style="margin-top:1.4rem;">
+    No se pudo construir el cubo: verifica que exista <span class="mono">data/raw/clima_limpio.csv</span>
+    (o que la limpieza de la Etapa 2 se ejecute al arrancar) y el archivo de regiones
+    <span class="mono">data/raw/dim_pais_region.csv</span>.
+</div>
+{%- endmacro %}
+
+{% macro conocimiento(k) -%}
+<article class="panel pob-conoc" id="k{{ k.numero }}">
+    <header>
+        <span class="pob-conoc-num">{{ k.numero }}</span>
+        <div>
+            <h3>{{ k.titulo }}</h3>
+            <p class="pob-mini" style="margin:.2rem 0 0;">{{ k.operacion }} ·
+                <a href="{{ url_for('e5_vista', num=k.vista) }}">abrir la vista {{ k.vista }}</a></p>
+        </div>
+    </header>
+    <dl class="pob-dl">
+        <div><dt>Pregunta</dt><dd>{{ k.pregunta }}</dd></div>
+        <div class="pob-evid">
+            <dt>Evidencia</dt>
+            <dd>
+                {% for e in k.evidencia %}
+                <div class="barra-h-fila{{ ' warm' if e.negativo }}">
+                    <div class="barra-h-label">{{ e.etiqueta }}</div>
+                    <div class="barra-h-track"><div class="barra-h-fill" style="width: {{ [[e.pct, 0.6] | max, 100] | min }}%;"></div></div>
+                    <div class="barra-h-val">{{ e.valor }} · {{ e.pct_txt }}</div>
+                </div>
+                {% endfor %}
+            </dd>
+        </div>
+        <div><dt>Hallazgo</dt><dd>{{ k.hallazgo }}</dd></div>
+        <div><dt>Interpretacion</dt><dd>{{ k.interpretacion }}</dd></div>
+        <div><dt>Utilidad</dt><dd>{{ k.utilidad }}</dd></div>
+    </dl>
+</article>
+{%- endmacro %}
