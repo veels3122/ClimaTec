@@ -233,6 +233,8 @@ def describir_modelo(hechos, dim_tiempo, dim_geo, dim_ind, dim_fuente):
             "pk": "id_tiempo",
             "filas": int(len(dim_tiempo)),
             "pregunta": "¿Cuando se midio el dato?",
+            "perspectiva": "El problema estudia cambios entre 2020 y 2026 y eventos de corta duracion (El Nino, COP): el tiempo es un eje real de analisis.",
+            "validez": "Cada mes pertenece a un solo trimestre, cada trimestre a un solo semestre y cada semestre a un solo anio. Solo las series mensuales llegan al nivel Mes.",
             "atributos": [
                 ("id_tiempo", "Clave AAAAMM; MM = 00 en las series anuales", "202409"),
                 ("anio", "Anio de la observacion", "{}–{}".format(int(dim_tiempo["anio"].min()), int(dim_tiempo["anio"].max()))),
@@ -253,6 +255,8 @@ def describir_modelo(hechos, dim_tiempo, dim_geo, dim_ind, dim_fuente):
             "pk": "id_geo",
             "filas": int(len(dim_geo)),
             "pregunta": "¿Donde?",
+            "perspectiva": "El proyecto se plantea en tres escalas (global, regional y nacional) con Colombia como foco.",
+            "validez": "Cada pais pertenece a un solo continente (via codigo ISO3) y cada continente al mundo. Las regiones y el mundo tambien existen como agregados oficiales para contrastar el roll-up.",
             "atributos": [
                 ("id_geo", "Clave sustituta", "1, 2, 3…"),
                 ("nivel_geografico", "Global, Regional o Nacional", "Nacional"),
@@ -273,6 +277,8 @@ def describir_modelo(hechos, dim_tiempo, dim_geo, dim_ind, dim_fuente):
             "pk": "id_indicador",
             "filas": int(len(dim_ind)),
             "pregunta": "¿Que se midio?",
+            "perspectiva": "El cambio climatico se observa con varios fenomenos (CO2, otros gases, energia, clima, poblacion) que no son comparables entre si.",
+            "validez": "Cada indicador pertenece a una sola categoria tematica. El nivel Categoria sirve para contar y medir calidad; el valor solo se agrega dentro de un indicador.",
             "atributos": [
                 ("id_indicador", "Clave sustituta", "1, 2, 3…"),
                 ("categoria", "Tema del indicador", "Emisiones de CO2"),
@@ -292,6 +298,8 @@ def describir_modelo(hechos, dim_tiempo, dim_geo, dim_ind, dim_fuente):
             "pk": "id_fuente",
             "filas": int(len(dim_fuente)),
             "pregunta": "¿Quien lo reporta?",
+            "perspectiva": "El proyecto integra fuentes primarias y terciarias; la confiabilidad y la metodologia dependen de quien publica.",
+            "validez": "Cada fuente pertenece a un solo proveedor y cada proveedor publica fuentes de un solo tipo en este dataset.",
             "atributos": [
                 ("id_fuente", "Clave sustituta", "1, 2, 3…"),
                 ("fuente_tipo", "Primaria o Terciaria", "Primaria"),
@@ -304,19 +312,42 @@ def describir_modelo(hechos, dim_tiempo, dim_geo, dim_ind, dim_fuente):
         },
     ]
     medidas = [
-        {"nombre": "Valor", "columna": "valor", "formula": "valor observado del indicador",
-         "agregacion": "SUM si agregacion = suma; AVG si agregacion = promedio",
-         "aditividad": "Semiaditiva: se suma entre territorios solo en indicadores absolutos; en el tiempo se promedia"},
-        {"nombre": "Numero de registros", "columna": "COUNT(*)", "formula": "cantidad de hechos en la celda",
-         "agregacion": "SUM", "aditividad": "Aditiva en todas las dimensiones"},
-        {"nombre": "Registros atipicos", "columna": "atipico", "formula": "SUM(atipico)",
-         "agregacion": "SUM", "aditividad": "Aditiva"},
-        {"nombre": "% de atipicos", "columna": "derivada", "formula": "SUM(atipico) / COUNT(*) × 100",
-         "agregacion": "Se recalcula en cada celda (no se suma)", "aditividad": "No aditiva"},
-        {"nombre": "Valor z promedio", "columna": "valor_z", "formula": "AVG(valor_z)",
-         "agregacion": "AVG", "aditividad": "No aditiva"},
-        {"nombre": "Participacion %", "columna": "derivada", "formula": "valor de la celda / total del nivel × 100",
-         "agregacion": "Se recalcula en cada nivel de la jerarquia", "aditividad": "No aditiva"},
+        {"nombre": "Valor del indicador", "columna": "valor", "unidad": "La del indicador (Mt CO2, TWh, %, °C, ppm…)",
+         "significado": "Magnitud observada del indicador para el territorio, la fecha y la fuente del hecho.",
+         "formula": "valor", "agregacion": "SUM si agregacion = suma; AVG si agregacion = promedio",
+         "aditividad": "Semiaditiva",
+         "cuando": "Se suma entre paises de una region solo en indicadores absolutos y dentro de un mismo nivel geografico. "
+                   "Per capita, porcentajes, anomalias y concentraciones se promedian (o se toma el agregado oficial). "
+                   "Nunca se suman indicadores distintos ni niveles geograficos distintos."},
+        {"nombre": "Numero de registros", "columna": "n_registros", "unidad": "hechos",
+         "significado": "Cuantas observaciones respaldan la celda del cubo.",
+         "formula": "SUM(n_registros) = COUNT(*)", "agregacion": "SUM", "aditividad": "Aditiva",
+         "cuando": "Se puede sumar en cualquier dimension y nivel."},
+        {"nombre": "Registros atipicos", "columna": "atipico", "unidad": "hechos",
+         "significado": "Cuantas observaciones quedaron marcadas como atipicas en la limpieza (1,5 × IQR).",
+         "formula": "SUM(atipico)", "agregacion": "SUM", "aditividad": "Aditiva",
+         "cuando": "Se puede sumar en cualquier dimension y nivel."},
+        {"nombre": "% de atipicos", "columna": "derivada", "unidad": "%",
+         "significado": "Proporcion de observaciones dudosas en la celda: indicador de calidad.",
+         "formula": "SUM(atipico) / SUM(n_registros) × 100", "agregacion": "Proporcion (se recalcula)",
+         "aditividad": "No aditiva",
+         "cuando": "No se suman ni promedian porcentajes: en cada nivel se recalcula con el numerador y el denominador."},
+        {"nombre": "Valor z promedio", "columna": "valor_z", "unidad": "desviaciones estandar (adimensional)",
+         "significado": "Que tan lejos de la media de su indicador estan, en promedio, los valores de la celda.",
+         "formula": "SUM(valor_z) / COUNT(valor_z)", "agregacion": "AVG ponderado por conteo",
+         "aditividad": "No aditiva",
+         "cuando": "Se promedia; al subir de nivel se usa la suma de z y el conteo de z, no el promedio de promedios."},
+        {"nombre": "Participacion %", "columna": "derivada", "unidad": "%",
+         "significado": "Peso de un miembro (pais, region) dentro del total de su nivel padre.",
+         "formula": "SUM(valor) del miembro / SUM(valor) del padre × 100", "agregacion": "Proporcion (se recalcula)",
+         "aditividad": "No aditiva",
+         "cuando": "Solo para indicadores sumables; suma 100% dentro de un mismo padre, pero no entre padres distintos."},
+        {"nombre": "Paises con dato", "columna": "id_geo", "unidad": "paises",
+         "significado": "Cuantos paises distintos reportan el indicador en el corte (cobertura).",
+         "formula": "COUNT(DISTINCT id_geo) con nivel Nacional", "agregacion": "Conteo distinto",
+         "aditividad": "No aditiva",
+         "cuando": "Se puede sumar entre regiones de un mismo anio (un pais esta en una sola region), pero no entre "
+                   "anios ni entre indicadores: el mismo pais se contaria varias veces."},
     ]
     categorias = []
     for c in ORDEN_CATEGORIAS:
@@ -773,14 +804,34 @@ def ejemplos_operaciones(p, vt):
 _CACHE = {}
 
 
-def construir(df, n_consolidado=None):
-    """Devuelve el dict completo para las paginas de la Etapa 5, o None."""
-    if df is None or df.empty:
+def _desde_almacen(ruta_db):
+    """Lee el modelo estrella cargado en SQLite (scripts/cargar_modelo.py) y
+    devuelve las tablas sin los miembros "Desconocido" (clave -1)."""
+    import cargar_modelo
+    h, dt, dg, di, dfu = cargar_modelo.leer_estrella(ruta_db)
+    h["atipico"] = h["atipico"].astype(bool)
+    dt = dt[dt["id_tiempo"] != -1].reset_index(drop=True)
+    dg = dg[dg["id_geo"] != -1].reset_index(drop=True)
+    dg["es_foco"] = dg["es_foco"].astype(bool)
+    di = di[di["id_indicador"] != -1].reset_index(drop=True)
+    dfu = dfu[dfu["id_fuente"] != -1].reset_index(drop=True)
+    return h, dt, dg, di, dfu
+
+
+def construir(df, n_consolidado=None, ruta_db=None):
+    """Devuelve el dict completo para las paginas de la Etapa 5, o None.
+    Si ruta_db apunta al almacen SQLite, el cubo se arma CONSULTANDO ese
+    almacen; si no, se arma en memoria a partir de df."""
+    usar_db = bool(ruta_db) and os.path.isfile(ruta_db)
+    if not usar_db and (df is None or df.empty):
         return None
-    clave = (id(df), len(df))
+    clave = ("db", ruta_db, os.path.getmtime(ruta_db)) if usar_db else (id(df), len(df))
     if clave in _CACHE:
         return _CACHE[clave]
-    hechos, dt, dg, di, dfu = construir_estrella(df)
+    if usar_db:
+        hechos, dt, dg, di, dfu = _desde_almacen(ruta_db)
+    else:
+        hechos, dt, dg, di, dfu = construir_estrella(df)
     p = _plano(hechos, dt, dg, di, dfu)
     modelo = describir_modelo(hechos, dt, dg, di, dfu)
     vt = vista_territorial(p)
@@ -797,6 +848,7 @@ def construir(df, n_consolidado=None):
         "conocimientos": conocimientos(p, vt),
         "ejemplos": ejemplos_operaciones(p, vt),
         "continuidad": continuidad(p, n_consolidado),
+        "origen": "almacen SQLite" if usar_db else "memoria",
         "sin_region": int(((dg["nivel_geografico"] == "Nacional") & (dg["region"] == "Sin region")).sum()),
     }
     _CACHE.clear()

@@ -79,6 +79,24 @@ if DF is not None:
     except Exception:
         DF_LIMPIO, REPORTE_E2 = None, None
 
+# Etapa 5: modelo estrella en SQLite (data/dw/climatec_dw.sqlite). Se carga con
+# scripts/cargar_modelo.py desde clima_limpio.csv; si el almacen no existe o el
+# origen cambio, se vuelve a cargar al arrancar.
+import cargar_modelo  # noqa: E402
+import verificar_modelo  # noqa: E402
+RUTA_DW = None
+try:
+    RUTA_DW = cargar_modelo.asegurar_modelo(DF_LIMPIO)
+except Exception:
+    RUTA_DW = None
+
+
+def df_tratado():
+    """Datos tratados que se cargaron al modelo (para las comprobaciones)."""
+    if os.path.isfile(cargar_modelo.RUTA_ORIGEN):
+        return pd.read_csv(cargar_modelo.RUTA_ORIGEN)
+    return DF_LIMPIO
+
 
 # ---------------------------------------------------------------------------
 # Metricas del dataset (calculadas del archivo real).
@@ -1092,7 +1110,7 @@ def _info_e5():
     import multidimensional
     base = DF_LIMPIO if DF_LIMPIO is not None else DF
     try:
-        return multidimensional.construir(base, n_consolidado=len(DF) if DF is not None else None)
+        return multidimensional.construir(base, n_consolidado=len(DF) if DF is not None else None, ruta_db=RUTA_DW)
     except Exception:
         app.logger.exception("No se pudo construir el cubo de la Etapa 5")
         return None
@@ -1145,6 +1163,27 @@ def e5_modelo():
 @app.route("/etapa-5/dimensiones-medidas-jerarquias")
 def e5_dimensiones():
     return render_template("etapa5/dimensiones.html", proyecto=PROYECTO, info=_info_e5())
+
+
+@app.route("/etapa-5/implementacion-y-carga")
+def e5_implementacion():
+    return render_template("etapa5/implementacion.html", proyecto=PROYECTO, info=_info_e5(),
+                           carga=cargar_modelo.ultima_carga(RUTA_DW) if RUTA_DW else None,
+                           correspondencia=cargar_modelo.CORRESPONDENCIA,
+                           ver=_verificacion_e5())
+
+
+@app.route("/etapa-5/verificacion-del-modelo")
+def e5_verificacion():
+    return render_template("etapa5/verificacion.html", proyecto=PROYECTO, info=_info_e5(), ver=_verificacion_e5())
+
+
+def _verificacion_e5():
+    try:
+        return verificar_modelo.verificar(RUTA_DW, df_tratado())
+    except Exception:
+        app.logger.exception("No se pudo verificar el modelo de la Etapa 5")
+        return None
 
 
 @app.route("/etapa-5/vistas-interactivas")

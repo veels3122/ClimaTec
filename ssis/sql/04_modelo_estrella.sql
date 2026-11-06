@@ -387,7 +387,9 @@ CREATE TABLE dw.hechos_observacion (
     valor         DECIMAL(18,4) NOT NULL,
     valor_z       DECIMAL(10,4) NULL,
     atipico       BIT           NULL,
-    IdLimpio      BIGINT        NOT NULL      -- trazabilidad con dbo.clima_limpio
+    n_registros   INT           NOT NULL DEFAULT 1,
+    IdLimpio      BIGINT        NOT NULL,     -- trazabilidad con dbo.clima_limpio
+    CONSTRAINT UX_hechos_grano UNIQUE (id_tiempo, id_geo, id_indicador, id_fuente)
 );
 INSERT INTO dw.hechos_observacion (id_tiempo, id_geo, id_indicador, id_fuente, valor, valor_z, atipico, IdLimpio)
 SELECT c.anio * 100 + ISNULL(c.mes, 0), g.id_geo, i.id_indicador, f.id_fuente,

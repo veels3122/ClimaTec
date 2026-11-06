@@ -7,3 +7,4 @@ env/
 *.egg-info/
 .DS_Store
 data/processed/owid-co2-data.csv
+data/dw/*.sqlite

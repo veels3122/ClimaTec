@@ -1,14 +1,15 @@
 {% extends 'base.html' %}
 {% import 'etapa5/_macros.html' as m %}
-{% block titulo %}Etapa 5 · Modelo estrella · ClimaTec{% endblock %}
+{% block titulo %}Etapa 5 · Diseno del modelo estrella · ClimaTec{% endblock %}
 {% block contenido %}
 
-{{ m.hero(5, 'Diagrama y explicacion del modelo estrella',
-   'Una tabla de hechos con las observaciones y cuatro dimensiones que las describen. Toda consulta del cubo es una union de la tabla central con las dimensiones que necesita.') }}
+{{ m.hero(5, 'Diseno del modelo multidimensional',
+   'Un modelo estrella con una tabla de hechos y cuatro dimensiones que corresponden a las cuatro preguntas que se le hacen a cada dato del proyecto: cuando, donde, que y quien lo reporta.') }}
 
 {% if info %}
 {% set mod = info.modelo %}
 {% set D = {} %}{% for d in mod.dimensiones %}{% set _ = D.update({d.clave: d}) %}{% endfor %}
+{% macro fmt(x) %}{{ '{:,}'.format(x).replace(',', '.') }}{% endmacro %}
 
 {# Caja de una tabla dentro del SVG. #}
 {% macro caja(x, y, w, titulo, filas_tabla, pk, campos, clase) -%}
@@ -27,10 +28,79 @@
 </g>
 {%- endmacro %}
 
-<section class="pob-bloque">
-    <h2>Diagrama</h2>
-    <p class="pob-mini">Cada dimension se une a la tabla de hechos por su clave (relacion 1 a muchos). Los numeros sobre cada tabla
-    son las filas reales que tiene cada tabla con el dataset actual.</p>
+<nav class="pob-indice" aria-label="Elementos del diseno">
+    <a href="#d-hechos"><span>1</span> Tabla de hechos</a>
+    <a href="#d-granularidad"><span>2</span> Granularidad</a>
+    <a href="#d-dimensiones"><span>3</span> Dimensiones</a>
+    <a href="#d-claves"><span>4</span> Claves</a>
+    <a href="#d-relaciones"><span>5</span> Relaciones</a>
+    <a href="#d-medidas"><span>6</span> Medidas</a>
+    <a href="#d-jerarquias"><span>7</span> Jerarquias</a>
+</nav>
+
+<section class="pob-bloque" id="d-hechos">
+    <h2>1 · Nombre y proposito de la tabla de hechos</h2>
+    <div class="grid grid-2">
+        <div class="panel"><h3><span class="mono">hechos_observacion</span></h3>
+            <p>Registra <strong>cada medicion cuantitativa</strong> de un fenomeno ligado al cambio climatico (emisiones, otros gases,
+            energia, temperatura, concentracion de CO2 y poblacion) para analizarla por tiempo, territorio, indicador y fuente.</p></div>
+        <div class="panel"><h3>Proceso que modela</h3>
+            <p>La <strong>publicacion de un indicador climatico</strong> por una institucion para un territorio y un periodo. Es el
+            mismo proceso que siguieron las etapas anteriores: el modelo no inventa hechos, organiza los {{ fmt(mod.n_hechos) }} registros tratados.</p></div>
+    </div>
+</section>
+
+<section class="pob-bloque" id="d-granularidad">
+    <h2>2 · Granularidad</h2>
+    <blockquote>Cada registro de <span class="mono">hechos_observacion</span> es <strong>un indicador, medido para un territorio,
+    en un periodo (anio o mes), segun una fuente</strong>.</blockquote>
+    <p>Es la granularidad mas fina que permiten los datos tratados (granularidad atomica): no se resume nada al cargar, y cualquier
+    nivel superior se obtiene agregando. Se garantiza con una restriccion <span class="mono">UNIQUE (id_tiempo, id_geo, id_indicador, id_fuente)</span>,
+    que equivale a la clave logica de la Etapa 3 (<span class="mono">fuente, nivel_geografico, entidad, anio, mes, indicador</span>).
+    La diferencia con la unidad de analisis (un territorio en un anio) esta explicada en <a href="{{ url_for('e5_continuidad') }}#c-unidad">Continuidad del proyecto</a>.</p>
+</section>
+
+<section class="pob-bloque" id="d-dimensiones">
+    <h2>3 · Dimensiones y su pertinencia</h2>
+    <div class="tabla-wrap">
+        <table class="e5-tabla-rel">
+            <thead><tr><th>Dimension</th><th>Pregunta</th><th>Perspectiva real del problema</th><th>Atributos</th><th>Miembros</th></tr></thead>
+            <tbody>
+            {% for d in mod.dimensiones %}
+                <tr><td><strong>{{ d.nombre.replace('Dimension ', '') }}</strong><br><span class="mono">{{ d.tabla }}</span></td>
+                    <td>{{ d.pregunta }}</td><td>{{ d.perspectiva }}</td>
+                    <td class="mono">{{ d.atributos | map(attribute=0) | join(', ') }}</td><td>{{ d.filas }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="nota" style="margin-top:1rem;"><p style="margin:0;max-width:none;"><strong>Dimensiones que no se crearon:</strong>
+    la unidad de medida depende del indicador (seria una copia de la dimension Indicador) y la periodicidad depende de la fecha
+    (es un atributo de Tiempo). Los eventos externos (COP, ENSO) estan en una muestra de pocas filas sin una clave confiable para unirlos a cada
+    hecho; convertirlos en dimension seria artificial, asi que quedan como contexto y como limitacion. El detalle de cada atributo esta en
+    <a href="{{ url_for('e5_dimensiones') }}">Dimensiones, medidas y jerarquias</a>.</p></div>
+</section>
+
+<section class="pob-bloque" id="d-claves">
+    <h2>4 · Claves primarias y foraneas</h2>
+    <div class="tabla-wrap">
+        <table>
+            <thead><tr><th>Tabla</th><th>Clave primaria</th><th>Tipo de clave</th><th>Claves foraneas</th><th>Unicidad del negocio</th></tr></thead>
+            <tbody>
+                <tr><td class="mono">hechos_observacion</td><td class="mono">id_hecho</td><td>Sustituta (consecutivo)</td><td class="mono">id_tiempo, id_geo, id_indicador, id_fuente</td><td class="mono">UNIQUE (id_tiempo, id_geo, id_indicador, id_fuente)</td></tr>
+                <tr><td class="mono">dim_tiempo</td><td class="mono">id_tiempo</td><td>Inteligente: AAAAMM (MM = 00 anual)</td><td>—</td><td class="mono">(anio, mes)</td></tr>
+                <tr><td class="mono">dim_geografia</td><td class="mono">id_geo</td><td>Sustituta</td><td>—</td><td class="mono">UNIQUE (entidad, nivel_geografico)</td></tr>
+                <tr><td class="mono">dim_indicador</td><td class="mono">id_indicador</td><td>Sustituta</td><td>—</td><td class="mono">UNIQUE (indicador)</td></tr>
+                <tr><td class="mono">dim_fuente</td><td class="mono">id_fuente</td><td>Sustituta</td><td>—</td><td class="mono">UNIQUE (fuente)</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <p class="pob-mini">Cada dimension reserva la clave <span class="mono">-1</span> para el miembro «Desconocido»: si un hecho no encontrara su
+    dimension, se asigna ahi en vez de perderse.</p>
+</section>
+
+<section class="pob-bloque" id="d-relaciones">
+    <h2>5 · Relaciones entre la tabla de hechos y las dimensiones</h2>
     <figure class="panel e5-estrella">
         <div class="e5-scroll">
         <svg viewBox="0 0 980 600" role="img" aria-labelledby="e5-estrella-tit e5-estrella-desc" class="e5-estrella-svg">
@@ -38,27 +108,27 @@
             <desc id="e5-estrella-desc">La tabla hechos_observacion esta en el centro y se une con dim_tiempo, dim_geografia, dim_indicador y dim_fuente.</desc>
             {# Conectores: de cada dimension a la tabla de hechos #}
             <g class="e5-lineas">
-                <path d="M250 120 C 320 120, 330 230, 380 230"/>
-                <path d="M250 450 C 320 450, 330 330, 380 330"/>
-                <path d="M730 120 C 660 120, 670 230, 620 230"/>
-                <path d="M730 450 C 660 450, 670 330, 620 330"/>
+                <path d="M250 120 C 310 120, 310 250, 360 250"/>
+                <path d="M250 450 C 310 450, 310 350, 360 350"/>
+                <path d="M730 120 C 670 120, 670 250, 620 250"/>
+                <path d="M730 450 C 670 450, 670 350, 620 350"/>
             </g>
             <g class="e5-card">
-                <text x="258" y="112">1</text><text x="346" y="222">N</text>
-                <text x="258" y="442">1</text><text x="346" y="322">N</text>
-                <text x="716" y="112">1</text><text x="628" y="222">N</text>
-                <text x="716" y="442">1</text><text x="628" y="322">N</text>
+                <text x="258" y="112">1</text><text x="346" y="242">N</text>
+                <text x="258" y="442">1</text><text x="346" y="342">N</text>
+                <text x="716" y="112">1</text><text x="628" y="242">N</text>
+                <text x="716" y="442">1</text><text x="628" y="342">N</text>
             </g>
             {{ caja(20, 30, 230, 'dim_tiempo', D.tiempo.filas,
-                    'PK id_tiempo', ['PK id_tiempo', 'anio', 'semestre', 'trimestre', 'mes · nombre_mes', 'periodicidad'], 'dim') }}
+                    'PK id_tiempo', ['PK id_tiempo', 'anio', 'semestre', 'trimestre', 'mes · nombre_mes', 'periodicidad', 'nivel_detalle'], 'dim') }}
             {{ caja(20, 350, 230, 'dim_geografia', D.geografia.filas,
-                    'PK id_geo', ['PK id_geo', 'nivel_geografico', 'region', 'pais · entidad', 'iso_code', 'es_foco'], 'dim') }}
+                    'PK id_geo', ['PK id_geo', 'nivel_geografico', 'region · region_es', 'pais · entidad', 'iso_code', 'es_foco'], 'dim') }}
             {{ caja(730, 30, 230, 'dim_indicador', D.indicador.filas,
                     'PK id_indicador', ['PK id_indicador', 'categoria', 'indicador', 'unidad', 'tipo_medida', 'agregacion'], 'dim') }}
             {{ caja(730, 380, 230, 'dim_fuente', D.fuente.filas,
                     'PK id_fuente', ['PK id_fuente', 'fuente_tipo', 'proveedor', 'fuente'], 'dim') }}
-            {{ caja(360, 150, 260, 'hechos_observacion', mod.n_hechos,
-                    '', ['FK id_tiempo', 'FK id_geo', 'FK id_indicador', 'FK id_fuente', 'M valor', 'M valor_z', 'M atipico', 'M n_registros (=1)'], 'hechos') }}
+            {{ caja(360, 140, 260, 'hechos_observacion', mod.n_hechos,
+                    '', ['PK id_hecho', 'FK id_tiempo', 'FK id_geo', 'FK id_indicador', 'FK id_fuente', 'M valor', 'M valor_z', 'M atipico', 'M n_registros'], 'hechos') }}
         </svg>
         </div>
         <figcaption class="e5-leyenda">
@@ -67,60 +137,47 @@
             <span><i class="e5-sw med"></i> Medida</span>
         </figcaption>
     </figure>
-</section>
-
-<section class="pob-bloque">
-    <h2>Como se lee el modelo</h2>
-    <div class="grid grid-2">
-        <div class="panel">
-            <h3>Granularidad de la tabla de hechos</h3>
-            <p>Una fila de <span class="mono">hechos_observacion</span> es <strong>un indicador, medido para una entidad, en una
-            fecha, por una fuente</strong>. Es la misma granularidad del dataset limpio, por eso el cubo tiene exactamente
-            {{ '{:,}'.format(mod.n_hechos).replace(',', '.') }} hechos y ninguna observacion se pierde ni se duplica al cargarlo.</p>
-        </div>
-        <div class="panel">
-            <h3>Las cuatro preguntas de cada dato</h3>
-            <p>Cada dimension responde una pregunta: <strong>¿cuando?</strong> (Tiempo), <strong>¿donde?</strong> (Geografia),
-            <strong>¿que?</strong> (Indicador) y <strong>¿quien lo reporta?</strong> (Fuente). La tabla central solo guarda las
-            claves y los numeros.</p>
-        </div>
-        <div class="panel">
-            <h3>Por que estrella y no copo de nieve</h3>
-            <p>La region del pais, la categoria del indicador y el proveedor de la fuente podrian ir en tablas aparte (copo de
-            nieve). Se dejaron dentro de cada dimension porque son pocas filas ({{ mod.dimensiones | sum(attribute='filas') }} en
-            total) y asi cada consulta necesita una sola union por dimension.</p>
-        </div>
-        <div class="panel">
-            <h3>Claves sustitutas</h3>
-            <p>Las dimensiones usan claves numericas propias. La de tiempo es legible (<span class="mono">AAAAMM</span>, con
-            <span class="mono">MM = 00</span> en las series anuales), asi un dato anual y uno mensual del mismo anio comparten el
-            nivel Anio de la jerarquia.</p>
-        </div>
-    </div>
-</section>
-
-<section class="pob-bloque">
-    <h2>Donde vive el modelo</h2>
-    <p>El modelo se construye de dos formas equivalentes:</p>
-    <div class="tabla-wrap">
+    <div class="tabla-wrap" style="margin-top:1rem;">
         <table>
-            <thead><tr><th>Archivo</th><th>Que hace</th></tr></thead>
+            <thead><tr><th>Relacion</th><th>Cardinalidad</th><th>Union</th><th>Significado</th></tr></thead>
             <tbody>
-                <tr><td class="mono">scripts/multidimensional.py</td><td>Arma las cuatro dimensiones y la tabla de hechos en memoria a partir del dataset limpio, y calcula los datos de las vistas y los conocimientos de esta etapa.</td></tr>
-                <tr><td class="mono">ssis/sql/04_modelo_estrella.sql</td><td>Crea el esquema <span class="mono">dw</span> en la base <span class="mono">ClimaTec_ETL</span> y lo carga desde <span class="mono">dbo.clima_limpio</span>, la tabla destino del paquete SSIS de la Etapa 3.</td></tr>
-                <tr><td class="mono">data/raw/dim_pais_region.csv</td><td>Asigna cada pais (codigo ISO3) a su continente: es lo que permite la jerarquia Region → Pais.</td></tr>
+                <tr><td>dim_tiempo → hechos_observacion</td><td>1 : N</td><td class="mono">id_tiempo</td><td>Un periodo agrupa muchas mediciones; cada medicion ocurre en un solo periodo.</td></tr>
+                <tr><td>dim_geografia → hechos_observacion</td><td>1 : N</td><td class="mono">id_geo</td><td>Un territorio tiene muchas mediciones; cada medicion es de un solo territorio.</td></tr>
+                <tr><td>dim_indicador → hechos_observacion</td><td>1 : N</td><td class="mono">id_indicador</td><td>Un indicador se mide muchas veces; cada medicion es de un solo indicador.</td></tr>
+                <tr><td>dim_fuente → hechos_observacion</td><td>1 : N</td><td class="mono">id_fuente</td><td>Una fuente publica muchas mediciones; cada medicion viene de una sola fuente.</td></tr>
             </tbody>
         </table>
     </div>
-<pre class="e5-codigo"><code>-- Consulta en estrella: CO2 por region y anio
-SELECT g.region, t.anio, SUM(h.valor) AS co2_mt
-FROM dw.hechos_observacion h
-JOIN dw.dim_tiempo    t ON t.id_tiempo    = h.id_tiempo
-JOIN dw.dim_geografia g ON g.id_geo       = h.id_geo
-JOIN dw.dim_indicador i ON i.id_indicador = h.id_indicador
-WHERE i.indicador = N'Emisiones de CO2 (total)'
-  AND g.nivel_geografico = N'Nacional'
-GROUP BY g.region, t.anio;</code></pre>
+    <p class="pob-mini">Las dimensiones no se relacionan entre si: todo cruce pasa por la tabla de hechos. Las relaciones se declaran como
+    <span class="mono">FOREIGN KEY</span> en el almacen y se comprueban en <a href="{{ url_for('e5_verificacion') }}">Verificacion del modelo</a>.</p>
+</section>
+
+<section class="pob-bloque" id="d-medidas">
+    <h2>6 · Medidas</h2>
+    <div class="tabla-wrap">
+        <table>
+            <thead><tr><th>Medida</th><th>Unidad</th><th>Formula</th><th>Agregacion</th><th>Tipo</th></tr></thead>
+            <tbody>
+            {% for me in mod.medidas %}<tr><td><strong>{{ me.nombre }}</strong></td><td>{{ me.unidad }}</td><td class="mono">{{ me.formula }}</td><td>{{ me.agregacion }}</td><td>{{ me.aditividad }}</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p class="pob-mini">Significado y reglas para sumar cada medida: <a href="{{ url_for('e5_dimensiones') }}#medidas">Dimensiones, medidas y jerarquias</a>.</p>
+</section>
+
+<section class="pob-bloque" id="d-jerarquias">
+    <h2>7 · Jerarquias</h2>
+    <div class="grid grid-2">
+    {% for d in mod.dimensiones %}
+        <div class="panel">
+            <h3>{{ d.nombre.replace('Dimension ', '') }}</h3>
+            <ol class="e5-jerarquia" aria-label="Jerarquia de {{ d.nombre }}">{% for n in d.jerarquia %}<li>{{ n }}</li>{% endfor %}</ol>
+            <p class="pob-mini" style="margin:.7rem 0 0;">{{ d.validez }}</p>
+        </div>
+    {% endfor %}
+    </div>
+    <p class="pob-mini">Las dos jerarquias principales son las naturales del problema: <strong>Anio → Semestre → Trimestre → Mes</strong> y
+    <strong>Mundo → Region → Pais</strong>. No hay departamentos ni municipios en los datos, por eso Pais es el nivel mas fino.</p>
 </section>
 
 {{ m.pie(('e5_preguntas', 'Preguntas de analisis'), ('e5_dimensiones', 'Dimensiones, medidas y jerarquias')) }}
