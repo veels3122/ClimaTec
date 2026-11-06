@@ -1079,6 +1079,11 @@ def e4_relacional():
 # ===========================================================================
 VISTAS_E5 = [
     {"num": 1, "clave": "temporal", "titulo": "Evolucion en el tiempo",
+     "titulo_analisis": "Ritmo temporal del calentamiento y del CO2 atmosferico",
+     "jerarquias": ["Tiempo: Anio → Semestre → Trimestre → Mes", "Fuente: Tipo de fuente → Proveedor → Fuente"],
+     "medidas": ["Valor promedio (°C o ppm): AVG(valor) — se promedia al subir de nivel", "Brecha entre proveedores (°C): diferencia de los promedios por periodo", "Numero de registros (meses): SUM(n_registros)"],
+     "limitacion": "Solo tres series globales llegan al nivel Mes, y 2026 esta incompleto. NASA y NOAA miden la anomalia contra lineas base distintas: se comparan sus subidas y bajadas, no sus niveles absolutos.",
+     "decision": "Analizar los eventos externos (El Nino, La Nina) a nivel mensual y comparar cada mes con el mismo mes del anio anterior; para tendencias, usar el promedio anual de las dos fuentes.",
      "resumen": "Sube y baja por Anio, Semestre, Trimestre y Mes en las series mensuales; compara Mundo, Sudamerica y Colombia en las anuales.",
      "operaciones": ["Drill-down", "Roll-up", "Slice"],
      "pregunta": "¿En que anios y meses se concentran las mayores anomalias de temperatura global y el mayor aumento del CO2 atmosferico, y coinciden las fuentes primarias cuando se baja del nivel Anio al nivel Mes?",
@@ -1090,6 +1095,11 @@ VISTAS_E5 = [
      "profundiza": "Baja de Anio a Mes con las series reales del dataset y separa la medida por fuente. Asi se ve si el anio mas calido contiene tambien el mes mas calido y si dos instituciones distintas cuentan la misma historia.",
      "nuevo": "Nivel de detalle mensual y comparacion entre fuentes, que no existian en la Etapa 4."},
     {"num": 2, "clave": "territorial", "titulo": "Del mundo al pais",
+     "titulo_analisis": "Concentracion territorial de las emisiones y lugar de Colombia",
+     "jerarquias": ["Geografia: Mundo → Region → Pais", "Tiempo: Anio"],
+     "medidas": ["Valor sumado (Mt CO2, TWh, personas…): SUM(valor) de los paises", "Participacion %: valor del miembro / total del nivel × 100", "Paises con dato: COUNT(DISTINCT pais)"],
+     "limitacion": "Los paises se asignan a su continente por codigo ISO y las cifras se comparan con agregados que la fuente calcula con otro criterio (diferencias menores a 0,5%). No hay datos por departamento, asi que no se ven diferencias dentro de Colombia.",
+     "decision": "Comparar a Colombia con sus pares de tamano similar (Argentina, Venezuela, Chile, Peru) y no con el total de Sudamerica, que domina un solo pais; y priorizar el metano en su seguimiento.",
      "resumen": "Parte del Mundo, abre una region y llega a sus paises, con Colombia resaltada.",
      "operaciones": ["Drill-down", "Roll-up", "Slice"],
      "pregunta": "¿Como se concentran las emisiones de CO2 y otros indicadores absolutos dentro de cada region, y que lugar ocupa Colombia entre los paises de Sudamerica al pasar del nivel Region al nivel Pais?",
@@ -1101,6 +1111,11 @@ VISTAS_E5 = [
      "profundiza": "La Etapa 4 midio la concentracion en dos fotos separadas (entre regiones y entre todos los paises del mundo). Aqui se mide dentro de cada region: si Sudamerica tambien esta concentrada y quienes son los pares reales de Colombia.",
      "nuevo": "Concentracion intrarregional y validacion de que la suma de los paises reproduce el agregado oficial (roll-up)."},
     {"num": 3, "clave": "mapa", "titulo": "Territorios por anio",
+     "titulo_analisis": "Trayectorias de emisiones y transicion energetica por territorio",
+     "jerarquias": ["Tiempo: Anio (dice sobre los anios del periodo)", "Geografia: Mundo / Region → Pais (drill-down en una region)"],
+     "medidas": ["Valor del indicador (unidad propia): valor publicado para el territorio", "Variacion frente al primer anio elegido: % (o puntos porcentuales en indicadores en %)", "Indice mundo = 100: valor del territorio / valor del Mundo × 100"],
+     "limitacion": "El periodo es corto (2020–2024) y 2020 es el anio de la pandemia: usarlo como base exagera el crecimiento posterior. Las regiones son agregados de la fuente y no siempre coinciden con la suma de sus paises.",
+     "decision": "Hacer seguimiento anual de la participacion de renovables de Colombia y emitir una alerta cuando baje frente al anio anterior; para medir crecimiento de emisiones, usar 2021 como base ademas de 2020.",
      "resumen": "Matriz territorio x anio para un indicador; elige que territorios y anios quedan en el corte.",
      "operaciones": ["Slice", "Dice"],
      "pregunta": "¿Que territorios aumentaron o redujeron sus emisiones y su participacion de energias renovables entre 2020 y 2024, en que anios ocurrio el cambio y como se compara Colombia con Sudamerica y el mundo?",
@@ -1112,6 +1127,11 @@ VISTAS_E5 = [
      "profundiza": "Convierte la comparacion de un anio en una trayectoria: ya no solo cuanto emite cada territorio, sino hacia donde va y en que anio cambio la tendencia.",
      "nuevo": "Eje del tiempo cruzado con el territorio y medida de cambio (variacion), en lugar de un valor estatico."},
     {"num": 4, "clave": "pivot", "titulo": "Tabla dinamica del cubo",
+     "titulo_analisis": "Calidad del dato en el cubo: donde se concentran los atipicos",
+     "jerarquias": ["Geografia: Nivel geografico → Region → Pais", "Indicador: Categoria → Indicador", "Fuente: Tipo de fuente → Proveedor → Fuente"],
+     "medidas": ["% de atipicos: SUM(atipico) / SUM(n_registros) × 100 (se recalcula en cada celda)", "Numero de registros: SUM(n_registros)", "Valor z promedio: AVG(valor_z)"],
+     "limitacion": "La marca de atipico viene de la Etapa 2 (1,5 × IQR por indicador mezclando niveles). Un atipico no es un error: muchos son paises grandes o agregados regionales correctos.",
+     "decision": "En la proxima iteracion de la limpieza (SSIS), calcular los atipicos dentro de cada nivel geografico y reportar la calidad del dataset con el slice Nivel = Nacional.",
      "resumen": "Elige filas, columnas, medida y filtros; intercambia ejes con un clic.",
      "operaciones": ["Pivot", "Dice", "Roll-up"],
      "pregunta": "¿Como se reparten los registros y los valores atipicos entre niveles geograficos, categorias de indicador y tipos de fuente, y que combinaciones concentran los posibles problemas de calidad?",
@@ -1205,6 +1225,66 @@ def _verificacion_e5():
         return None
 
 
+# --- API OLAP: las vistas consultan el modelo estrella en SQLite -------------
+import olap  # noqa: E402
+from flask import jsonify, request  # noqa: E402
+
+_ATTR_NUM = {"anio", "semestre", "trimestre", "mes", "mes_del_anio"}
+
+
+def _leer_filtros():
+    filtros = {}
+    for f in request.args.getlist("f"):
+        if "=" not in f:
+            continue
+        a, v = f.split("=", 1)
+        if a in _ATTR_NUM:
+            try:
+                v = int(v)
+            except ValueError:
+                continue
+        filtros.setdefault(a, []).append(v)
+    return filtros
+
+
+@app.route("/api/etapa5/olap")
+def api_olap():
+    if not RUTA_DW:
+        return jsonify({"error": "El modelo estrella no esta cargado."}), 503
+    try:
+        r = olap.consulta(RUTA_DW, request.args.get("filas", ""), request.args.get("columnas") or None,
+                          request.args.get("medida", "n"), _leer_filtros())
+    except olap.ErrorConsulta as e:
+        return jsonify({"error": str(e)}), 400
+    return jsonify(r)
+
+
+def _config_vistas():
+    """Miembros de las dimensiones que las vistas usan para llenar sus filtros."""
+    import multidimensional as md
+    cfg = {"anios": [], "indicadores": {}, "regiones": [], "territorios": []}
+    if not RUTA_DW:
+        return cfg
+    cfg["anios"] = [v["clave"] for v in olap.valores(RUTA_DW, "anio")]
+    for ind in olap.valores(RUTA_DW, "indicador"):
+        cfg["indicadores"][ind["clave"]] = md.CATALOGO_INDICADORES.get(ind["clave"], ("", "", "promedio"))
+    cfg["mensuales"] = [v["clave"] for v in olap.valores(RUTA_DW, "indicador", {"mes_del_anio": list(range(1, 13))})]
+    cfg["territoriales"] = md.IND_TERRITORIALES
+    cfg["mapa"] = md.IND_MAPA
+    cfg["regiones"] = [md.REGIONES_ES[r] for r in md.ORDEN_REGIONES]
+    cfg["territorios"] = ([{"clave": r, "etiqueta": md.REGIONES_ES[r]} for r in md.ORDEN_REGIONES]
+                          + [{"clave": "World", "etiqueta": "Mundo"}, {"clave": md.PAIS_FOCO, "etiqueta": md.PAIS_FOCO}])
+    import sqlite3
+    con = sqlite3.connect(RUTA_DW)
+    try:
+        cfg["unidades"] = dict(con.execute("SELECT indicador, unidad FROM dim_indicador WHERE id_indicador <> -1").fetchall())
+    finally:
+        con.close()
+    cfg["jerarquias"] = olap.JERARQUIAS
+    cfg["atributos"] = {k: {"dimension": v[0], "nivel": v[1]} for k, v in olap.ATRIBUTOS.items()}
+    return cfg
+
+
 @app.route("/etapa-5/vistas-interactivas")
 def e5_vistas():
     return render_template("etapa5/vistas.html", proyecto=PROYECTO, info=_info_e5(), vistas=VISTAS_E5)
@@ -1216,12 +1296,18 @@ def e5_vista(num):
     if vista is None:
         return redirect(url_for("e5_vistas"))
     return render_template("etapa5/vista.html", proyecto=PROYECTO, info=_info_e5(),
-                           vista=vista, vistas=VISTAS_E5)
+                           vista=vista, vistas=VISTAS_E5, cfg=_config_vistas())
 
 
 @app.route("/etapa-5/operaciones-multidimensionales")
 def e5_operaciones():
-    return render_template("etapa5/operaciones.html", proyecto=PROYECTO, info=_info_e5(), vistas=VISTAS_E5)
+    try:
+        ejemplos = olap.ejemplos(RUTA_DW) if RUTA_DW else []
+    except Exception:
+        app.logger.exception("No se pudieron calcular los ejemplos OLAP")
+        ejemplos = []
+    return render_template("etapa5/operaciones.html", proyecto=PROYECTO, info=_info_e5(), vistas=VISTAS_E5,
+                           ejemplos=ejemplos)
 
 
 @app.route("/etapa-5/conocimientos-conclusiones")

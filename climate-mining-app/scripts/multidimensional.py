@@ -693,7 +693,7 @@ def conocimientos(p, vt):
                         "({vc}).{ren}".format(
                             p=filas[0][0], vp=fmt_signo(filas[0][1]),
                             neg=("bajan " + ", ".join(neg)) if neg else "ningun territorio reduce sus emisiones",
-                            vc=fmt_signo(next((f[1] for f in filas if f[0] == PAIS_FOCO), 0)), ren=txt_ren),
+                            vc=fmt_signo(next((f[1] for f in filas if f[0] == PAIS_FOCO), 0)), ren=""),
             "interpretacion": "La foto de un solo anio (Etapa 4) muestra quien emite mas; el corte por anio muestra "
                               "hacia donde va cada territorio. Parte del crecimiento se explica por el rebote despues "
                               "de 2020, el anio de la pandemia, por lo que conviene leer tambien la variacion anual.",
@@ -774,6 +774,129 @@ def conocimientos(p, vt):
     return ks
 
 
+def conocimientos_extra(p, vt):
+    """Segundo conocimiento multidimensional de cada vista (numeros 5 a 8)."""
+    ks = []
+    anio_ref = vt["anio_ref"]
+    anio_ini = min(vt["anios"]) if vt["anios"] else None
+
+    # --- K5 (vista 1): estacionalidad del CO2 atmosferico --------------------
+    ml = p[(p["periodicidad"] == "Mensual") & (p["indicador"] == "Concentracion de CO2 atmosferico")]
+    if len(ml):
+        completos = [a for a, g in ml.groupby("anio") if g["mes"].nunique() >= 12]
+        sub = ml[ml["anio"].isin(completos)]
+        perfil = sub.groupby("mes")["valor"].mean()
+        anual = sub.groupby("anio")["valor"].mean()
+        sube = (anual.iloc[-1] - anual.iloc[0]) / (anual.index[-1] - anual.index[0]) if len(anual) > 1 else 0
+        amp = perfil.max() - perfil.min()
+        evid = [{"etiqueta": MESES[int(mm) - 1], "valor": fmt_dec(v, 1) + " ppm",
+                 "pct": round((v - perfil.min()) / (amp or 1) * 100, 2), "pct_txt": "promedio {}–{}".format(completos[0], completos[-1])}
+                for mm, v in perfil.items()]
+        ks.append({
+            "numero": 5, "vista": 1,
+            "titulo": "Dentro de cada anio el CO2 sube y baja {} ppm, mas del doble de lo que aumenta de un anio a otro".format(fmt_dec(amp, 1)),
+            "operacion": "Drill-down Anio → Mes del anio + slice por indicador y fuente (Mauna Loa)",
+            "pregunta": "¿Que patron aparece al bajar la concentracion de CO2 al nivel Mes?",
+            "evidencia": evid,
+            "hallazgo": "Promediando los anios completos ({a}–{b}), el maximo es en {mx} ({vmx} ppm) y el minimo en {mn} ({vmn} ppm): "
+                        "una oscilacion de {amp} ppm, frente a un aumento de {s} ppm por anio.".format(
+                            a=completos[0], b=completos[-1], mx=MESES[int(perfil.idxmax()) - 1], vmx=fmt_dec(perfil.max(), 1),
+                            mn=MESES[int(perfil.idxmin()) - 1], vmn=fmt_dec(perfil.min(), 1), amp=fmt_dec(amp, 1),
+                            s=fmt_dec(sube, 2)),
+            "interpretacion": "El ciclo estacional (la vegetacion del hemisferio norte absorbe CO2 en verano y lo libera en invierno) "
+                              "es mayor que la tendencia anual. Comparar dos meses distintos puede mostrar una «bajada» que no existe.",
+            "utilidad": "Las comparaciones mensuales deben hacerse contra el mismo mes del anio anterior o con el promedio anual.",
+        })
+
+    # --- K6 (vista 2): Colombia pesa distinto segun el indicador --------------
+    filas = []
+    for ind, nom in [("Emisiones de CO2 (total)", "CO2"), ("Emisiones de metano", "Metano"),
+                     ("Emisiones de oxido nitroso", "Oxido nitroso"), ("Consumo de energia primaria", "Energia primaria"),
+                     ("Poblacion", "Poblacion")]:
+        s_ = p[(p["indicador"] == ind) & (p["anio"] == anio_ref) & (p["nivel_geografico"] == "Nacional")
+               & (p["region"] == REGION_FOCO)].sort_values("valor", ascending=False)
+        if len(s_) and PAIS_FOCO in list(s_["entidad"]):
+            tot = s_["valor"].sum()
+            filas.append((nom, float(s_[s_["entidad"] == PAIS_FOCO]["valor"].iloc[0]) / tot * 100,
+                          list(s_["entidad"]).index(PAIS_FOCO) + 1, len(s_)))
+    if filas:
+        pob = next((f for f in filas if f[0] == "Poblacion"), None)
+        mx = max(f[1] for f in filas)
+        evid = [{"etiqueta": f[0], "valor": "puesto {} de {}".format(f[2], f[3]), "pct": round(f[1] / mx * 100, 2),
+                 "pct_txt": fmt_pct(f[1]) + " de Sudamerica"} for f in filas]
+        met = next((f for f in filas if f[0] == "Metano"), None)
+        co2 = next((f for f in filas if f[0] == "CO2"), None)
+        ks.append({
+            "numero": 6, "vista": 2,
+            "titulo": "En Sudamerica, Colombia pesa mas en metano que en CO2 y menos que en poblacion",
+            "operacion": "Drill-down Region → Pais + slice por anio, cambiando el indicador (slice en Indicador)",
+            "pregunta": "¿El lugar de Colombia entre sus pares regionales es el mismo en todos los gases?",
+            "evidencia": evid,
+            "hallazgo": "En {a}, Colombia aporta {c} del CO2 de Sudamerica (puesto {rc}) y {m} del metano (puesto {rm}){p}.".format(
+                a=anio_ref, c=fmt_pct(co2[1]) if co2 else "-", rc=co2[2] if co2 else "-",
+                m=fmt_pct(met[1]) if met else "-", rm=met[2] if met else "-",
+                p=", mientras tiene {} de la poblacion de la region".format(fmt_pct(pob[1])) if pob else ""),
+            "interpretacion": "La Etapa 4 mostro que Colombia pesa mas en metano que en CO2 a escala mundial; el drill-down "
+                              "muestra que tambien ocurre frente a sus vecinos, y que por habitante emite menos que su peso poblacional.",
+            "utilidad": "Ubica al metano (agricultura, ganaderia, residuos) como el gas donde Colombia tiene mas peso relativo en la region.",
+        })
+
+    # --- K7 (vista 3): renovables ---------------------------------------------
+    filas = []
+    for ent in ORDEN_REGIONES + ["World", PAIS_FOCO]:
+        v0 = _valor(p, "Participacion de renovables en energia", ent, anio_ini)
+        v1 = _valor(p, "Participacion de renovables en energia", ent, anio_ref)
+        if v0 is not None and v1 is not None:
+            filas.append((nombre_geo(ent), v1 - v0, v0, v1))
+    if filas:
+        filas.sort(key=lambda x: -x[1])
+        mx = max(abs(f[1]) for f in filas) or 1
+        evid = [{"etiqueta": f[0], "valor": fmt_signo(f[1], 1).replace("%", " pp"), "pct": round(abs(f[1]) / mx * 100, 2),
+                 "pct_txt": "{} → {}".format(fmt_pct(f[2]), fmt_pct(f[3])), "negativo": f[1] < 0} for f in filas]
+        neg = [f[0] for f in filas if f[1] < 0]
+        col = next((f for f in filas if f[0] == PAIS_FOCO), None)
+        ks.append({
+            "numero": 7, "vista": 3,
+            "titulo": "Colombia parte con mas renovables que casi todos, pero es {} que pierde participacion".format(
+                "el unico territorio" if neg == [PAIS_FOCO] else "uno de los territorios"),
+            "operacion": "Slice (Indicador = renovables) + dice (territorios × anios {} y {})".format(anio_ini, anio_ref),
+            "pregunta": "¿Como cambio la participacion de las renovables en la energia entre {} y {}?".format(anio_ini, anio_ref),
+            "evidencia": evid,
+            "hallazgo": "{t} es el que mas gana ({v}). Colombia pasa de {c0} a {c1} ({cv}); el mundo sube {w}.".format(
+                t=filas[0][0], v=fmt_signo(filas[0][1], 1).replace("%", " pp"),
+                c0=fmt_pct(col[2]) if col else "-", c1=fmt_pct(col[3]) if col else "-",
+                cv=fmt_signo(col[1], 1).replace("%", " pp") if col else "-",
+                w=fmt_signo(next((f[1] for f in filas if f[0] == "Mundo"), 0), 1).replace("%", " pp")),
+            "interpretacion": "La ventaja de Colombia viene de la hidroelectricidad; en anios secos (como los de El Nino) la "
+                              "generacion termica sube y la participacion renovable baja, mientras otras regiones crecen con solar y eolica.",
+            "utilidad": "Muestra que la matriz energetica colombiana depende del clima: un riesgo que conecta energia y eventos externos.",
+        })
+
+    # --- K8 (vista 4): atipicos dentro del nivel Nacional ----------------------
+    nac = p[p["nivel_geografico"] == "Nacional"]
+    if len(nac):
+        cat = (nac.groupby("categoria")["atipico"].mean() * 100).sort_values(ascending=False)
+        prim = p[p["fuente_tipo"] == "Primaria"]
+        evid = [{"etiqueta": c, "valor": fmt_int(int((nac["categoria"] == c).sum())) + " registros",
+                 "pct": round(v / cat.max() * 100, 2), "pct_txt": fmt_pct(v) + " atipicos"} for c, v in cat.items()]
+        ks.append({
+            "numero": 8, "vista": 4,
+            "titulo": "Entre paises, los atipicos se reparten parejo entre categorias y no aparecen en las fuentes primarias",
+            "operacion": "Slice (Nivel = Nacional) + pivot Categoria × Tipo de fuente, medida % de atipicos",
+            "pregunta": "¿Si se quita el efecto de los agregados, alguna categoria concentra los problemas de calidad?",
+            "evidencia": evid,
+            "hallazgo": "Con solo paises, el % de atipicos va de {mn} ({cmn}) a {mx} ({cmx}), un rango estrecho frente al {rg} de los "
+                        "registros regionales. Las {np} mediciones de fuentes primarias tienen {pp} de atipicos.".format(
+                            mn=fmt_pct(cat.min()), cmn=cat.idxmin(), mx=fmt_pct(cat.max()), cmx=cat.idxmax(),
+                            rg=fmt_pct(p[p["nivel_geografico"] == "Regional"]["atipico"].mean() * 100),
+                            np=fmt_int(len(prim)), pp=fmt_pct(prim["atipico"].mean() * 100 if len(prim) else 0)),
+            "interpretacion": "Al hacer slice en el nivel Nacional la marca de atipico deja de depender de la escala y refleja "
+                              "paises grandes o perfiles extremos. Las series primarias son estables porque miden un solo agregado global.",
+            "utilidad": "Para filtrar datos dudosos conviene usar la marca solo dentro del nivel Nacional y no descartar series primarias.",
+        })
+    return ks
+
+
 def ejemplos_operaciones(p, vt):
     anio_ref = vt["anio_ref"]
     ej = {}
@@ -845,7 +968,7 @@ def construir(df, n_consolidado=None, ruta_db=None):
             "mapa": vista_mapa(p),
             "pivot": vista_pivot(p),
         },
-        "conocimientos": conocimientos(p, vt),
+        "conocimientos": conocimientos(p, vt) + conocimientos_extra(p, vt),
         "ejemplos": ejemplos_operaciones(p, vt),
         "continuidad": continuidad(p, n_consolidado),
         "origen": "almacen SQLite" if usar_db else "memoria",

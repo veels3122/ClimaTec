@@ -12,7 +12,7 @@
         {% for v in vistas %}
         <a class="panel enlace e5-vista-card" href="{{ url_for('e5_vista', num=v.num) }}">
             <span class="e5-vista-num">Vista {{ v.num }}</span>
-            <h3>{{ v.titulo }}</h3>
+            <h3>{{ v.titulo_analisis }}</h3>
             <p class="e5-vista-preg">{{ v.pregunta }}</p>
             <div class="e5-ops">{% for o in v.operaciones %}<span class="chip">{{ o }}</span>{% endfor %}</div>
             <span class="e5-abrir">Abrir la vista</span>
@@ -34,7 +34,22 @@
             </tbody>
         </table>
     </div>
-    <p class="pob-mini">Las vistas se calculan en el navegador con los datos que entrega <span class="mono">scripts/multidimensional.py</span>; no usan librerias externas.</p>
+    <p class="pob-mini">Cada vista consulta el modelo estrella en SQLite a traves de <span class="mono">/api/etapa5/olap</span>; los filtros y
+    operaciones vuelven a consultar el modelo y recalculan indicadores, graficas y matriz.</p>
+
+    <h3 class="e5-subtit">Contenido de cada vista</h3>
+    <div class="tabla-wrap">
+        <table class="e5-matriz">
+            <thead><tr><th>Vista</th><th>Indicadores</th><th>Visualizaciones</th><th>Matriz</th><th>Filtros (dimension)</th><th>Operaciones</th><th>Conocimientos</th></tr></thead>
+            <tbody>
+                <tr><td><a href="{{ url_for('e5_vista', num=1) }}">1</a></td><td>3</td><td>2 · serie por nivel, perfil mensual</td><td>Anio × Mes</td><td style="text-align:left;">Indicador · Proveedor (Fuente) · Anio (Tiempo)</td><td style="text-align:left;">Drill-down, roll-up, slice, dice, pivot</td><td>2</td></tr>
+                <tr><td><a href="{{ url_for('e5_vista', num=2) }}">2</a></td><td>3</td><td>2 · barras del nivel, participacion por anio</td><td>Territorio × Anio</td><td style="text-align:left;">Indicador · Anio (Tiempo)</td><td style="text-align:left;">Drill-down, roll-up, slice, pivot</td><td>2</td></tr>
+                <tr><td><a href="{{ url_for('e5_vista', num=3) }}">3</a></td><td>3</td><td>2 · trayectorias, cambio total</td><td>Territorio × Anio</td><td style="text-align:left;">Indicador · Territorios (Geografia) · Anios (Tiempo)</td><td style="text-align:left;">Slice, dice, drill-down, roll-up, pivot</td><td>2</td></tr>
+                <tr><td><a href="{{ url_for('e5_vista', num=4) }}">4</a></td><td>3</td><td>2 · medida por miembro, composicion</td><td>Filas × Columnas a eleccion</td><td style="text-align:left;">Tipo de fuente (Fuente) · Anio (Tiempo) · Nivel (Geografia)</td><td style="text-align:left;">Drill-down, roll-up, slice, dice, pivot</td><td>2</td></tr>
+            </tbody>
+            <tfoot><tr><th>Total</th><td>12</td><td>8</td><td>4</td><td></td><td></td><td>8</td></tr></tfoot>
+        </table>
+    </div>
 </section>
 
 {{ m.pie(('e5_verificacion', 'Verificacion del modelo'), ('e5_vista', 'Vista 1 · Evolucion en el tiempo', {'num': 1})) }}
