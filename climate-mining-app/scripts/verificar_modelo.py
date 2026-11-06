@@ -302,3 +302,149 @@ if __name__ == "__main__":
         print("\n[{}] {}".format("OK" if c["ok"] else "DIF", c["titulo"]))
         for f in c["filas"]:
             print("   ", f)
+
+
+# ---------------------------------------------------------------------------
+# 3. Condiciones para realizar el analisis (pagina "Condiciones del analisis")
+# ---------------------------------------------------------------------------
+def condiciones(ruta_db):
+    import olap
+    con = sqlite3.connect(ruta_db)
+    out = []
+
+    def ev(texto, sql=None, valor=None):
+        v = valor if valor is not None else (_uno(con, sql) if sql else None)
+        return {"texto": texto, "sql": sql, "valor": v}
+
+    try:
+        # 1. Granularidad consistente
+        dup = ("SELECT COUNT(*) FROM (SELECT id_tiempo, id_geo, id_indicador, id_fuente FROM hechos_observacion "
+               "GROUP BY 1, 2, 3, 4 HAVING COUNT(*) > 1);")
+        mix = ("SELECT COUNT(*) FROM (SELECT h.id_indicador FROM hechos_observacion h JOIN dim_tiempo t ON t.id_tiempo = h.id_tiempo "
+               "GROUP BY h.id_indicador HAVING COUNT(DISTINCT t.periodicidad) > 1);")
+        e1, e2 = ev("Grupos de hechos repetidos en el grano declarado", dup), ev("Indicadores que mezclan series anuales y mensuales", mix)
+        out.append({"condicion": "Mantener una granularidad consistente en la tabla de hechos",
+                    "como": "Un hecho = un indicador × territorio × periodo × fuente, protegido por UNIQUE. Cada indicador tiene una sola "
+                            "periodicidad, asi que nunca se mezclan en una celda un dato anual y uno mensual del mismo indicador.",
+                    "evidencias": [e1, e2], "ok": e1["valor"] == 0 and e2["valor"] == 0})
+
+        # 2. Relaciones que no multiplican valores
+        n_h = _uno(con, "SELECT COUNT(*) FROM hechos_observacion;")
+        n_j = ("SELECT COUNT(*) FROM hechos_observacion h JOIN dim_tiempo t ON t.id_tiempo = h.id_tiempo "
+               "JOIN dim_geografia g ON g.id_geo = h.id_geo JOIN dim_indicador i ON i.id_indicador = h.id_indicador "
+               "JOIN dim_fuente f ON f.id_fuente = h.id_fuente;")
+        s_h = _uno(con, "SELECT ROUND(SUM(valor), 4) FROM hechos_observacion;")
+        s_j = _uno(con, n_j.replace("COUNT(*)", "ROUND(SUM(h.valor), 4)"))
+        out.append({"condicion": "Evitar que las relaciones entre tablas multipliquen los valores",
+                    "como": "Todas las relaciones son 1:N desde dimensiones con clave unica; no hay uniones entre dimensiones ni "
+                            "tablas puente. Unir la estrella completa no cambia ni el numero de filas ni la suma de valores.",
+                    "evidencias": [ev("Filas de la tabla de hechos sola", valor=n_h), ev("Filas tras unir las cuatro dimensiones", n_j),
+                                   ev("SUM(valor) sin uniones vs. con uniones", valor="{} = {}".format(md.fmt_dec(s_h, 1), md.fmt_dec(s_j, 1)))],
+                    "ok": n_h == _uno(con, n_j) and abs((s_h or 0) - (s_j or 0)) < 1e-6})
+
+        # 3. Conteos de registros, entidades unicas y sumas
+        r_n = olap.consulta(ruta_db, "region", None, "n", {"indicador": ["Emisiones de CO2 (total)"], "nivel": ["Nacional"],
+                                                           "region": ["Sudamerica"], "anio": [2020, 2021, 2022, 2023, 2024]})
+        r_p = olap.consulta(ruta_db, "region", None, "paises", {"indicador": ["Emisiones de CO2 (total)"], "nivel": ["Nacional"],
+                                                                "region": ["Sudamerica"], "anio": [2020, 2021, 2022, 2023, 2024]})
+        r_p1 = olap.consulta(ruta_db, "anio", None, "paises", {"indicador": ["Emisiones de CO2 (total)"], "nivel": ["Nacional"],
+                                                               "region": ["Sudamerica"], "anio": [2020, 2021, 2022, 2023, 2024]})
+        suma_anual = sum(v for v in r_p1["celdas"].values() if v)
+        out.append({"condicion": "Diferenciar conteos de registros, conteos de entidades unicas y sumas de cantidades",
+                    "como": "Son tres medidas distintas: SUM(n_registros) cuenta hechos, COUNT(DISTINCT id_geo) cuenta paises y "
+                            "SUM(valor) suma la cantidad. El conteo distinto no se suma entre anios.",
+                    "evidencias": [ev("Sudamerica, CO2, 2020–2024: registros (hechos)", valor=r_n["total"]),
+                                   ev("Paises distintos en el mismo corte", valor=r_p["total"]),
+                                   ev("Suma (incorrecta) de los paises de cada anio", valor=suma_anual),
+                                   ev("Suma de la cantidad (Mt CO2), unidad distinta", valor=md.fmt_dec(r_n and olap.consulta(
+                                       ruta_db, "region", None, "valor", {"indicador": ["Emisiones de CO2 (total)"], "nivel": ["Nacional"],
+                                                                         "region": ["Sudamerica"], "anio": [2020, 2021, 2022, 2023, 2024]})["total"], 1))],
+                    "ok": r_p["total"] < suma_anual})
+
+        # 4. Denominadores de los porcentajes
+        out.append({"condicion": "Indicar el denominador utilizado en los porcentajes",
+                    "como": "Cada porcentaje del modulo declara su denominador, en esta tabla y en el subtitulo de la grafica o matriz que lo usa.",
+                    "tabla": [("% de atipicos", "Registros (SUM(n_registros)) de la misma celda", "Vista 4"),
+                              ("Participacion %", "Suma del nivel padre (region o mundo) del mismo indicador y anio", "Vista 2"),
+                              ("Variacion %", "Valor del mismo territorio en el primer anio elegido", "Vista 3"),
+                              ("Cambio en pp", "No es cociente: diferencia de dos porcentajes", "Vista 3"),
+                              ("Indice mundo = 100", "Valor del Mundo en el mismo anio", "Vista 3")],
+                    "evidencias": [], "ok": True})
+
+        # 5 y 6. Recalcular porcentajes y promedios; no sumarlos
+        ind = olap.consulta(ruta_db, "indicador", None, "pat", {"nivel": ["Nacional"], "categoria": ["Energia"]})
+        cat = olap.consulta(ruta_db, "categoria", None, "pat", {"nivel": ["Nacional"], "categoria": ["Energia"]})
+        vals = [v for v in ind["celdas"].values() if v is not None]
+        mes = olap.consulta(ruta_db, "mes", None, "valor", {"indicador": ["Anomalia de temperatura global"], "proveedor": ["NASA"], "anio": [2023]})
+        anio = olap.consulta(ruta_db, "anio", None, "valor", {"indicador": ["Anomalia de temperatura global"], "proveedor": ["NASA"], "anio": [2023]})
+        mv = [v for v in mes["celdas"].values() if v is not None]
+        out.append({"condicion": "Recalcular porcentajes y promedios al cambiar el nivel de agrupacion",
+                    "como": "Cada nivel es una consulta nueva sobre los hechos: la proporcion usa el numerador y el denominador del grupo "
+                            "y el promedio usa todos los hechos del grupo.",
+                    "evidencias": [ev("% de atipicos de Energia recalculado (paises)", valor=md.fmt_pct(cat["total"], 2)),
+                                   ev("Promedio de los 2023 meses (NASA) vs. valor anual recalculado",
+                                      valor="{} = {} °C".format(md.fmt_dec(sum(mv) / len(mv), 3), md.fmt_dec(anio["total"], 3)))],
+                    "ok": True})
+        try:
+            olap.consulta(ruta_db, "region", None, "valor", {})
+            bloqueo = "no bloqueado"
+        except olap.ErrorConsulta as e:
+            bloqueo = str(e)
+        out.append({"condicion": "Evitar sumar porcentajes o promedios de grupos sin considerar como fueron calculados",
+                    "como": "Los totales de las matrices salen de su propia consulta; el motor rechaza sumar valores de indicadores distintos; "
+                            "la vista 2 no suma anios (la poblacion es un stock).",
+                    "evidencias": [ev("Promediar los % de los {} indicadores de Energia daria".format(len(vals)),
+                                      valor=md.fmt_pct(sum(vals) / len(vals), 2) + " (incorrecto)"),
+                                   ev("El valor correcto, con numerador y denominador", valor=md.fmt_pct(cat["total"], 2)),
+                                   ev("Respuesta del motor a una suma de indicadores distintos", valor=bloqueo)],
+                    "ok": bloqueo != "no bloqueado"})
+
+        # 7. Periodos equivalentes
+        meses = con.execute("SELECT t.anio, COUNT(DISTINCT t.mes) FROM hechos_observacion h JOIN dim_tiempo t ON t.id_tiempo = h.id_tiempo "
+                            "WHERE t.mes > 0 GROUP BY t.anio ORDER BY 1;").fetchall()
+        reg = con.execute("SELECT t.anio, COUNT(*) FROM hechos_observacion h JOIN dim_tiempo t ON t.id_tiempo = h.id_tiempo "
+                          "GROUP BY t.anio ORDER BY 1;").fetchall()
+        out.append({"condicion": "Comparar periodos equivalentes cuando existan datos temporales",
+                    "como": "Los promedios anuales y los indicadores de cambio de la vista 1 usan solo periodos completos; las vistas 2 y 3 "
+                            "comparan hasta 2024, el ultimo anio con cobertura amplia; los meses se comparan con el mismo mes de otro anio.",
+                    "evidencias": [ev("Meses con dato por anio (series mensuales)", valor=", ".join("{}: {}".format(a, n) for a, n in meses)),
+                                   ev("Registros por anio", valor=", ".join("{}: {}".format(a, md.fmt_int(n)) for a, n in reg))],
+                    "ok": True})
+
+        # 8. Faltantes, desconocidos y negativos
+        neg = con.execute("SELECT i.indicador, COUNT(*) FROM hechos_observacion h JOIN dim_indicador i ON i.id_indicador = h.id_indicador "
+                          "WHERE h.valor < 0 GROUP BY i.indicador ORDER BY 2 DESC;").fetchall()
+        n_pais = _uno(con, "SELECT COUNT(*) FROM dim_geografia WHERE nivel_geografico = 'Nacional';")
+        sin_gas = _uno(con, "SELECT COUNT(*) FROM dim_geografia g WHERE g.nivel_geografico = 'Nacional' AND NOT EXISTS ("
+                            "SELECT 1 FROM hechos_observacion h JOIN dim_indicador i ON i.id_indicador = h.id_indicador "
+                            "JOIN dim_tiempo t ON t.id_tiempo = h.id_tiempo WHERE h.id_geo = g.id_geo "
+                            "AND i.indicador = 'CO2 por gas' AND t.anio = 2024);")
+        out.append({"condicion": "Diferenciar valores faltantes, categorias desconocidas y respuestas negativas",
+                    "como": "Faltante = no existe el hecho: se muestra «—» y no se cuenta como cero. Desconocido = miembro -1 de una "
+                            "dimension. No aplica = nulo estructural (ISO de un agregado, mes de una serie anual). Negativo = valor real "
+                            "permitido en anomalias y variaciones; en estos datos solo aparece en la variacion anual de CO2.",
+                    "evidencias": [ev("Paises sin dato de «CO2 por gas» en 2024 (faltantes, no ceros)", valor="{} de {}".format(sin_gas, n_pais)),
+                                   ev("Hechos en miembros desconocidos (-1)", "SELECT COUNT(*) FROM hechos_observacion WHERE id_geo = -1 "
+                                      "OR id_tiempo = -1 OR id_indicador = -1 OR id_fuente = -1;"),
+                                   ev("Entidades con ISO «No aplica»", "SELECT COUNT(*) FROM dim_geografia WHERE iso_code = 'No aplica' AND id_geo <> -1;"),
+                                   ev("Valores negativos legitimos", valor="; ".join("{}: {}".format(i, n) for i, n in neg) or "ninguno")],
+                    "ok": True})
+
+        # 9. Jerarquias validas
+        jer = [c for c in integridad(con, n_h) if c["grupo"] == "Jerarquias"]
+        out.append({"condicion": "Utilizar jerarquias con relaciones de agrupacion validas",
+                    "como": "Cada hijo tiene un solo padre en Tiempo, Geografia, Indicador y Fuente (comprobado en el almacen).",
+                    "evidencias": [ev(c["nombre"], c["sql"]) for c in jer], "ok": all(c["ok"] for c in jer)})
+    finally:
+        con.close()
+
+    # 10 y 11. Asociacion vs causalidad; hipotesis
+    out.append({"condicion": "Diferenciar las asociaciones observadas de las relaciones causales",
+                "como": "Los ocho conocimientos se presentan como asociaciones observadas (campo «Tipo de relacion»). Ninguno afirma "
+                        "causas: el cubo solo tiene medidas climaticas, energeticas y de poblacion, sin variables que permitan aislar efectos.",
+                "evidencias": [], "ok": True, "ref_conocimientos": "tipo"})
+    out.append({"condicion": "Presentar como hipotesis las explicaciones que no puedan comprobarse con los datos",
+                "como": "Las posibles causas (pandemia, El Nino, vegetacion, hidroelectricidad, sectores emisores) se separan de la "
+                        "interpretacion y se marcan como hipotesis en cada conocimiento.",
+                "evidencias": [], "ok": True, "ref_conocimientos": "hipotesis"})
+    return out

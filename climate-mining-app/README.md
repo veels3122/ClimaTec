@@ -116,11 +116,11 @@ Procfile y render.yaml incluidos. El servicio arranca con gunicorn app:app.
 
 ## Etapa 5 — analisis multidimensional
 
-Menu **Multidimensional** con 11 apartados: proposito, continuidad del proyecto
+Menu **Multidimensional** con 12 apartados: proposito, continuidad del proyecto
 (registros usados, limitaciones de calidad, unidad de analisis vs granularidad),
 relacion con el conocimiento evidente, 4 preguntas de analisis (una por vista),
 diseno del modelo estrella, dimensiones/medidas/jerarquias, implementacion y carga,
-verificacion del modelo, 4 vistas interactivas,
+verificacion del modelo, condiciones del analisis, 4 vistas interactivas,
 operaciones OLAP (slice, dice, roll-up, drill-down, pivot) y conclusiones.
 
     python scripts/cargar_modelo.py      # carga el modelo estrella en data/dw/climatec_dw.sqlite

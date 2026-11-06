@@ -264,3 +264,8 @@
 @media (max-width: 980px) { .e5-graficas, .e5-diseno { grid-template-columns: 1fr; } }
 .e5-ej-tablas { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin-top: .8rem; }
 .e5-ej-tablas .tabla-wrap { max-height: 360px; overflow: auto; }
+.e5-seleccion-k { display: block; margin-top: .45rem; font-size: .86rem; color: var(--ink-soft); }
+.e5-seleccion-k strong, .e5-hipotesis strong { color: #fff; font-weight: 500; }
+.e5-hipotesis { display: block; margin-top: .55rem; padding: .5rem .7rem; border-left: 3px solid var(--amber);
+    background: rgba(255,180,84,.08); border-radius: 0 8px 8px 0; font-size: .86rem; color: var(--ink-soft); }
+.e5-conoc .pob-dl dt { min-width: 11rem; }

@@ -385,13 +385,16 @@
                     if (E.pivot) chips.push({ op: 'pivot', etq: 'Pivot', texto: 'Matriz rotada' });
                     seleccion(chips);
 
-                    // KPIs
+                    // KPIs: solo periodos equivalentes (con el mismo numero de registros que un periodo completo)
+                    var nmax = Math.max.apply(null, r4.filas.map(function (f) { return totalFila(r4, f.clave) || 0; }).concat([0]));
+                    var comp = r1.filas.filter(function (f) { return totalFila(r4, f.clave) === nmax; });
+                    var excl = r1.filas.length - comp.length;
                     var mejor = null;
-                    r1.filas.forEach(function (f) { var v = totalFila(r1, f.clave); if (v !== null && (!mejor || v > mejor.v)) mejor = { f: f, v: v }; });
+                    comp.forEach(function (f) { var v = totalFila(r1, f.clave); if (v !== null && (!mejor || v > mejor.v)) mejor = { f: f, v: v }; });
                     kpi(1, mejor ? auto(mejor.v) + ' ' + u : '—', 'valor mas alto en el nivel ' + NIV_T[E.nivel].toLowerCase(),
-                        mejor ? mejor.f.etiqueta + ' (promedio de los proveedores elegidos)' : '');
-                    var fs = r1.filas, ini = fs.length ? totalFila(r1, fs[0].clave) : null, fin = fs.length ? totalFila(r1, fs[fs.length - 1].clave) : null;
-                    kpi(2, ini !== null && fin !== null ? signo(fin - ini, 2, ' ' + u) : '—', 'cambio entre el primer y el ultimo periodo',
+                        mejor ? mejor.f.etiqueta + ' · promedio de ' + nmax + ' registros' + (excl ? ' · ' + excl + ' periodo(s) incompleto(s) excluido(s)' : '') : '');
+                    var fs = comp, ini = fs.length ? totalFila(r1, fs[0].clave) : null, fin = fs.length ? totalFila(r1, fs[fs.length - 1].clave) : null;
+                    kpi(2, ini !== null && fin !== null ? signo(fin - ini, 2, ' ' + u) : '—', 'cambio entre el primer y el ultimo periodo completo',
                         fs.length ? fs[0].etiqueta + ' → ' + fs[fs.length - 1].etiqueta : '');
                     var provs = r1.columnas.map(function (c) { return c.clave; });
                     if (provs.length >= 2) {
