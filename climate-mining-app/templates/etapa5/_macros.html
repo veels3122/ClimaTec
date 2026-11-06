@@ -26,32 +26,57 @@
 {%- endmacro %}
 
 {% macro conocimiento(k) -%}
-<article class="panel pob-conoc" id="k{{ k.numero }}">
+<article class="panel pob-conoc e5-conoc" id="k{{ k.numero }}">
     <header>
         <span class="pob-conoc-num">{{ k.numero }}</span>
         <div>
             <h3>{{ k.titulo }}</h3>
-            <p class="pob-mini" style="margin:.2rem 0 0;">{{ k.operacion }} ·
-                <a href="{{ url_for('e5_vista', num=k.vista) }}">abrir la vista {{ k.vista }}</a></p>
+            <p class="pob-mini" style="margin:.2rem 0 0;">{{ k.operacion }}</p>
         </div>
     </header>
     <dl class="pob-dl">
-        <div><dt>Pregunta</dt><dd>{{ k.pregunta }}</dd></div>
+        <div><dt>1 · Pregunta</dt><dd>{{ k.pregunta }}</dd></div>
+        <div><dt>2 · Dimensiones y medidas</dt><dd><strong>Dimensiones:</strong> {{ k.dimensiones }}<br><strong>Medidas:</strong> {{ k.medidas }}</dd></div>
+        <div><dt>3 · Procedimiento</dt><dd>{{ k.procedimiento }}
+            <span class="e5-seleccion-k"><strong>Seleccion para reproducirlo:</strong> {{ k.seleccion }} ·
+            <a href="{{ url_for('e5_vista', num=k.vista) }}">abrir la vista {{ k.vista }}</a></span></dd></div>
         <div class="pob-evid">
-            <dt>Evidencia</dt>
+            <dt>4 · Evidencia</dt>
             <dd>
+                <p class="pob-mini" style="margin:0 0 .5rem;">{{ k.evidencia_ref }}</p>
+                {% set divergente = k.evidencia | selectattr('negativo') | list | length > 0 %}
+                {% if divergente %}<p class="pob-mini" style="margin:0 0 .3rem;">Rojo = aumento · azul = reduccion.</p>{% endif %}
                 {% for e in k.evidencia %}
-                <div class="barra-h-fila{{ ' warm' if e.negativo }}">
+                <div class="barra-h-fila{{ ' warm' if divergente and not e.negativo }}">
                     <div class="barra-h-label">{{ e.etiqueta }}</div>
                     <div class="barra-h-track"><div class="barra-h-fill" style="width: {{ [[e.pct, 0.6] | max, 100] | min }}%;"></div></div>
                     <div class="barra-h-val">{{ e.valor }} · {{ e.pct_txt }}</div>
                 </div>
                 {% endfor %}
+                {% for c in k.evidencia_consultas %}
+                <details class="e5-sql">
+                    <summary>Consulta al modelo: {{ c.titulo }}{% if c.n %} · {{ '{:,}'.format(c.n).replace(',', '.') }} hechos{% endif %}{% if c.unidad %} · {{ c.unidad }}{% endif %}</summary>
+                    {% if c.error %}<p class="e5-x">{{ c.error }}</p>{% else %}
+                    <div class="tabla-wrap" style="margin-top:.5rem;">
+                        <table class="e5-pivot">
+                            <thead><tr>{% for h in c.cab %}<th>{{ h }}</th>{% endfor %}</tr></thead>
+                            <tbody>{% for f in c.filas %}<tr><th>{{ f[0] }}</th>{% for v in f[1:] %}<td class="mono">{{ v }}</td>{% endfor %}</tr>{% endfor %}</tbody>
+                        </table>
+                    </div>
+                    <pre class="e5-codigo"><code>{{ c.sql }}</code></pre>
+                    {% endif %}
+                </details>
+                {% endfor %}
             </dd>
         </div>
-        <div><dt>Hallazgo</dt><dd>{{ k.hallazgo }}</dd></div>
-        <div><dt>Interpretacion</dt><dd>{{ k.interpretacion }}</dd></div>
-        <div><dt>Utilidad</dt><dd>{{ k.utilidad }}</dd></div>
+        <div><dt>5 · Hallazgo</dt><dd>{{ k.hallazgo }}</dd></div>
+        <div><dt>6 · Interpretacion</dt><dd>{{ k.interpretacion }}
+            {% if k.frente_evidente %}<span class="e5-seleccion-k"><strong>Frente al conocimiento evidente:</strong> {{ k.frente_evidente }}</span>{% endif %}
+            <span class="e5-seleccion-k"><strong>Tipo de relacion:</strong> {{ k.tipo_relacion }}.</span>
+            {% if k.hipotesis %}<span class="e5-hipotesis"><strong>Hipotesis (no comprobada con estos datos):</strong> {{ k.hipotesis }}</span>{% endif %}
+        </dd></div>
+        <div><dt>7 · Utilidad</dt><dd>{{ k.utilidad }}</dd></div>
+        <div><dt>8 · Limitacion</dt><dd>{{ k.limitacion }}</dd></div>
     </dl>
 </article>
 {%- endmacro %}

@@ -1198,6 +1198,16 @@ def e5_verificacion():
     return render_template("etapa5/verificacion.html", proyecto=PROYECTO, info=_info_e5(), ver=_verificacion_e5())
 
 
+@app.route("/etapa-5/condiciones-del-analisis")
+def e5_condiciones():
+    try:
+        conds = verificar_modelo.condiciones(RUTA_DW) if RUTA_DW else []
+    except Exception:
+        app.logger.exception("No se pudieron evaluar las condiciones del analisis")
+        conds = []
+    return render_template("etapa5/condiciones.html", proyecto=PROYECTO, info=_info_e5(), conds=conds)
+
+
 def _verificacion_e5():
     try:
         return verificar_modelo.verificar(RUTA_DW, df_tratado())

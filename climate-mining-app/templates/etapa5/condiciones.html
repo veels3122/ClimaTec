@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% import 'etapa5/_macros.html' as m %}
+{% block titulo %}Etapa 5 · Condiciones del analisis · ClimaTec{% endblock %}
+{% block contenido %}
+
+{{ m.hero(9, 'Condiciones para realizar el analisis',
+   'Once condiciones que garantizan que las cifras del cubo sean correctas y que las conclusiones digan solo lo que los datos permiten. Cada una indica como se cumple y la evidencia que se calcula en vivo sobre el modelo.') }}
+
+{% if conds %}
+<div class="grid grid-3" style="margin-top:1.4rem;">
+    <div class="panel stat cold"><div class="valor">{{ conds | selectattr('ok') | list | length }} / {{ conds | length }}</div><div class="etiqueta">condiciones cumplidas</div></div>
+    <div class="panel stat"><div class="valor">{{ info.conocimientos | length if info else 0 }}</div><div class="etiqueta">conocimientos presentados como asociaciones observadas</div></div>
+    <div class="panel stat warm"><div class="valor">{{ (info.conocimientos | selectattr('hipotesis') | list | length) if info else 0 }}</div><div class="etiqueta">conocimientos con hipotesis marcadas aparte</div></div>
+</div>
+
+<nav class="pob-indice" aria-label="Condiciones" style="margin-top:1.4rem;">
+    {% for c in conds %}<a href="#c{{ loop.index }}"><span>{{ loop.index }}</span> {{ c.condicion.split(' ')[0] }} {{ c.condicion.split(' ')[1] }}…</a>{% endfor %}
+</nav>
+
+{% for c in conds %}
+<section class="pob-bloque" id="c{{ loop.index }}">
+    <article class="panel e5-check-grupo">
+        <h3>{{ loop.index }} · {{ c.condicion }} <span class="{{ 'e5-ok' if c.ok else 'e5-x' }}">{{ '✓ Se cumple' if c.ok else '✗ Revisar' }}</span></h3>
+        <p style="max-width:none;">{{ c.como }}</p>
+        {% if c.tabla %}
+        <div class="tabla-wrap"><table>
+            <thead><tr><th>Porcentaje</th><th>Denominador</th><th>Donde se usa</th></tr></thead>
+            <tbody>{% for a, b, d in c.tabla %}<tr><td><strong>{{ a }}</strong></td><td>{{ b }}</td><td>{{ d }}</td></tr>{% endfor %}</tbody>
+        </table></div>
+        {% endif %}
+        {% if c.evidencias %}
+        <div class="tabla-wrap"><table>
+            <thead><tr><th>Evidencia</th><th>Resultado en el modelo</th></tr></thead>
+            <tbody>
+            {% for e in c.evidencias %}
+                <tr><td>{{ e.texto }}{% if e.sql %}<details class="e5-sql"><summary>SQL</summary><pre class="e5-codigo"><code>{{ e.sql }}</code></pre></details>{% endif %}</td>
+                    <td class="mono">{{ '{:,}'.format(e.valor).replace(',', '.') if e.valor is number else e.valor }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table></div>
+        {% endif %}
+        {% if c.ref_conocimientos and info %}
+        <div class="tabla-wrap"><table>
+            <thead><tr><th>Conocimiento</th><th>{{ 'Tipo de relacion' if c.ref_conocimientos == 'tipo' else 'Hipotesis (no comprobada)' }}</th></tr></thead>
+            <tbody>
+            {% for k in info.conocimientos %}
+                <tr><td><a href="{{ url_for('e5_vista', num=k.vista) }}#k{{ k.numero }}">{{ k.numero }} · {{ k.titulo }}</a></td>
+                    <td>{{ k.tipo_relacion if c.ref_conocimientos == 'tipo' else (k.hipotesis or 'Sin hipotesis: la explicacion se comprueba con el procedimiento de la Etapa 2.') }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table></div>
+        {% endif %}
+    </article>
+</section>
+{% endfor %}
+
+{{ m.pie(('e5_verificacion', 'Verificacion del modelo'), ('e5_vistas', 'Vistas interactivas')) }}
+{% else %}
+<div class="nota" style="margin-top:1.4rem;">No se pudieron evaluar las condiciones: ejecuta <span class="mono">python scripts/cargar_modelo.py</span>.</div>
+{% endif %}
+{% endblock %}

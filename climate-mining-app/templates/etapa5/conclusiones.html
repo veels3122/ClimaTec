@@ -3,7 +3,7 @@
 {% block titulo %}Etapa 5 · Conocimientos, limitaciones y conclusiones · ClimaTec{% endblock %}
 {% block contenido %}
 
-{{ m.hero(11, 'Conocimientos descubiertos, limitaciones y conclusiones',
+{{ m.hero(12, 'Conocimientos descubiertos, limitaciones y conclusiones',
    'Lo que el cubo mostro y que no era visible mirando una dimension a la vez, con lo que todavia no se puede afirmar.') }}
 
 {% if info %}
@@ -15,7 +15,7 @@
 
 <section class="pob-bloque">
     <h2>Conocimientos descubiertos</h2>
-    <p>Cada conocimiento indica la operacion que lo revelo y enlaza a la vista donde se puede reproducir. Las cifras se calculan en vivo.</p>
+    <p>Los ocho conocimientos de las cuatro vistas, con sus ocho elementos: pregunta, dimensiones y medidas, procedimiento, evidencia (con la consulta al modelo), hallazgo, interpretacion, utilidad y limitacion. Las cifras se calculan en vivo.</p>
     {% for k in info.conocimientos %}{{ m.conocimiento(k) }}{% endfor %}
 </section>
 
@@ -48,8 +48,8 @@
     <div class="panel pob-decision" style="margin-top:1rem;">
         <h3 style="margin-top:0;">Para Colombia</h3>
         <p style="max-width:none;margin-bottom:0;">Colombia debe compararse con sus pares de Sudamerica y con indicadores relativos, no con el total regional.
-        Su seguimiento climatico necesita dos ritmos: anual para emisiones y energia, y mensual para los eventos externos (El Nino, La Nina)
-        que se reflejan en la temperatura.</p>
+        Su seguimiento climatico necesita dos ritmos: anual para emisiones y energia, y mensual para estudiar eventos externos (El Nino, La Nina);
+        la relacion entre esos eventos y los indicadores queda como hipotesis hasta integrar un indice ENSO al modelo.</p>
     </div>
 </section>
 

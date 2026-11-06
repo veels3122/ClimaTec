@@ -838,7 +838,7 @@ def conocimientos_extra(p, vt):
                 p=", mientras tiene {} de la poblacion de la region".format(fmt_pct(pob[1])) if pob else ""),
             "interpretacion": "La Etapa 4 mostro que Colombia pesa mas en metano que en CO2 a escala mundial; el drill-down "
                               "muestra que tambien ocurre frente a sus vecinos, y que por habitante emite menos que su peso poblacional.",
-            "utilidad": "Ubica al metano (agricultura, ganaderia, residuos) como el gas donde Colombia tiene mas peso relativo en la region.",
+            "utilidad": "Ubica al metano como el gas donde Colombia tiene mas peso relativo en la region: es el candidato a priorizar en su seguimiento y en metas de reduccion.",
         })
 
     # --- K7 (vista 3): renovables ---------------------------------------------
@@ -869,7 +869,7 @@ def conocimientos_extra(p, vt):
                 w=fmt_signo(next((f[1] for f in filas if f[0] == "Mundo"), 0), 1).replace("%", " pp")),
             "interpretacion": "La ventaja de Colombia viene de la hidroelectricidad; en anios secos (como los de El Nino) la "
                               "generacion termica sube y la participacion renovable baja, mientras otras regiones crecen con solar y eolica.",
-            "utilidad": "Muestra que la matriz energetica colombiana depende del clima: un riesgo que conecta energia y eventos externos.",
+            "utilidad": "Justifica vigilar cada anio la participacion renovable de Colombia y cruzarla con eventos climaticos en analisis posteriores.",
         })
 
     # --- K8 (vista 4): atipicos dentro del nivel Nacional ----------------------
@@ -894,6 +894,197 @@ def conocimientos_extra(p, vt):
                               "paises grandes o perfiles extremos. Las series primarias son estables porque miden un solo agregado global.",
             "utilidad": "Para filtrar datos dudosos conviene usar la marca solo dentro del nivel Nacional y no descartar series primarias.",
         })
+    return ks
+
+
+# ---------------------------------------------------------------------------
+# Documentacion completa de cada conocimiento (pregunta, dimensiones y medidas,
+# procedimiento, evidencia, hallazgo, interpretacion, utilidad, limitacion).
+# Los textos de interpretacion distinguen la asociacion observada de las
+# posibles causas, que se presentan aparte como hipotesis.
+# ---------------------------------------------------------------------------
+def _doc(anio_ini, anio_ref):
+    co2, met, n2o = "Emisiones de CO2 (total)", "Emisiones de metano", "Emisiones de oxido nitroso"
+    ter = ORDEN_REGIONES + ["World", PAIS_FOCO]
+    return {
+        1: {
+            "dimensiones": "Geografia (Region → Pais), Indicador, Tiempo",
+            "medidas": "Valor sumado (Mt CO2) y participacion % (denominador: suma de los paises de Sudamerica en el mismo anio)",
+            "procedimiento": "Slice Indicador = Emisiones de CO2 (total) y Anio = {a}; slice Nivel = Nacional para sumar solo paises; "
+                             "drill-down de Region a Pais con filtro Region = Sudamerica; agrupacion por pais y orden por valor.".format(a=anio_ref),
+            "seleccion": "Vista 2 · Indicador = Emisiones de CO2 (total) · Anio = {} · drill-down a Sudamerica".format(anio_ref),
+            "evidencia_ref": "Vista 2: visualizacion 1, indicador 3 (posicion de Colombia) y matriz Paises × Anio tras el drill-down.",
+            "consultas": [("Paises de Sudamerica", "pais", None, "valor",
+                           {"indicador": [co2], "anio": [anio_ref], "nivel": ["Nacional"], "region": ["Sudamerica"]})],
+            "frente_evidente": "El conocimiento evidente de la Etapa 4 ubicaba a Sudamerica como un bloque de bajo aporte (cerca del 3% mundial). "
+                               "El drill-down muestra que ese bloque no es homogeneo: el aporte regional depende de pocos paises.",
+            "interpretacion": "Comparar a Colombia con el total de Sudamerica la hace parecer pequena, pero entre sus pares regionales ocupa "
+                              "un lugar intermedio-alto. La comparacion pertinente es pais con pais, no pais con region.",
+            "hipotesis": "El peso de Brasil podria explicarse por su tamano economico y poblacional; los datos del cubo no permiten "
+                         "comprobarlo porque no incluyen PIB ni estructura productiva.",
+            "limitacion": "Es un solo anio y mide emisiones territoriales (no incluye las emisiones de lo que un pais importa). No permite "
+                          "concluir nada sobre diferencias dentro de cada pais ni sobre las causas del reparto.",
+        },
+        2: {
+            "dimensiones": "Geografia (6 regiones, Mundo y Colombia), Tiempo (Anio), Indicador",
+            "medidas": "Variacion % = (valor del anio / valor de {a0} − 1) × 100; denominador: valor del mismo territorio en {a0}".format(a0=anio_ini),
+            "procedimiento": "Slice Indicador = Emisiones de CO2 (total); dice Territorio ∈ {{6 regiones, Mundo, Colombia}} × Anio ∈ {{{a0}–{a}}}; "
+                             "agrupacion Territorio × Anio con los agregados oficiales de cada territorio.".format(a0=anio_ini, a=anio_ref),
+            "seleccion": "Vista 3 · Indicador = Emisiones de CO2 (total) · todos los territorios · anios {}–{} · medida Variacion".format(anio_ini, anio_ref),
+            "evidencia_ref": "Vista 3: matriz Territorios × Anio, visualizacion 2 (cambio total) e indicadores 1 y 2.",
+            "consultas": [("Territorios en el anio base y el final", "territorio", "anio", "valor",
+                           {"indicador": [co2], "pais": ter, "anio": [anio_ini, anio_ref]})],
+            "frente_evidente": "La Etapa 4 mostro quien emite mas en un anio. El cruce Territorio × Anio muestra hacia donde va cada territorio, "
+                               "algo que la foto de un anio no permite ver.",
+            "interpretacion": "Los territorios que mas emiten no son necesariamente los que mas crecen, y la region de Colombia crece mas rapido "
+                              "que el mundo aunque su aporte absoluto sea pequeno. Es una asociacion temporal observada, no una explicacion.",
+            "hipotesis": "Parte del crecimiento medido desde {} podria deberse al rebote despues de la pandemia; para probarlo habria que "
+                         "comparar con anios anteriores, que no estan en el dataset. La vista 3 permite repetir el corte desde 2021.".format(anio_ini),
+            "limitacion": "{} es un anio atipico como base, y la variacion porcentual no dice nada del nivel absoluto: un +13% en Asia y un "
+                          "+13% en Sudamerica representan cantidades muy distintas.".format(anio_ini),
+        },
+        3: {
+            "dimensiones": "Tiempo (Anio → Mes), Fuente (Proveedor), Indicador",
+            "medidas": "Valor promedio de la anomalia (°C) = AVG de los meses del periodo; brecha entre proveedores (°C)",
+            "procedimiento": "Slice Indicador = Anomalia de temperatura global; dice Proveedor ∈ {NASA, NOAA}; roll-up a Anio solo con "
+                             "anios de 12 meses; drill-down a Mes para ubicar el maximo; comparacion de proveedores en cada periodo.",
+            "seleccion": "Vista 1 · Indicador = Anomalia de temperatura global · Proveedores NASA y NOAA · nivel Anio y luego Mes (2023)",
+            "evidencia_ref": "Vista 1: visualizacion 1 en nivel Anio y en nivel Mes, indicador 3 (brecha entre proveedores) y matriz Anio × Mes.",
+            "consultas": [("Promedio anual por proveedor", "anio", "proveedor", "valor",
+                           {"indicador": ["Anomalia de temperatura global"]}),
+                          ("Meses de 2023 por proveedor", "mes", "proveedor", "valor",
+                           {"indicador": ["Anomalia de temperatura global"], "anio": [2023]})],
+            "frente_evidente": "La dimension temporal de la Etapa 4 trabajo a nivel anual. Bajar al mes y separar por fuente muestra que el "
+                               "maximo puntual y el maximo anual no estan en el mismo anio.",
+            "interpretacion": "El nivel Anio sirve para la tendencia y el nivel Mes para los episodios. La diferencia entre fuentes es "
+                              "estable, lo que indica una diferencia de linea base y no un desacuerdo sobre la evolucion.",
+            "hipotesis": "El pico de 2023 coincide en el tiempo con el episodio de El Nino 2023–2024; el cubo no incluye un indice ENSO, "
+                         "asi que la relacion queda como hipotesis.",
+            "limitacion": "Es una serie global: no dice nada de la temperatura en Colombia. 2026 tiene meses incompletos y no entra al "
+                          "promedio anual; los niveles absolutos de NASA y NOAA no son comparables entre si.",
+        },
+        4: {
+            "dimensiones": "Geografia (Nivel geografico), Indicador (Categoria), Fuente (Tipo)",
+            "medidas": "% de atipicos = SUM(atipico) / SUM(n_registros) × 100; denominador: registros de cada celda",
+            "procedimiento": "Sin filtros (todo el cubo); pivot Nivel geografico × Categoria; la proporcion se recalcula en cada celda y en "
+                             "cada total; luego slice Tipo de fuente = Primaria para contrastar.",
+            "seleccion": "Vista 4 · Filas = Nivel geografico · Columnas = Categoria · Medida = % de atipicos · sin filtros",
+            "evidencia_ref": "Vista 4: matriz Nivel × Categoria, visualizacion 1 y indicador 3 (celda con el valor mas alto).",
+            "consultas": [("% de atipicos por nivel y categoria", "nivel", "categoria", "pat", {})],
+            "frente_evidente": "La Etapa 4 describio cuantos registros hay por nivel y tipo de fuente. Al cruzarlo con la marca de calidad "
+                               "aparece que esa composicion afecta como se detectaron los atipicos.",
+            "interpretacion": "La marca de atipico no se reparte segun la calidad de las fuentes sino segun la escala: los agregados regionales "
+                              "quedan fuera del rango calculado con todos los niveles juntos. El efecto se comprueba en el procedimiento de la "
+                              "Etapa 2 (IQR por indicador sin separar niveles).",
+            "hipotesis": "",
+            "limitacion": "Un atipico no es un error: el cubo no permite decir que valores estan mal. Algunas celdas regionales tienen pocos "
+                          "registros (60 o menos), por lo que su porcentaje es poco estable.",
+        },
+        5: {
+            "dimensiones": "Tiempo (Mes del anio, Anio), Indicador, Fuente (Proveedor)",
+            "medidas": "Valor promedio (ppm) por mes calendario; amplitud = maximo − minimo; aumento anual = diferencia de promedios anuales / anios",
+            "procedimiento": "Slice Indicador = Concentracion de CO2 atmosferico (unica fuente: NOAA, Mauna Loa); dice en los anios con 12 meses; "
+                             "drill-down de Anio a Mes del anio y agrupacion por mes calendario; roll-up a Anio para la tendencia.",
+            "seleccion": "Vista 1 · Indicador = Concentracion de CO2 atmosferico · Proveedor NOAA · visualizacion 2 (perfil por mes)",
+            "evidencia_ref": "Vista 1: visualizacion 2 (perfil por mes del anio) y matriz Anio × Mes.",
+            "consultas": [("Promedio por mes calendario", "mes_del_anio", None, "valor",
+                           {"indicador": ["Concentracion de CO2 atmosferico"], "anio": list(range(2020, 2026))})],
+            "frente_evidente": "El conocimiento evidente mostraba un CO2 que sube cada anio. Al bajar al mes aparece una oscilacion dentro "
+                               "del anio mayor que la subida anual.",
+            "interpretacion": "Dos meses de anios distintos no son periodos equivalentes: comparar mayo con septiembre puede mostrar una "
+                              "«bajada» que no existe en la tendencia. Es un patron observado, repetido en todos los anios completos.",
+            "hipotesis": "El ciclo podria deberse a la vegetacion del hemisferio norte, que absorbe CO2 en verano y lo libera en invierno; "
+                         "el cubo no tiene datos de vegetacion para comprobarlo.",
+            "limitacion": "Es una sola estacion (Mauna Loa), no un promedio global, y el patron no se puede trasladar a Colombia.",
+        },
+        6: {
+            "dimensiones": "Geografia (Pais dentro de Sudamerica), Indicador (CO2, metano, oxido nitroso, energia, poblacion), Tiempo",
+            "medidas": "Participacion % de Colombia = valor de Colombia / suma de los paises de Sudamerica × 100 (mismo indicador y anio)",
+            "procedimiento": "Slice Anio = {a} y Nivel = Nacional; drill-down a los paises de Sudamerica; se repite la consulta cambiando el "
+                             "slice de Indicador y se compara la participacion y el puesto de Colombia.".format(a=anio_ref),
+            "seleccion": "Vista 2 · drill-down a Sudamerica · Anio = {} · Indicador = CO2, luego metano, oxido nitroso, energia y poblacion".format(anio_ref),
+            "evidencia_ref": "Vista 2: indicador 3 (posicion de Colombia) y visualizacion 1 al cambiar el filtro Indicador.",
+            "consultas": [("Paises × indicador (suma por celda)", "pais", "indicador", "suma",
+                           {"indicador": [co2, met, n2o, "Poblacion"], "anio": [anio_ref], "nivel": ["Nacional"], "region": ["Sudamerica"]})],
+            "frente_evidente": "La Etapa 4 encontro que Colombia pesa mas en metano que en CO2 a escala mundial. El drill-down comprueba que "
+                               "el mismo patron se mantiene frente a sus vecinos, y anade la comparacion con su peso poblacional.",
+            "interpretacion": "Colombia emite menos de lo que pesa en habitantes dentro de la region, y su mayor peso relativo esta en el metano. "
+                              "Es una asociacion entre territorio e indicador observada en un anio.",
+            "hipotesis": "El mayor peso en metano podria relacionarse con la ganaderia, la agricultura o los residuos; el cubo no tiene "
+                         "emisiones por sector para comprobarlo.",
+            "limitacion": "Es un solo anio; el metano se expresa en equivalentes de CO2 segun el factor que usa la fuente; las participaciones "
+                          "dependen de que todos los paises reporten el indicador.",
+        },
+        7: {
+            "dimensiones": "Geografia (6 regiones, Mundo y Colombia), Tiempo (Anio), Indicador",
+            "medidas": "Cambio en puntos porcentuales = participacion {a} − participacion {a0} (no se usa variacion % sobre un porcentaje)".format(a=anio_ref, a0=anio_ini),
+            "procedimiento": "Slice Indicador = Participacion de renovables en energia; dice Territorio ∈ {{regiones, Mundo, Colombia}} × "
+                             "Anio ∈ {{{a0}, {a}}}; diferencia por territorio.".format(a0=anio_ini, a=anio_ref),
+            "seleccion": "Vista 3 · Indicador = Participacion de renovables en energia · todos los territorios · medida Variacion (pp)",
+            "evidencia_ref": "Vista 3: visualizacion 2 (cambio total en pp), indicador 2 y matriz Territorios × Anio.",
+            "consultas": [("Participacion de renovables", "territorio", "anio", "valor",
+                           {"indicador": ["Participacion de renovables en energia"], "pais": ter, "anio": [anio_ini, anio_ref]})],
+            "frente_evidente": "El conocimiento evidente mostraba a Colombia con una participacion renovable alta en un anio. El cruce con el "
+                               "tiempo muestra que es el unico territorio donde esa participacion baja.",
+            "interpretacion": "Partir de un nivel alto no garantiza mejorar: mientras las demas regiones ganan participacion, la de Colombia "
+                              "retrocede. Es una tendencia observada, no una explicacion de por que ocurre.",
+            "hipotesis": "Podria deberse a la dependencia de la hidroelectricidad y a anios secos (como los asociados a El Nino), en los que "
+                         "sube la generacion termica; el cubo no tiene la composicion de la generacion ni datos de lluvia.",
+            "limitacion": "Es una participacion: si el consumo total crece, la energia renovable puede aumentar en cantidad aunque su "
+                          "porcentaje baje. Cinco anios son pocos para hablar de una tendencia estable.",
+        },
+        8: {
+            "dimensiones": "Indicador (Categoria), Fuente (Tipo de fuente), Geografia (Nivel = Nacional)",
+            "medidas": "% de atipicos = SUM(atipico) / SUM(n_registros) × 100; denominador: registros de cada categoria o tipo de fuente",
+            "procedimiento": "Slice Nivel geografico = Nacional; pivot Categoria × Tipo de fuente; y, sin el slice, agrupacion por Tipo de "
+                             "fuente para contrastar las fuentes primarias.",
+            "seleccion": "Vista 4 · Nivel geografico = Nacional · Filas = Categoria · Columnas = Tipo de fuente · % de atipicos",
+            "evidencia_ref": "Vista 4: matriz con el slice Nacional, visualizacion 1 e indicador 1.",
+            "consultas": [("Categoria con slice Nacional", "categoria", None, "pat", {"nivel": ["Nacional"]}),
+                          ("% de atipicos por tipo de fuente", "tipo_fuente", None, "pat", {})],
+            "frente_evidente": "Complementa el conocimiento 4: una vez se quita el efecto de escala, la calidad es pareja entre temas, "
+                               "algo que el conocimiento evidente de composicion no podia mostrar.",
+            "interpretacion": "Entre paises, ninguna categoria concentra los problemas de calidad; los atipicos que quedan estan repartidos.",
+            "hipotesis": "Las series primarias podrian no tener atipicos porque miden un solo agregado global con poca variacion; con estos "
+                         "datos no se puede separar ese efecto de la calidad de la fuente.",
+            "limitacion": "El IQR entre paises mezcla paises grandes y pequenos, y las fuentes primarias tienen solo registros globales: no se "
+                          "puede comparar su calidad con la de los paises.",
+        },
+    }
+
+
+def documentar(ks, anio_ini, anio_ref, ruta_db=None):
+    """Completa cada conocimiento con los 8 elementos y ejecuta sus consultas
+    de evidencia sobre el modelo (si hay almacen)."""
+    doc = _doc(anio_ini, anio_ref)
+    olap = None
+    if ruta_db and os.path.isfile(ruta_db):
+        import olap
+    for k in ks:
+        k.update(doc.get(k["numero"], {}))
+        k["tipo_relacion"] = "Asociacion observada en los datos (no establece causalidad)"
+        evid = []
+        for titulo, filas, cols, medida, filtros in k.get("consultas", []):
+            if olap is None:
+                continue
+            try:
+                r = olap.consulta(ruta_db, filas, cols, medida, filtros)
+                d = 0 if medida in ("n", "at", "paises") else (1 if medida == "pat" else 2)
+                fmt = lambda v, d=d: "—" if v is None else (
+                    fmt_dec(v, 0 if abs(v) >= 1000 else d) + ("%" if medida == "pat" else ""))
+                cab = [r["atributo_filas"]["nivel"]] + ([c["etiqueta"] for c in r["columnas"]] if r["columnas"] else [r["medida"]["nombre"]])
+                cuerpo = []
+                for f in r["filas"][:14]:
+                    if r["columnas"]:
+                        cuerpo.append([f["etiqueta"]] + [fmt(r["celdas"].get("{}|{}".format(f["clave"], c["clave"]))) for c in r["columnas"]])
+                    else:
+                        cuerpo.append([f["etiqueta"], fmt(r["celdas"].get("{}|".format(f["clave"])))])
+                evid.append({"titulo": titulo, "cab": cab, "filas": cuerpo, "sql": r["sql"], "n": r["n_hechos"],
+                             "unidad": r["medida"]["unidad"] or ""})
+            except Exception as e:  # la evidencia nunca debe tumbar la pagina
+                evid.append({"titulo": titulo, "error": str(e)})
+        k["evidencia_consultas"] = evid
+        k.pop("consultas", None)
     return ks
 
 
@@ -968,7 +1159,8 @@ def construir(df, n_consolidado=None, ruta_db=None):
             "mapa": vista_mapa(p),
             "pivot": vista_pivot(p),
         },
-        "conocimientos": conocimientos(p, vt) + conocimientos_extra(p, vt),
+        "conocimientos": documentar(conocimientos(p, vt) + conocimientos_extra(p, vt),
+                                    min(vt["anios"]) if vt["anios"] else None, vt["anio_ref"], ruta_db if usar_db else None),
         "ejemplos": ejemplos_operaciones(p, vt),
         "continuidad": continuidad(p, n_consolidado),
         "origen": "almacen SQLite" if usar_db else "memoria",
