@@ -116,22 +116,38 @@ Procfile y render.yaml incluidos. El servicio arranca con gunicorn app:app.
 
 ## Etapa 5 — analisis multidimensional
 
-Menu **Multidimensional** con 12 apartados: proposito, continuidad del proyecto
-(registros usados, limitaciones de calidad, unidad de analisis vs granularidad),
-relacion con el conocimiento evidente, 4 preguntas de analisis (una por vista),
-diseno del modelo estrella, dimensiones/medidas/jerarquias, implementacion y carga,
-verificacion del modelo, condiciones del analisis, 4 vistas interactivas,
-operaciones OLAP (slice, dice, roll-up, drill-down, pivot) y conclusiones.
+Menu **Analisis multidimensional** (12 apartados): proposito, continuidad del proyecto, relacion con el
+conocimiento evidente, preguntas de analisis, diseno del modelo estrella, dimensiones/medidas/jerarquias,
+implementacion y carga, verificacion, condiciones del analisis, 4 vistas interactivas, operaciones OLAP y
+conocimientos/conclusiones.
 
-    python scripts/cargar_modelo.py      # carga el modelo estrella en data/dw/climatec_dw.sqlite
-    python scripts/verificar_modelo.py   # integridad + comparaciones con los datos tratados
-    python scripts/multidimensional.py   # resumen del cubo y conocimientos
+- **App publicada:** https://climatec-ctrm.onrender.com/etapa-5/proposito
+- **Documentacion del modelo, scripts SQL y flujo de commits:** [`docs/etapa5/`](../docs/etapa5/README.md)
 
-La app carga el almacen al arrancar si no existe o si cambio clima_limpio.csv.
-Las 4 vistas consultan el modelo con `scripts/olap.py` a traves de `/api/etapa5/olap`
-(drill-down, roll-up, slice, dice y pivot recalculados en SQL).
+### Datos
+- Entrada: `data/raw/clima_limpio.csv` (resultado de las Etapas 2 y 3; se regenera con
+  `python scripts/preparar_datos.py` y `python scripts/limpieza.py`).
+- `data/raw/dim_pais_region.csv`: pais (ISO3) → continente, para la jerarquia Region → Pais.
+- Almacen: `data/dw/climatec_dw.sqlite` (no se versiona; se crea con la carga).
 
-- `scripts/multidimensional.py`: modelo estrella en memoria sobre `clima_limpio.csv`.
-- `data/raw/dim_pais_region.csv`: pais (ISO3) -> continente, para la jerarquia Region > Pais.
-- `static/js/etapa5_vistas.js`: las 4 vistas (sin librerias externas).
-- `ssis/sql/04_modelo_estrella.sql`: el mismo modelo en el esquema `dw` de ClimaTec_ETL.
+### Dependencias
+Las mismas de `requirements.txt` (Flask, pandas, gunicorn, plotly). El modelo usa `sqlite3` de la
+biblioteca estandar de Python: no requiere servidor de base de datos.
+
+### Configurar, cargar y ejecutar
+```bash
+pip install -r requirements.txt
+python scripts/cargar_modelo.py          # crea el modelo estrella en data/dw/climatec_dw.sqlite
+python scripts/verificar_modelo.py       # integridad + comparaciones con los datos tratados
+python scripts/exportar_documentacion.py # regenera docs/etapa5 (diccionario y SQL)
+python app.py                            # http://localhost:5000/etapa-5/proposito
+```
+La app tambien carga el almacen al arrancar si no existe o si cambio `clima_limpio.csv`, por eso en
+Render no hace falta un paso extra: `gunicorn app:app` basta.
+
+### Componentes
+- `scripts/multidimensional.py`: dimensiones, medidas, conocimientos y datos de las paginas.
+- `scripts/cargar_modelo.py`: transformacion y carga (DDL con PK, FK, UNIQUE e indices).
+- `scripts/olap.py`: motor de consultas OLAP; lo usan las vistas a traves de `/api/etapa5/olap`.
+- `scripts/verificar_modelo.py`: verificaciones de integridad, comparaciones y condiciones del analisis.
+- `ssis/sql/04_modelo_estrella.sql`: el mismo modelo en SQL Server (esquema `dw` de ClimaTec_ETL).

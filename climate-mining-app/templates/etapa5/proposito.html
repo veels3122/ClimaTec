@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% import 'etapa5/_macros.html' as m %}
+{% import 'etapa5/_macros.html' as m with context %}
 {% block titulo %}Etapa 5 · Proposito de la etapa · ClimaTec{% endblock %}
 {% block contenido %}
 
@@ -56,6 +56,27 @@
     lo carga en el almacen SQLite <span class="mono">data/dw/climatec_dw.sqlite</span>, que la app consulta para armar el cubo; el script
     <span class="mono">ssis/sql/04_modelo_estrella.sql</span> deja el mismo modelo en la base <span class="mono">ClimaTec_ETL</span> de SQL Server.
     Ver <a href="{{ url_for('e5_implementacion') }}">Implementacion y carga</a>.</p>
+</section>
+
+<section class="pob-bloque">
+    <h2>Como recorrer esta seccion</h2>
+    <div class="tabla-wrap">
+        <table>
+            <thead><tr><th>Contenido</th><th>Apartados</th></tr></thead>
+            <tbody>
+                <tr><td>Proposito de la etapa</td><td>1 · esta pagina · <a href="{{ url_for('e5_continuidad') }}">2 Continuidad del proyecto</a> · <a href="{{ url_for('e5_preguntas') }}">4 Preguntas de analisis</a></td></tr>
+                <tr><td>Relacion con los resultados de conocimiento evidente</td><td><a href="{{ url_for('e5_relacion') }}">3 Relacion con el conocimiento evidente</a></td></tr>
+                <tr><td>Diagrama y explicacion del modelo estrella</td><td><a href="{{ url_for('e5_modelo') }}">5 Diseno del modelo estrella</a> · <a href="{{ url_for('e5_implementacion') }}">7 Implementacion y carga</a> · <a href="{{ url_for('e5_verificacion') }}">8 Verificacion</a></td></tr>
+                <tr><td>Dimensiones, medidas y jerarquias</td><td><a href="{{ url_for('e5_dimensiones') }}">6 Dimensiones, medidas y jerarquias</a> · <a href="{{ url_for('e5_condiciones') }}">9 Condiciones del analisis</a></td></tr>
+                <tr><td>Acceso a las cuatro vistas interactivas</td><td><a href="{{ url_for('e5_vistas') }}">10 Vistas interactivas</a>: {% for v in vistas %}<a href="{{ url_for('e5_vista', num=v.num) }}">vista {{ v.num }}</a>{{ ', ' if not loop.last }}{% endfor %}</td></tr>
+                <tr><td>Operaciones multidimensionales implementadas</td><td><a href="{{ url_for('e5_operaciones') }}">11 Operaciones multidimensionales</a></td></tr>
+                <tr><td>Conocimientos descubiertos, limitaciones y conclusiones</td><td><a href="{{ url_for('e5_conclusiones') }}">12 Conocimientos, limitaciones y conclusiones</a></td></tr>
+            </tbody>
+        </table>
+    </div>
+    <p class="pob-mini">Las vistas ejecutan consultas reales sobre el modelo (no son capturas). Aplicacion publicada:
+    <a href="{{ ficha_e5.url_app if ficha_e5 else 'https://climatec-ctrm.onrender.com' }}">climatec-ctrm.onrender.com</a> · repositorio:
+    <a href="{{ ficha_e5.url_repo if ficha_e5 else 'https://github.com/veels3122/ClimaTec' }}">github.com/veels3122/ClimaTec</a>.</p>
 </section>
 
 {{ m.pie(None, ('e5_continuidad', 'Continuidad del proyecto')) }}

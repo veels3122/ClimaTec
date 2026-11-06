@@ -8,6 +8,14 @@
     <h1>{{ titulo }}</h1>
     <p class="lede">{{ lede }}</p>
 </div>
+{% if ficha_e5 %}{% set f = ficha_e5 %}
+<aside class="e5-ficha" aria-label="Fuente y cobertura de los datos">
+    <div><span>Datos</span><strong>Modelo estrella en SQLite</strong> cargado desde <span class="mono">clima_limpio.csv</span> (Etapas 2 y 3){% if f.carga %} · carga {{ f.carga }}{% endif %}</div>
+    <div><span>Fuentes</span>{% for t, n in f.fuentes %}{{ n }} <em>({{ t|lower }})</em>{{ '; ' if not loop.last }}{% endfor %}</div>
+    <div><span>Periodo</span>{{ f.anio_min }}–{{ f.anio_max }} · comparaciones entre territorios hasta {{ f.anio_completo }} (ultimo anio completo)</div>
+    <div><span>Cobertura</span>{{ f.paises }} paises · {{ f.regiones }} regiones · Mundo · {{ f.indicadores }} indicadores · {{ '{:,}'.format(f.hechos).replace(',', '.') }} hechos</div>
+</aside>
+{% endif %}
 {%- endmacro %}
 
 {% macro pie(anterior=None, siguiente=None) -%}

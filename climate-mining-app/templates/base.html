@@ -112,7 +112,7 @@
                     Analisis de Datos <span class="caret">&#9662;</span>
                 </button>
                 <button type="button" class="nav-pill-link ruleta-disparador{{ ' activo' if request.endpoint in endpoints_etapa5 }}" data-etapa="multidimensional" aria-haspopup="dialog" aria-expanded="false">
-                    Multidimensional <span class="caret">&#9662;</span>
+                    Analisis multidimensional <span class="caret">&#9662;</span>
                 </button>
                 <a href="{{ url_for('dataset_etapa1') }}" class="nav-pill-link{{ ' activo' if request.endpoint == 'dataset_etapa1' }}">Dataset</a>
                 <a href="{{ url_for('fuentes_datos') }}" class="nav-pill-link{{ ' activo' if request.endpoint == 'fuentes_datos' }}">Fuentes</a>
@@ -151,7 +151,7 @@
                     Analisis de Datos <span class="caret">&#9662;</span>
                 </button>
                 <button type="button" class="ruleta-disparador" data-etapa="multidimensional" aria-haspopup="dialog" aria-expanded="false">
-                    Analisis Multidimensional <span class="caret">&#9662;</span>
+                    Analisis multidimensional <span class="caret">&#9662;</span>
                 </button>
                 <a href="{{ url_for('dataset_etapa1') }}">Dataset</a>
                 <a href="{{ url_for('fuentes_datos') }}">Fuentes</a>
@@ -200,7 +200,7 @@
         {% for s in secciones_etapa4 %}{"num": {{ s.num }}, "titulo": {{ s.titulo|tojson }}, "href": {{ url_for(s.endpoint)|tojson }}, "activo": {{ (request.endpoint == s.endpoint)|tojson }}}{{ ',' if not loop.last }}
         {% endfor %}
     ]}</script>
-    <script type="application/json" id="ruleta-secciones-multidimensional-data">{"titulo": "Analisis Multidimensional", "secciones": [
+    <script type="application/json" id="ruleta-secciones-multidimensional-data">{"titulo": "Analisis multidimensional", "secciones": [
         {% for s in secciones_etapa5 %}{"num": {{ s.num }}, "titulo": {{ s.titulo|tojson }}, "href": {{ url_for(s.endpoint)|tojson }}, "activo": {{ (request.endpoint == s.endpoint or (s.endpoint == 'e5_vistas' and request.endpoint == 'e5_vista'))|tojson }}}{{ ',' if not loop.last }}
         {% endfor %}
     ]}</script>
@@ -209,7 +209,7 @@
         {"num": 2, "titulo": "Recoleccion de Datos", "disponible": true, "clave": "recoleccion"},
         {"num": 3, "titulo": "ETL (SSIS)", "disponible": true, "clave": "etl"},
         {"num": 4, "titulo": "Analisis de Datos", "disponible": true, "clave": "analisis"},
-        {"num": 5, "titulo": "Analisis Multidimensional", "disponible": true, "clave": "multidimensional"},
+        {"num": 5, "titulo": "Analisis multidimensional", "disponible": true, "clave": "multidimensional"},
         {"num": 6, "titulo": "Publicacion", "disponible": false}
     ]</script>
 
