@@ -115,6 +115,16 @@ def _medida_sql(medida, con, filtros):
     return sql, nombre, unidad, None
 
 
+def _sql_legible(sql, params):
+    """SQL con los parametros escritos (numeros sin comillas), para mostrarlo."""
+    partes = sql.split("?")
+    out = partes[0]
+    for p, resto in zip(params, partes[1:]):
+        lit = str(p) if isinstance(p, (int, float)) else "'{}'".format(str(p).replace("'", "''"))
+        out += lit + resto
+    return out + ";"
+
+
 def consulta(ruta_db, filas, columnas=None, medida="n", filtros=None, limite=400):
     """Ejecuta la consulta OLAP y devuelve celdas, totales y el SQL usado."""
     if filas not in ATRIBUTOS:
@@ -174,7 +184,7 @@ def consulta(ruta_db, filas, columnas=None, medida="n", filtros=None, limite=400
         "atributo_columnas": ({"clave": columnas, "dimension": ATRIBUTOS[columnas][0], "nivel": ATRIBUTOS[columnas][1]}
                               if columnas else None),
         "filtros": desc,
-        "sql": sql.replace("?", "{}").format(*["'{}'".format(p) for p in params]) if params else sql,
+        "sql": _sql_legible(sql, params),
     }
 
 

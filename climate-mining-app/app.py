@@ -1153,6 +1153,46 @@ def _conocimientos_e4():
     return salida
 
 
+URL_APP = "https://climatec-ctrm.onrender.com"
+URL_REPO = "https://github.com/veels3122/ClimaTec"
+_FICHA = {}
+
+
+@app.context_processor
+def ficha_etapa5():
+    """Fuente de los datos, periodo y cobertura: se muestra en todas las
+    paginas de la Etapa 5 (Analisis multidimensional)."""
+    if not (request.endpoint or "").startswith("e5_") or not RUTA_DW:
+        return {}
+    import sqlite3
+    clave = (RUTA_DW, os.path.getmtime(RUTA_DW))
+    if _FICHA.get("clave") != clave:
+        con = sqlite3.connect(RUTA_DW)
+        try:
+            uno = lambda q: con.execute(q).fetchone()
+            anios = uno("SELECT MIN(anio), MAX(anio) FROM dim_tiempo WHERE id_tiempo <> -1")
+            ficha = {
+                "fuentes": con.execute("SELECT fuente_tipo, fuente FROM dim_fuente WHERE id_fuente <> -1 "
+                                       "ORDER BY fuente_tipo, fuente").fetchall(),
+                "anio_min": anios[0], "anio_max": anios[1],
+                "anio_completo": uno("SELECT MAX(anio) FROM (SELECT t.anio, COUNT(*) n FROM hechos_observacion h "
+                                     "JOIN dim_tiempo t ON t.id_tiempo = h.id_tiempo GROUP BY t.anio) "
+                                     "WHERE n >= 0.8 * (SELECT MAX(n) FROM (SELECT COUNT(*) n FROM hechos_observacion h "
+                                     "JOIN dim_tiempo t ON t.id_tiempo = h.id_tiempo GROUP BY t.anio))")[0],
+                "paises": uno("SELECT COUNT(*) FROM dim_geografia WHERE nivel_geografico = 'Nacional'")[0],
+                "regiones": uno("SELECT COUNT(*) FROM dim_geografia WHERE nivel_geografico = 'Regional'")[0],
+                "indicadores": uno("SELECT COUNT(*) FROM dim_indicador WHERE id_indicador <> -1")[0],
+                "hechos": uno("SELECT COUNT(*) FROM hechos_observacion")[0],
+            }
+        finally:
+            con.close()
+        carga = cargar_modelo.ultima_carga(RUTA_DW)
+        ficha["carga"] = carga["fecha"][:10] if carga else None
+        ficha["url_app"], ficha["url_repo"] = URL_APP, URL_REPO
+        _FICHA.update({"clave": clave, "ficha": ficha})
+    return {"ficha_e5": _FICHA["ficha"]}
+
+
 @app.route("/etapa-5/proposito")
 def e5_proposito():
     return render_template("etapa5/proposito.html", proyecto=PROYECTO, info=_info_e5(), vistas=VISTAS_E5)
