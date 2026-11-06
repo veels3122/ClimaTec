@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% import 'etapa5/_macros.html' as m %}
+{% block titulo %}Etapa 5 · Vistas interactivas · ClimaTec{% endblock %}
+{% block contenido %}
+
+{{ m.hero(5, 'Acceso a las cuatro vistas interactivas',
+   'Cuatro formas de recorrer el mismo cubo. Todas leen la misma tabla de hechos; cambian las dimensiones que ponen en primer plano y las operaciones que permiten.') }}
+
+{% if info %}
+<section class="pob-bloque">
+    <div class="e5-vistas">
+        {% for v in vistas %}
+        <a class="panel enlace e5-vista-card" href="{{ url_for('e5_vista', num=v.num) }}">
+            <span class="e5-vista-num">Vista {{ v.num }}</span>
+            <h3>{{ v.titulo }}</h3>
+            <p>{{ v.resumen }}</p>
+            <div class="e5-ops">{% for o in v.operaciones %}<span class="chip">{{ o }}</span>{% endfor %}</div>
+            <span class="e5-abrir">Abrir la vista</span>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="pob-bloque">
+    <h2>Que dimensiones usa cada vista</h2>
+    <div class="tabla-wrap">
+        <table class="e5-matriz">
+            <thead><tr><th>Vista</th><th>Tiempo</th><th>Geografia</th><th>Indicador</th><th>Fuente</th><th>Medida principal</th></tr></thead>
+            <tbody>
+                <tr><td><a href="{{ url_for('e5_vista', num=1) }}">1 · Evolucion en el tiempo</a></td><td>Anio → Mes</td><td>Slice</td><td>Slice</td><td>Slice</td><td>Valor (promedio)</td></tr>
+                <tr><td><a href="{{ url_for('e5_vista', num=2) }}">2 · Del mundo al pais</a></td><td>Slice</td><td>Mundo → Pais</td><td>Slice</td><td>—</td><td>Valor (suma) y participacion %</td></tr>
+                <tr><td><a href="{{ url_for('e5_vista', num=3) }}">3 · Territorios por anio</a></td><td>Dice</td><td>Dice</td><td>Slice</td><td>—</td><td>Valor, variacion o indice mundo = 100</td></tr>
+                <tr><td><a href="{{ url_for('e5_vista', num=4) }}">4 · Tabla dinamica</a></td><td>Eje o filtro</td><td>Eje o filtro</td><td>Eje o filtro</td><td>Eje o filtro</td><td>A eleccion</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <p class="pob-mini">Las vistas se calculan en el navegador con los datos que entrega <span class="mono">scripts/multidimensional.py</span>; no usan librerias externas.</p>
+</section>
+
+{{ m.pie(('e5_dimensiones', 'Dimensiones, medidas y jerarquias'), ('e5_vista', 'Vista 1 · Evolucion en el tiempo', {'num': 1})) }}
+{% else %}{{ m.sin_datos() }}{% endif %}
+{% endblock %}

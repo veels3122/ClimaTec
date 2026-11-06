@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% import 'etapa5/_macros.html' as m %}
+{% block titulo %}Etapa 5 · Relacion con el conocimiento evidente · ClimaTec{% endblock %}
+{% block contenido %}
+
+{{ m.hero(2, 'Relacion con los resultados de conocimiento evidente',
+   'Cada conocimiento evidente de la Etapa 4 se convierte aqui en un punto de partida: el cubo lo reproduce, lo cruza con otra dimension y lo abre a un nivel de detalle que antes no estaba disponible.') }}
+
+{% if info %}
+{# Como retoma el cubo cada conocimiento evidente, en el orden en que los publica la Etapa 4. #}
+{% set retoma = {
+  'Dimension Poblacional': [
+    {'dims': 'Geografia (nivel) × Fuente (tipo)', 'op': 'Pivot y roll-up', 'vista': 4,
+     'como': 'Se vuelve a contar en la tabla dinamica con Nivel geografico y Tipo de fuente en los ejes; al cruzarlo con la marca de atipico aparece el conocimiento 4 de esta etapa.'},
+    {'dims': 'Geografia (Region) × Indicador (Poblacion) × Tiempo', 'op': 'Roll-up a Region', 'vista': 2,
+     'como': 'La vista territorial con el indicador Poblacion reproduce el reparto por region y permite bajar a los paises de cada una.'},
+    {'dims': 'Geografia (Pais) × Indicador (Poblacion)', 'op': 'Drill-down a Pais', 'vista': 2,
+     'como': 'Al abrir una region se ve que la concentracion tambien ocurre dentro de cada continente, no solo a escala mundial.'},
+  ],
+  'Dimension Territorial': [
+    {'dims': 'Geografia (Region) × Indicador × Tiempo', 'op': 'Roll-up y slice por anio', 'vista': 2,
+     'como': 'El reparto por region se reproduce sumando los paises de cada continente y se compara con el agregado oficial de la fuente.'},
+    {'dims': 'Geografia (Pais) × Indicador', 'op': 'Drill-down', 'vista': 2,
+     'como': 'La concentracion entre paises se estudia ahora dentro de cada region; en Sudamerica da el conocimiento 1 de esta etapa.'},
+    {'dims': 'Geografia × Tiempo × Indicador (per capita, metano)', 'op': 'Slice y dice', 'vista': 3,
+     'como': 'El mapa de calor anade el eje del tiempo: ya no solo cuanto emite Colombia, sino como cambia anio a anio frente a Sudamerica y el mundo.'},
+  ],
+} %}
+
+<section class="pob-bloque">
+    <h2>De la dimension aislada al cubo</h2>
+    <p>La Etapa 4 produjo conocimiento <strong>evidente</strong>: patrones que se leen directamente al describir una dimension
+    (quien concentra mas, como se reparte, quien emite menos). Esos resultados definieron que debia tener el modelo:</p>
+    <div class="grid grid-2">
+        <div class="panel"><h3>Que dimensiones crear</h3><p>Territorio y tiempo aparecieron en casi todos los hallazgos, y el tipo de fuente explico por que algunos niveles tienen pocos registros. Por eso son dimensiones del cubo.</p></div>
+        <div class="panel"><h3>Que jerarquias necesitaba</h3><p>Los hallazgos se movian entre mundo, region y pais, pero cada pagina los calculaba aparte. La jerarquia Mundo → Region → Pais permite pasar de uno a otro en la misma vista.</p></div>
+        <div class="panel"><h3>Que medidas no se pueden sumar</h3><p>La comparacion de Colombia se hizo con indicadores per capita y porcentajes. En el cubo esas medidas se marcan como no aditivas y se promedian.</p></div>
+        <div class="panel"><h3>Que faltaba responder</h3><p>Ningun hallazgo cruzaba territorio y tiempo a la vez, ni bajaba al nivel mensual. Esos huecos son los que llenan las vistas 1 y 3.</p></div>
+    </div>
+</section>
+
+<section class="pob-bloque">
+    <h2>Correspondencia con cada conocimiento evidente</h2>
+    <p class="pob-mini">Los titulos y hallazgos se leen en vivo de las paginas de la Etapa 4.</p>
+    {% for bloque in e4 %}
+    <h3 class="e5-subtit"><a href="{{ url_for(bloque.endpoint) }}">{{ bloque.dimension }}</a></h3>
+    {% if bloque.conocimientos %}
+    <div class="tabla-wrap">
+        <table class="e5-tabla-rel">
+            <thead><tr><th>Conocimiento evidente (Etapa 4)</th><th>Dimensiones del cubo</th><th>Operacion</th><th>Como lo retoma la Etapa 5</th></tr></thead>
+            <tbody>
+            {% for k in bloque.conocimientos %}
+                {% set r = retoma[bloque.dimension][loop.index0] if loop.index0 < retoma[bloque.dimension]|length else None %}
+                <tr>
+                    <td><strong>{{ k.numero }}. {{ k.titulo }}</strong><br><span class="pob-mini">{{ k.hallazgo }}</span></td>
+                    <td>{{ r.dims if r else '-' }}</td>
+                    <td>{% if r %}<span class="chip">{{ r.op }}</span>{% endif %}</td>
+                    <td>{% if r %}{{ r.como }} <a href="{{ url_for('e5_vista', num=r.vista) }}">Vista {{ r.vista }}</a>{% endif %}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="nota">No se pudieron leer los conocimientos de esta dimension.</div>
+    {% endif %}
+    {% endfor %}
+
+    <h3 class="e5-subtit"><a href="{{ url_for('e4_temporal') }}">Dimension Temporal</a></h3>
+    <p>La dimension Tiempo del cubo se construye con las fechas reales de cada observacion. Las series anuales llegan al nivel
+    Anio; las tres series mensuales (anomalia de temperatura de NASA GISS y NOAA, y CO2 de Mauna Loa) llegan hasta el nivel Mes,
+    y son las que permiten el drill-down temporal de la <a href="{{ url_for('e5_vista', num=1) }}">vista 1</a>.</p>
+
+    <h3 class="e5-subtit"><a href="{{ url_for('e4_relacional') }}">Dimension Relacional Multidimensional</a></h3>
+    <p>Este apartado de la Etapa 4 queda absorbido por el cubo: las relaciones entre dimensiones que alli se proponian se
+    consultan ahora directamente en la <a href="{{ url_for('e5_vista', num=4) }}">tabla dinamica</a>.</p>
+</section>
+
+<section class="pob-bloque">
+    <h2>De evidente a descubierto</h2>
+    <div class="nota"><p style="margin:0;max-width:none;">El conocimiento evidente responde «¿que hay?». El conocimiento que se
+    busca en esta etapa responde «¿que cambia cuando cruzo o cambio de nivel?». Los cuatro resultados de la
+    <a href="{{ url_for('e5_conclusiones') }}">seccion 7</a> salen de ese paso: ninguno era visible mirando una sola dimension.</p></div>
+</section>
+
+{{ m.pie(('e5_proposito', 'Proposito de la etapa'), ('e5_modelo', 'Modelo estrella')) }}
+{% else %}{{ m.sin_datos() }}{% endif %}
+{% endblock %}

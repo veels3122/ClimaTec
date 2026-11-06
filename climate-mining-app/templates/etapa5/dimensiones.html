@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% import 'etapa5/_macros.html' as m %}
+{% block titulo %}Etapa 5 · Dimensiones, medidas y jerarquias · ClimaTec{% endblock %}
+{% block contenido %}
+
+{{ m.hero(4, 'Descripcion de las dimensiones, medidas y jerarquias',
+   'Que atributos tiene cada dimension, por que niveles se puede subir y bajar, y como se agrega cada medida para que el resultado siga siendo correcto.') }}
+
+{% if info %}
+{% set mod = info.modelo %}
+
+<nav class="pob-indice" aria-label="Contenido de la pagina">
+    {% for d in mod.dimensiones %}<a href="#dim-{{ d.clave }}">{{ d.nombre.replace('Dimension ', '') }}</a>{% endfor %}
+    <a href="#medidas">Medidas</a>
+    <a href="#reglas">Reglas de agregacion</a>
+</nav>
+
+<section class="pob-bloque">
+    <h2>Dimensiones</h2>
+    {% for d in mod.dimensiones %}
+    <article class="panel e5-dim" id="dim-{{ d.clave }}">
+        <header class="e5-dim-cab">
+            <div>
+                <h3>{{ d.nombre }} <span class="mono">{{ d.tabla }}</span></h3>
+                <p class="pob-mini" style="margin:0;">{{ d.pregunta }} · {{ d.filas }} miembros</p>
+            </div>
+            <ol class="e5-jerarquia" aria-label="Jerarquia de {{ d.nombre }}">
+                {% for nivel in d.jerarquia %}<li>{{ nivel }}</li>{% endfor %}
+            </ol>
+        </header>
+        <div class="tabla-wrap">
+            <table>
+                <thead><tr><th>Atributo</th><th>Descripcion</th><th>Ejemplo</th></tr></thead>
+                <tbody>
+                {% for a in d.atributos %}
+                    <tr><td class="mono">{{ a[0] }}</td><td>{{ a[1] }}</td><td>{{ a[2] }}</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p class="pob-mini" style="margin:.8rem 0 0;">{{ d.nota }}</p>
+    </article>
+    {% endfor %}
+</section>
+
+<section class="pob-bloque">
+    <h2>Miembros de las jerarquias</h2>
+    <div class="grid grid-2 e5-miembros">
+        <div class="panel">
+            <h3>Geografia: Region → Pais</h3>
+            <div class="tabla-wrap">
+                <table>
+                    <thead><tr><th>Region</th><th>Paises</th></tr></thead>
+                    <tbody>
+                    {% for r in mod.regiones %}<tr><td>{{ r.region }}</td><td>{{ r.paises }}</td></tr>{% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <p class="pob-mini" style="margin-bottom:0;">Por encima de las regiones esta el Mundo; Colombia esta marcada como pais foco.{% if info.sin_region %} {{ info.sin_region }} pais(es) quedan sin region.{% endif %}</p>
+        </div>
+        <div class="panel">
+            <h3>Fuente: Tipo → Proveedor → Fuente</h3>
+            <div class="tabla-wrap">
+                <table>
+                    <thead><tr><th>Tipo</th><th>Proveedor</th><th>Fuente</th></tr></thead>
+                    <tbody>
+                    {% for f in mod.fuentes %}<tr><td>{{ f.tipo }}</td><td>{{ f.proveedor }}</td><td>{{ f.fuente }}</td></tr>{% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel" style="margin-top:1rem;">
+        <h3>Indicador: Categoria → Indicador</h3>
+        <div class="tabla-wrap">
+            <table>
+                <thead><tr><th>Categoria</th><th>Indicador</th><th>Unidad</th><th>Tipo de medida</th><th>Al subir de nivel</th></tr></thead>
+                <tbody>
+                {% for c in mod.categorias %}
+                    {% for i in c.indicadores %}
+                    <tr>
+                        {% if loop.first %}<td rowspan="{{ c.indicadores|length }}"><strong>{{ c.categoria }}</strong></td>{% endif %}
+                        <td>{{ i.nombre }}</td><td>{{ i.unidad }}</td><td>{{ i.tipo }}</td>
+                        <td><span class="tag {{ 'num' if i.agregacion == 'suma' else 'tmp' }}">{{ i.agregacion }}</span></td>
+                    </tr>
+                    {% endfor %}
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<section class="pob-bloque" id="medidas">
+    <h2>Medidas</h2>
+    <p>Las medidas base viven en la tabla de hechos; las derivadas se recalculan en cada celda del cubo a partir de las base,
+    nunca sumando porcentajes ya calculados.</p>
+    <div class="tabla-wrap">
+        <table>
+            <thead><tr><th>Medida</th><th>Origen</th><th>Calculo</th><th>Agregacion</th><th>Aditividad</th></tr></thead>
+            <tbody>
+            {% for me in mod.medidas %}
+                <tr><td><strong>{{ me.nombre }}</strong></td><td class="mono">{{ me.columna }}</td><td>{{ me.formula }}</td><td>{{ me.agregacion }}</td><td>{{ me.aditividad }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="pob-bloque" id="reglas">
+    <h2>Reglas de agregacion</h2>
+    <div class="grid grid-3">
+        <div class="panel"><h3>Sumar entre territorios</h3><p>Solo indicadores absolutos (CO2, metano, energia primaria, poblacion). La suma de los paises de una region se compara con el agregado oficial de esa region.</p></div>
+        <div class="panel"><h3>Promediar lo relativo</h3><p>Per capita, porcentajes, anomalias y concentraciones se promedian. Para regiones y el mundo se usa el valor que publica la fuente, no el promedio simple de los paises.</p></div>
+        <div class="panel"><h3>No mezclar niveles</h3><p>Sumar paises, regiones y el mundo en la misma celda contaria tres veces la misma emision. La vista 4 lo advierte cuando el filtro deja mas de un nivel geografico.</p></div>
+    </div>
+</section>
+
+{{ m.pie(('e5_modelo', 'Modelo estrella'), ('e5_vistas', 'Vistas interactivas')) }}
+{% else %}{{ m.sin_datos() }}{% endif %}
+{% endblock %}

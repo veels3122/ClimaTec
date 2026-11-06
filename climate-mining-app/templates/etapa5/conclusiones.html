@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% import 'etapa5/_macros.html' as m %}
+{% block titulo %}Etapa 5 · Conocimientos, limitaciones y conclusiones · ClimaTec{% endblock %}
+{% block contenido %}
+
+{{ m.hero(7, 'Conocimientos descubiertos, limitaciones y conclusiones',
+   'Lo que el cubo mostro y que no era visible mirando una dimension a la vez, con lo que todavia no se puede afirmar.') }}
+
+{% if info %}
+<nav class="pob-indice" aria-label="Contenido">
+    {% for k in info.conocimientos %}<a href="#k{{ k.numero }}"><span>{{ k.numero }}</span> {{ k.operacion.split(' (')[0].split(' +')[0] }}</a>{% endfor %}
+    <a href="#limitaciones">Limitaciones</a>
+    <a href="#conclusiones">Conclusiones</a>
+</nav>
+
+<section class="pob-bloque">
+    <h2>Conocimientos descubiertos</h2>
+    <p>Cada conocimiento indica la operacion que lo revelo y enlaza a la vista donde se puede reproducir. Las cifras se calculan en vivo.</p>
+    {% for k in info.conocimientos %}{{ m.conocimiento(k) }}{% endfor %}
+</section>
+
+<section class="pob-bloque" id="limitaciones">
+    <h2>Limitaciones</h2>
+    <div class="tabla-wrap">
+        <table>
+            <thead><tr><th>Limitacion</th><th>Efecto en el analisis</th></tr></thead>
+            <tbody>
+                <tr><td><strong>Jerarquia temporal incompleta</strong></td><td>Solo tres series (anomalia de temperatura de dos fuentes y CO2 de Mauna Loa) llegan al nivel Mes. Los demas indicadores son anuales: no se puede hacer drill-down temporal sobre emisiones o energia.</td></tr>
+                <tr><td><strong>Anios con cobertura parcial</strong></td><td>{{ info.anio_max }} y el anio anterior tienen pocos registros. Las vistas lo advierten; los conocimientos 1 y 2 usan el ultimo anio con cobertura amplia de paises.</td></tr>
+                <tr><td><strong>El pais es el nivel mas fino</strong></td><td>No hay departamentos ni municipios: no se pueden ver diferencias dentro de Colombia.</td></tr>
+                <tr><td><strong>Regiones con dos definiciones</strong></td><td>Los paises se asignan a su continente por codigo ISO; las regiones oficiales son agregados de Our World in Data. Coinciden casi siempre, pero la suma de paises y el agregado pueden diferir algunos puntos en energia (por ejemplo, Africa).</td></tr>
+                <tr><td><strong>Medidas no aditivas</strong></td><td>Per capita, porcentajes y anomalias no se pueden sumar; un promedio simple entre paises no pondera por poblacion. Por eso la vista 3 usa los valores publicados por la fuente para regiones y mundo.</td></tr>
+                <tr><td><strong>Una fuente domina el cubo</strong></td><td>Casi todos los hechos vienen de Our World in Data (fuente terciaria); la dimension Fuente solo permite comparar proveedores en las series climaticas globales.</td></tr>
+                <tr><td><strong>Cubo descriptivo</strong></td><td>Las operaciones muestran como se reparten y cambian los datos, no por que. Ningun hallazgo establece causas.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="pob-bloque" id="conclusiones">
+    <h2>Conclusiones</h2>
+    <div class="e5-conclusiones">
+        <div class="panel"><h3>El cubo integra lo que la Etapa 4 tenia separado</h3><p>Con un solo modelo estrella y cuatro dimensiones se reproducen los conocimientos evidentes de la Etapa 4 y se cruzan entre si, sin calculos aparte por pagina.</p></div>
+        <div class="panel"><h3>Cambiar de nivel cambia la conclusion</h3><p>Sudamerica parece homogenea hasta que se abre por pais, y el anio mas calido no coincide con el mes mas calido. El nivel de detalle es parte de la respuesta.</p></div>
+        <div class="panel"><h3>Las reglas de agregacion son tan importantes como los datos</h3><p>Marcar cada indicador como sumable o promediable, y no mezclar niveles geograficos, evita resultados que parecen correctos pero cuentan dos veces la misma emision.</p></div>
+        <div class="panel"><h3>El cubo tambien audita la limpieza</h3><p>Cruzar la marca de atipico con el nivel geografico mostro que la regla de la Etapa 2 penaliza a los agregados. Es un insumo directo para mejorar la deteccion de atipicos.</p></div>
+    </div>
+    <div class="panel pob-decision" style="margin-top:1rem;">
+        <h3 style="margin-top:0;">Para Colombia</h3>
+        <p style="max-width:none;margin-bottom:0;">Colombia debe compararse con sus pares de Sudamerica y con indicadores relativos, no con el total regional.
+        Su seguimiento climatico necesita dos ritmos: anual para emisiones y energia, y mensual para los eventos externos (El Nino, La Nina)
+        que se reflejan en la temperatura.</p>
+    </div>
+</section>
+
+{{ m.pie(('e5_operaciones', 'Operaciones multidimensionales'), None) }}
+{% else %}{{ m.sin_datos() }}{% endif %}
+{% endblock %}

@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% import 'etapa5/_macros.html' as m %}
+{% block titulo %}Etapa 5 · Vista {{ vista.num }} · {{ vista.titulo }} · ClimaTec{% endblock %}
+{% block contenido %}
+
+{{ m.hero(5, 'Vista ' ~ vista.num ~ ' · ' ~ vista.titulo, vista.resumen) }}
+
+<nav class="e5-tabs" aria-label="Cambiar de vista">
+    {% for v in vistas %}
+    <a href="{{ url_for('e5_vista', num=v.num) }}" class="{{ 'activo' if v.num == vista.num }}"{% if v.num == vista.num %} aria-current="page"{% endif %}><span>{{ v.num }}</span> {{ v.titulo }}</a>
+    {% endfor %}
+</nav>
+
+{% if info %}
+{% set V = info.vistas %}
+
+{# ======================================================================= #}
+{% if vista.clave == 'temporal' %}
+<section class="pob-bloque">
+    <div class="pob-filtros panel" role="group" aria-label="Controles de la vista temporal">
+        <div class="pob-filtros-campos">
+            <label class="pob-campo" style="max-width:420px;">
+                <span>Serie (slice por indicador y fuente)</span>
+                <select id="v1-serie"></select>
+            </label>
+            <div class="pob-campo e5-campo-seg">
+                <span>Nivel de la jerarquia Tiempo</span>
+                <div class="e5-seg" id="v1-nivel" role="radiogroup" aria-label="Nivel de tiempo">
+                    <button type="button" data-nivel="anio" role="radio">Anio</button>
+                    <button type="button" data-nivel="semestre" role="radio">Semestre</button>
+                    <button type="button" data-nivel="trimestre" role="radio">Trimestre</button>
+                    <button type="button" data-nivel="mes" role="radio">Mes</button>
+                </div>
+            </div>
+            <div class="pob-campo" id="v1-ents-caja">
+                <span>Territorios (series anuales)</span>
+                <div class="e5-checks" id="v1-ents"></div>
+            </div>
+            <button type="button" class="pob-reset" id="v1-reset">Restablecer</button>
+        </div>
+        <p class="pob-mini" id="v1-ayuda"></p>
+    </div>
+
+    <article class="panel pob-viz">
+        <header>
+            <ol class="e5-migas" id="v1-migas" aria-label="Ruta de la consulta"></ol>
+            <h3 id="v1-titulo"></h3>
+            <p class="pob-mini" id="v1-sub"></p>
+        </header>
+        <div class="pob-leyenda-h" id="v1-leyenda"></div>
+        <div class="e5-graf" id="v1-graf" role="img" aria-label="Grafica de la serie en el nivel de tiempo elegido"></div>
+        <p class="pob-lectura" id="v1-lectura" aria-live="polite"></p>
+        <details class="e5-detalle">
+            <summary>Ver los valores en tabla</summary>
+            <div class="tabla-wrap"><table><thead id="v1-thead"></thead><tbody id="v1-tbody"></tbody></table></div>
+        </details>
+    </article>
+    <p class="pob-mini">Haz clic en un punto del nivel Anio para bajar a los meses de ese anio (drill-down); usa la ruta de arriba para volver (roll-up).</p>
+</section>
+<script type="application/json" id="v1-datos">{{ V.temporal | tojson }}</script>
+
+{# ======================================================================= #}
+{% elif vista.clave == 'territorial' %}
+<section class="pob-bloque">
+    <div class="pob-filtros panel" role="group" aria-label="Controles de la vista territorial">
+        <div class="pob-filtros-campos">
+            <label class="pob-campo"><span>Indicador (slice)</span><select id="v2-ind"></select></label>
+            <label class="pob-campo"><span>Anio (slice)</span><select id="v2-anio"></select></label>
+            <button type="button" class="pob-reset" id="v2-reset">Volver al Mundo</button>
+        </div>
+    </div>
+
+    <article class="panel pob-viz">
+        <header>
+            <ol class="e5-migas" id="v2-migas" aria-label="Ruta de la consulta"></ol>
+            <h3 id="v2-titulo"></h3>
+            <p class="pob-mini" id="v2-sub"></p>
+        </header>
+        <div class="grid grid-3 e5-kpis" id="v2-kpis" aria-live="polite"></div>
+        <div class="pob-barras e5-barras-click" id="v2-barras"></div>
+        <p class="pob-lectura" id="v2-lectura" aria-live="polite"></p>
+    </article>
+    <p class="pob-mini">Haz clic en una region para ver sus paises (drill-down). La ruta de arriba o «Volver al Mundo» suben de nivel (roll-up).
+    Los paises se muestran como vienen en el dataset; Colombia va resaltada.</p>
+</section>
+<script type="application/json" id="v2-datos">{{ V.territorial | tojson }}</script>
+
+{# ======================================================================= #}
+{% elif vista.clave == 'mapa' %}
+<section class="pob-bloque">
+    <div class="pob-filtros panel" role="group" aria-label="Controles del mapa de calor">
+        <div class="pob-filtros-campos">
+            <label class="pob-campo"><span>Indicador (slice)</span><select id="v3-ind"></select></label>
+            <label class="pob-campo"><span>Medida</span>
+                <select id="v3-medida">
+                    <option value="valor">Valor del indicador</option>
+                    <option value="var">Variacion frente al primer anio elegido</option>
+                    <option value="indice">Indice: mundo = 100</option>
+                </select>
+            </label>
+            <button type="button" class="pob-reset" id="v3-reset">Restablecer</button>
+        </div>
+        <div class="e5-dice">
+            <div><span class="pob-mini">Territorios (dice)</span><div class="e5-checks" id="v3-ents"></div></div>
+            <div><span class="pob-mini">Anios (dice)</span><div class="e5-checks" id="v3-anios"></div></div>
+        </div>
+    </div>
+
+    <article class="panel pob-viz">
+        <header>
+            <h3 id="v3-titulo"></h3>
+            <p class="pob-mini" id="v3-sub"></p>
+        </header>
+        <div class="tabla-wrap"><table class="e5-calor" id="v3-tabla"></table></div>
+        <div class="e5-escala" id="v3-escala" aria-hidden="true"></div>
+        <p class="pob-lectura" id="v3-lectura" aria-live="polite"></p>
+    </article>
+</section>
+<script type="application/json" id="v3-datos">{{ V.mapa | tojson }}</script>
+
+{# ======================================================================= #}
+{% elif vista.clave == 'pivot' %}
+<section class="pob-bloque">
+    <div class="pob-filtros panel" role="group" aria-label="Controles de la tabla dinamica">
+        <div class="pob-filtros-campos">
+            <label class="pob-campo"><span>Filas</span><select id="v4-filas"></select></label>
+            <button type="button" class="pob-reset e5-swap" id="v4-swap" aria-label="Intercambiar filas y columnas">⇄ Pivot</button>
+            <label class="pob-campo"><span>Columnas</span><select id="v4-cols"></select></label>
+            <label class="pob-campo"><span>Medida</span>
+                <select id="v4-medida">
+                    <option value="n">Numero de registros</option>
+                    <option value="at">Registros atipicos</option>
+                    <option value="pat">% de atipicos</option>
+                    <option value="z">Valor z promedio</option>
+                    <option value="v">Valor del indicador (elige un indicador)</option>
+                </select>
+            </label>
+        </div>
+        <p class="pob-mini" style="margin:.9rem 0 .4rem;">Filtros (slice y dice)</p>
+        <div class="pob-filtros-campos" id="v4-filtros"></div>
+        <p class="pob-mini e5-aviso" id="v4-aviso" aria-live="polite"></p>
+    </div>
+
+    <article class="panel pob-viz">
+        <header>
+            <h3 id="v4-titulo"></h3>
+            <p class="pob-mini" id="v4-sub"></p>
+        </header>
+        <div class="tabla-wrap"><table class="e5-pivot" id="v4-tabla"></table></div>
+        <p class="pob-lectura" id="v4-lectura" aria-live="polite"></p>
+    </article>
+    <p class="pob-mini">Los totales se recalculan a partir de las medidas base de cada celda, por eso el total de un porcentaje o de un
+    promedio es correcto y no la suma de los valores de la fila.</p>
+</section>
+<script type="application/json" id="v4-datos">{{ V.pivot | tojson }}</script>
+{% endif %}
+
+<script src="{{ url_for('static', filename='js/etapa5_vistas.js') }}"></script>
+
+{% set ant = ('e5_vista', 'Vista ' ~ (vista.num - 1), {'num': vista.num - 1}) if vista.num > 1 else ('e5_vistas', 'Vistas interactivas') %}
+{% set sig = ('e5_vista', 'Vista ' ~ (vista.num + 1), {'num': vista.num + 1}) if vista.num < vistas|length else ('e5_operaciones', 'Operaciones multidimensionales') %}
+{{ m.pie(ant, sig) }}
+{% else %}{{ m.sin_datos() }}{% endif %}
+{% endblock %}

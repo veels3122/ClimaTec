@@ -113,3 +113,16 @@ la Etapa 2 siempre reflejan el dataset actual.
 
 ## Despliegue (Render)
 Procfile y render.yaml incluidos. El servicio arranca con gunicorn app:app.
+
+## Etapa 5 — analisis multidimensional
+
+Menu **Multidimensional** con 7 apartados: proposito, relacion con el conocimiento
+evidente, modelo estrella, dimensiones/medidas/jerarquias, 4 vistas interactivas,
+operaciones OLAP (slice, dice, roll-up, drill-down, pivot) y conclusiones.
+
+    python scripts/multidimensional.py   # resumen del cubo y conocimientos
+
+- `scripts/multidimensional.py`: modelo estrella en memoria sobre `clima_limpio.csv`.
+- `data/raw/dim_pais_region.csv`: pais (ISO3) -> continente, para la jerarquia Region > Pais.
+- `static/js/etapa5_vistas.js`: las 4 vistas (sin librerias externas).
+- `ssis/sql/04_modelo_estrella.sql`: el mismo modelo en el esquema `dw` de ClimaTec_ETL.

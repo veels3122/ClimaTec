@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/apogee-hero.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/ruleta.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/fondos.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/etapa5.css') }}">
 </head>
 <body>
     <div class="atmosfera" aria-hidden="true"><div class="rayo"></div><div class="grano"></div></div>
@@ -62,6 +63,17 @@
     ] %}
     {% set endpoints_etapa4 = secciones_etapa4 | map(attribute='endpoint') | list %}
 
+    {% set secciones_etapa5 = [
+        {'num': 1, 'titulo': 'Proposito de la etapa', 'endpoint': 'e5_proposito'},
+        {'num': 2, 'titulo': 'Relacion con el conocimiento evidente', 'endpoint': 'e5_relacion'},
+        {'num': 3, 'titulo': 'Modelo estrella', 'endpoint': 'e5_modelo'},
+        {'num': 4, 'titulo': 'Dimensiones, medidas y jerarquias', 'endpoint': 'e5_dimensiones'},
+        {'num': 5, 'titulo': 'Vistas interactivas', 'endpoint': 'e5_vistas'},
+        {'num': 6, 'titulo': 'Operaciones multidimensionales', 'endpoint': 'e5_operaciones'},
+        {'num': 7, 'titulo': 'Conocimientos, limitaciones y conclusiones', 'endpoint': 'e5_conclusiones'},
+    ] %}
+    {% set endpoints_etapa5 = (secciones_etapa5 | map(attribute='endpoint') | list) + ['e5_vista'] %}
+
     <header class="topbar">
         <div class="contenedor topbar-inner">
             <a class="marca" href="{{ url_for('index') }}">
@@ -94,6 +106,9 @@
                 </button>
                 <button type="button" class="nav-pill-link ruleta-disparador{{ ' activo' if request.endpoint in endpoints_etapa4 }}" data-etapa="analisis" aria-haspopup="dialog" aria-expanded="false">
                     Analisis de Datos <span class="caret">&#9662;</span>
+                </button>
+                <button type="button" class="nav-pill-link ruleta-disparador{{ ' activo' if request.endpoint in endpoints_etapa5 }}" data-etapa="multidimensional" aria-haspopup="dialog" aria-expanded="false">
+                    Multidimensional <span class="caret">&#9662;</span>
                 </button>
                 <a href="{{ url_for('dataset_etapa1') }}" class="nav-pill-link{{ ' activo' if request.endpoint == 'dataset_etapa1' }}">Dataset</a>
                 <a href="{{ url_for('fuentes_datos') }}" class="nav-pill-link{{ ' activo' if request.endpoint == 'fuentes_datos' }}">Fuentes</a>
@@ -130,6 +145,9 @@
                 </button>
                 <button type="button" class="ruleta-disparador" data-etapa="analisis" aria-haspopup="dialog" aria-expanded="false">
                     Analisis de Datos <span class="caret">&#9662;</span>
+                </button>
+                <button type="button" class="ruleta-disparador" data-etapa="multidimensional" aria-haspopup="dialog" aria-expanded="false">
+                    Analisis Multidimensional <span class="caret">&#9662;</span>
                 </button>
                 <a href="{{ url_for('dataset_etapa1') }}">Dataset</a>
                 <a href="{{ url_for('fuentes_datos') }}">Fuentes</a>
@@ -178,12 +196,16 @@
         {% for s in secciones_etapa4 %}{"num": {{ s.num }}, "titulo": {{ s.titulo|tojson }}, "href": {{ url_for(s.endpoint)|tojson }}, "activo": {{ (request.endpoint == s.endpoint)|tojson }}}{{ ',' if not loop.last }}
         {% endfor %}
     ]}</script>
+    <script type="application/json" id="ruleta-secciones-multidimensional-data">{"titulo": "Analisis Multidimensional", "secciones": [
+        {% for s in secciones_etapa5 %}{"num": {{ s.num }}, "titulo": {{ s.titulo|tojson }}, "href": {{ url_for(s.endpoint)|tojson }}, "activo": {{ (request.endpoint == s.endpoint or (s.endpoint == 'e5_vistas' and request.endpoint == 'e5_vista'))|tojson }}}{{ ',' if not loop.last }}
+        {% endfor %}
+    ]}</script>
     <script type="application/json" id="ruleta-etapas-data">[
         {"num": 1, "titulo": "Definicion", "disponible": true, "clave": "definicion"},
         {"num": 2, "titulo": "Recoleccion de Datos", "disponible": true, "clave": "recoleccion"},
         {"num": 3, "titulo": "ETL (SSIS)", "disponible": true, "clave": "etl"},
         {"num": 4, "titulo": "Analisis de Datos", "disponible": true, "clave": "analisis"},
-        {"num": 5, "titulo": "Verificacion", "disponible": false},
+        {"num": 5, "titulo": "Analisis Multidimensional", "disponible": true, "clave": "multidimensional"},
         {"num": 6, "titulo": "Publicacion", "disponible": false}
     ]</script>
 
