@@ -128,6 +128,8 @@ operaciones OLAP (slice, dice, roll-up, drill-down, pivot) y conclusiones.
     python scripts/multidimensional.py   # resumen del cubo y conocimientos
 
 La app carga el almacen al arrancar si no existe o si cambio clima_limpio.csv.
+Las 4 vistas consultan el modelo con `scripts/olap.py` a traves de `/api/etapa5/olap`
+(drill-down, roll-up, slice, dice y pivot recalculados en SQL).
 
 - `scripts/multidimensional.py`: modelo estrella en memoria sobre `clima_limpio.csv`.
 - `data/raw/dim_pais_region.csv`: pais (ISO3) -> continente, para la jerarquia Region > Pais.

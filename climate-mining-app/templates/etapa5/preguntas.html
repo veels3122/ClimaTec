@@ -9,7 +9,7 @@
 {% if info %}
 {% set DIMS = ['Tiempo', 'Geografia', 'Indicador', 'Fuente'] %}
 {% set PROPOSITOS = ['Comparar grupos', 'Identificar concentraciones', 'Explorar cambios entre niveles de detalle', 'Reconocer combinaciones relevantes'] %}
-{% set respuestas = {} %}{% for k in info.conocimientos %}{% set _ = respuestas.update({k.vista: k}) %}{% endfor %}
+{% set respuestas = {} %}{% for k in info.conocimientos %}{% if k.vista not in respuestas %}{% set _ = respuestas.update({k.vista: k}) %}{% endif %}{% endfor %}
 
 <nav class="pob-indice" aria-label="Preguntas">
     {% for v in vistas %}<a href="#p{{ v.num }}"><span>{{ v.num }}</span> {{ v.titulo }}</a>{% endfor %}
