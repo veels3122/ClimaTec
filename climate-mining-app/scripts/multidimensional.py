@@ -487,6 +487,92 @@ def vista_pivot(p):
     }
 
 
+
+# ---------------------------------------------------------------------------
+# 3b. Continuidad: registros usados, limitaciones de calidad y unidad de analisis
+# ---------------------------------------------------------------------------
+def registros_por_vista(p):
+    mens = p["periodicidad"] == "Mensual"
+    anual_foco = (p["periodicidad"] == "Anual") & p["entidad"].isin(["World", REGION_FOCO, PAIS_FOCO])
+    v2 = (p["nivel_geografico"] == "Nacional") & p["indicador"].isin(IND_TERRITORIALES) & (p["periodicidad"] == "Anual")
+    v3 = p["indicador"].isin(IND_MAPA) & p["entidad"].isin(ORDEN_REGIONES + ["World", PAIS_FOCO]) & (p["periodicidad"] == "Anual")
+    return {1: int((mens | anual_foco).sum()), 2: int(v2.sum()), 3: int(v3.sum()), 4: int(len(p))}
+
+
+EJEMPLO_IND = ["Emisiones de CO2 (total)", "Emisiones de CO2 per capita", "Emisiones de metano",
+               "Participacion de renovables en energia", "Poblacion", "Consumo de energia primaria"]
+
+
+def continuidad(p, n_consolidado=None):
+    total = int(len(p))
+    n_at = int(p["atipico"].sum())
+    por_anio = p.groupby("anio").size()
+    mx = int(por_anio.max())
+    anios = [{"anio": int(a), "n": int(n), "pct": round(n / mx * 100, 1), "parcial": bool(n < mx * 0.5)}
+             for a, n in por_anio.items()]
+    parciales = [a["anio"] for a in anios if a["parcial"]]
+    nivel = p["nivel_geografico"].value_counts()
+    tipo = p["fuente_tipo"].value_counts()
+    cob = p[p["nivel_geografico"] == "Nacional"].groupby("indicador").size().sort_values()
+    mens = int((p["periodicidad"] == "Mensual").sum())
+    owid = int(p["fuente"].astype(str).str.startswith("Our World in Data").sum())
+
+    # Unidad de analisis: territorio en un anio. Granularidad: un indicador por
+    # territorio, fecha y fuente.
+    nac = p[p["nivel_geografico"] == "Nacional"]
+    unidades = nac.groupby(["entidad", "anio"]).size()
+    col = p[(p["entidad"] == PAIS_FOCO) & (p["anio"] == 2024)]
+    ejemplo = [{"indicador": r.indicador, "valor": fmt_dec(r.valor, 2 if abs(r.valor) < 100 else 0), "unidad": r.unidad,
+                "fuente": nombre_fuente_corto(r.fuente)} for r in col[col["indicador"].isin(EJEMPLO_IND)].sort_values("indicador").itertuples()]
+
+    limitaciones = [
+        {"titulo": "Atipicos marcados, no eliminados",
+         "detalle": "{} registros ({}) estan marcados como atipicos por 1,5 × IQR. Se conservan porque casi todos tienen "
+                    "una causa real (agregados, paises muy grandes, rebote 2020-2021), pero el IQR se calculo mezclando "
+                    "niveles geograficos.".format(fmt_int(n_at), fmt_pct(n_at / total * 100)),
+         "efecto": "Una medida de atipicos sin separar por nivel exagera los problemas de regiones y mundo (pregunta 4)."},
+        {"titulo": "Anios con cobertura parcial",
+         "detalle": "{} tienen {} registros frente a {} de un anio completo.".format(
+             " y ".join(str(a) for a in parciales), " y ".join(fmt_int(int(por_anio[a])) for a in parciales), fmt_int(mx))
+         if parciales else "Todos los anios tienen cobertura similar.",
+         "efecto": "Las comparaciones entre territorios se hacen hasta el ultimo anio con cobertura amplia (2024)."},
+        {"titulo": "Indicadores con cobertura desigual",
+         "detalle": "Entre paises, {} tiene {} registros y {} tiene {}: no todos los paises reportan todos los gases ni la mezcla energetica.".format(
+             cob.index[0], fmt_int(int(cob.iloc[0])), cob.index[-1], fmt_int(int(cob.iloc[-1]))),
+         "efecto": "Un total por region puede cambiar segun el indicador porque cambia el numero de paises que suman."},
+        {"titulo": "Solo tres series llegan al mes",
+         "detalle": "{} registros son mensuales (anomalia de temperatura de NASA y NOAA, CO2 de Mauna Loa); el resto es anual.".format(fmt_int(mens)),
+         "efecto": "El drill-down temporal hasta el mes solo es posible para el clima global (pregunta 3)."},
+        {"titulo": "Predominio de una fuente terciaria",
+         "detalle": "{} de los registros vienen de Our World in Data; las fuentes primarias aportan {}.".format(
+             fmt_pct(owid / total * 100), fmt_pct(tipo.get("Primaria", 0) / total * 100)),
+         "efecto": "La dimension Fuente solo permite comparar proveedores en las series climaticas globales."},
+        {"titulo": "Niveles geograficos superpuestos",
+         "detalle": "Conviven {} registros nacionales, {} regionales y {} globales que miden lo mismo a distinta escala.".format(
+             fmt_int(int(nivel.get("Nacional", 0))), fmt_int(int(nivel.get("Regional", 0))), fmt_int(int(nivel.get("Global", 0)))),
+         "efecto": "Sumar niveles distintos cuenta dos veces la misma emision; el cubo filtra o advierte."},
+    ]
+    return {
+        "n_consolidado": int(n_consolidado) if n_consolidado is not None else total,
+        "n_limpio": total,
+        "n_eliminados": int(n_consolidado - total) if n_consolidado is not None else 0,
+        "n_atipicos": n_at,
+        "pct_atipicos": fmt_pct(n_at / total * 100),
+        "n_mensuales": mens,
+        "anios": anios,
+        "niveles": [{"nivel": k, "n": int(v), "pct": fmt_pct(v / total * 100)} for k, v in nivel.items()],
+        "limitaciones": limitaciones,
+        "por_vista": registros_por_vista(p),
+        "unidad": {
+            "n_paises": int(nac["entidad"].nunique()),
+            "n_pais_anio": int(len(unidades)),
+            "hechos_por_pais_anio": fmt_dec(float(unidades.mean()), 1),
+            "max_hechos": int(unidades.max()),
+            "n_col_2024": int(len(col)),
+            "ejemplo": ejemplo,
+        },
+    }
+
 # ---------------------------------------------------------------------------
 # 4. Ejemplos de operaciones y conocimientos descubiertos (paginas 6 y 7)
 # ---------------------------------------------------------------------------
@@ -687,7 +773,7 @@ def ejemplos_operaciones(p, vt):
 _CACHE = {}
 
 
-def construir(df):
+def construir(df, n_consolidado=None):
     """Devuelve el dict completo para las paginas de la Etapa 5, o None."""
     if df is None or df.empty:
         return None
@@ -710,6 +796,7 @@ def construir(df):
         },
         "conocimientos": conocimientos(p, vt),
         "ejemplos": ejemplos_operaciones(p, vt),
+        "continuidad": continuidad(p, n_consolidado),
         "sin_region": int(((dg["nivel_geografico"] == "Nacional") & (dg["region"] == "Sin region")).sum()),
     }
     _CACHE.clear()

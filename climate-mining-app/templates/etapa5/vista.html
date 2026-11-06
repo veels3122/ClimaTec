@@ -3,7 +3,7 @@
 {% block titulo %}Etapa 5 · Vista {{ vista.num }} · {{ vista.titulo }} · ClimaTec{% endblock %}
 {% block contenido %}
 
-{{ m.hero(5, 'Vista ' ~ vista.num ~ ' · ' ~ vista.titulo, vista.resumen) }}
+{{ m.hero(7, 'Vista ' ~ vista.num ~ ' · ' ~ vista.titulo, vista.resumen) }}
 
 <nav class="e5-tabs" aria-label="Cambiar de vista">
     {% for v in vistas %}
@@ -13,6 +13,20 @@
 
 {% if info %}
 {% set V = info.vistas %}
+
+<section class="panel e5-pregunta e5-pregunta-vista" aria-labelledby="pregunta-vista">
+    <p class="e5-vista-num">Pregunta {{ vista.num }}</p>
+    <h2 id="pregunta-vista">{{ vista.pregunta }}</h2>
+    <div class="e5-pregunta-meta">
+        <span><strong>Dimensiones:</strong> {{ vista.dimensiones | join(' · ') }}</span>
+        <span><strong>Medida:</strong> {{ vista.medida }}</span>
+        <span><strong>Registros que usa:</strong> {{ '{:,}'.format(info.continuidad.por_vista[vista.num]).replace(',', '.') }} hechos</span>
+    </div>
+    <details class="e5-detalle">
+        <summary>Como profundiza la Etapa 4</summary>
+        <p style="margin:.6rem 0 0;"><a href="{{ url_for(vista.e4[1]) }}">{{ vista.e4[0] }}</a>: {{ vista.e4_hallazgo }} {{ vista.profundiza }}</p>
+    </details>
+</section>
 
 {# ======================================================================= #}
 {% if vista.clave == 'temporal' %}

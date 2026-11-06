@@ -3,7 +3,7 @@
 {% block titulo %}Etapa 5 · Modelo estrella · ClimaTec{% endblock %}
 {% block contenido %}
 
-{{ m.hero(3, 'Diagrama y explicacion del modelo estrella',
+{{ m.hero(5, 'Diagrama y explicacion del modelo estrella',
    'Una tabla de hechos con las observaciones y cuatro dimensiones que las describen. Toda consulta del cubo es una union de la tabla central con las dimensiones que necesita.') }}
 
 {% if info %}
@@ -123,6 +123,6 @@ WHERE i.indicador = N'Emisiones de CO2 (total)'
 GROUP BY g.region, t.anio;</code></pre>
 </section>
 
-{{ m.pie(('e5_relacion', 'Relacion con el conocimiento evidente'), ('e5_dimensiones', 'Dimensiones, medidas y jerarquias')) }}
+{{ m.pie(('e5_preguntas', 'Preguntas de analisis'), ('e5_dimensiones', 'Dimensiones, medidas y jerarquias')) }}
 {% else %}{{ m.sin_datos() }}{% endif %}
 {% endblock %}

@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% import 'etapa5/_macros.html' as m %}
+{% block titulo %}Etapa 5 · Preguntas de analisis · ClimaTec{% endblock %}
+{% block contenido %}
+
+{{ m.hero(4, 'Formulacion de las preguntas de analisis',
+   'Cuatro preguntas que solo se pueden responder mirando una medida desde varias dimensiones a la vez. Cada una tiene su propia vista interactiva y parte de un hallazgo concreto de la Etapa 4.') }}
+
+{% if info %}
+{% set DIMS = ['Tiempo', 'Geografia', 'Indicador', 'Fuente'] %}
+{% set PROPOSITOS = ['Comparar grupos', 'Identificar concentraciones', 'Explorar cambios entre niveles de detalle', 'Reconocer combinaciones relevantes'] %}
+{% set respuestas = {} %}{% for k in info.conocimientos %}{% set _ = respuestas.update({k.vista: k}) %}{% endfor %}
+
+<nav class="pob-indice" aria-label="Preguntas">
+    {% for v in vistas %}<a href="#p{{ v.num }}"><span>{{ v.num }}</span> {{ v.titulo }}</a>{% endfor %}
+    <a href="#p-cobertura">Cobertura del modelo</a>
+</nav>
+
+{% for v in vistas %}
+<section class="pob-bloque" id="p{{ v.num }}">
+    <article class="panel e5-pregunta">
+        <header class="e5-pregunta-cab">
+            <span class="pob-conoc-num">{{ v.num }}</span>
+            <h2>{{ v.pregunta }}</h2>
+        </header>
+
+        <div class="e5-pregunta-grid">
+            <div>
+                <h4 class="e5-op-h">Dimensiones</h4>
+                <ul class="e5-lista">{% for d in v.dimensiones %}<li>{{ d }}</li>{% endfor %}</ul>
+            </div>
+            <div>
+                <h4 class="e5-op-h">Medida</h4>
+                <p style="margin:.3rem 0 0;">{{ v.medida }}</p>
+                <h4 class="e5-op-h">Para que sirve</h4>
+                <div class="e5-ops" style="padding-top:.3rem;">{% for p in v.proposito %}<span class="chip">{{ p }}</span>{% endfor %}</div>
+            </div>
+        </div>
+
+        <dl class="pob-dl" style="margin-top:1.1rem;">
+            <div><dt>Parte de (Etapa 4)</dt><dd><a href="{{ url_for(v.e4[1]) }}">{{ v.e4[0] }}</a>: {{ v.e4_hallazgo }}</dd></div>
+            <div><dt>Como profundiza</dt><dd>{{ v.profundiza }}</dd></div>
+            <div><dt>Perspectiva nueva</dt><dd>{{ v.nuevo }}</dd></div>
+            {% if respuestas[v.num] %}<div><dt>Lo que responde</dt><dd>{{ respuestas[v.num].hallazgo }}</dd></div>{% endif %}
+        </dl>
+        <p style="margin:1rem 0 0;"><a class="e5-abrir" href="{{ url_for('e5_vista', num=v.num) }}">Explorar en la vista {{ v.num }}</a></p>
+    </article>
+</section>
+{% endfor %}
+
+<section class="pob-bloque" id="p-cobertura">
+    <h2>Cobertura del modelo</h2>
+    <p>Cada pregunta combina al menos dos dimensiones y una medida, y entre las cuatro se usan todas las dimensiones del modelo estrella.</p>
+    <div class="tabla-wrap">
+        <table class="e5-matriz">
+            <thead><tr><th>Pregunta</th>{% for d in DIMS %}<th>{{ d }}</th>{% endfor %}<th>Dimensiones</th><th>Medida</th></tr></thead>
+            <tbody>
+            {% for v in vistas %}
+                {% set usadas = [] %}
+                {% for d in DIMS %}{% for x in v.dimensiones %}{% if x.startswith(d) and d not in usadas %}{% set _ = usadas.append(d) %}{% endif %}{% endfor %}{% endfor %}
+                <tr>
+                    <td><a href="#p{{ v.num }}">{{ v.num }} · {{ v.titulo }}</a></td>
+                    {% for d in DIMS %}<td>{{ '✓' if d in usadas else '' }}</td>{% endfor %}
+                    <td>{{ usadas|length }}</td>
+                    <td style="text-align:left;">{{ v.medida.split(' (')[0] }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <h3 class="e5-subtit">Que tipo de analisis cubre cada pregunta</h3>
+    <div class="tabla-wrap">
+        <table class="e5-matriz">
+            <thead><tr><th>Pregunta</th>{% for p in PROPOSITOS %}<th>{{ p }}</th>{% endfor %}</tr></thead>
+            <tbody>
+            {% for v in vistas %}
+                <tr><td><a href="#p{{ v.num }}">{{ v.num }} · {{ v.titulo }}</a></td>
+                {% for p in PROPOSITOS %}<td>{{ '✓' if p in v.proposito or (p == 'Comparar grupos' and 'Comparar grupos (fuentes)' in v.proposito) or (p == 'Reconocer combinaciones relevantes' and 'Reconocer combinaciones relevantes (territorio × anio)' in v.proposito) else '' }}</td>{% endfor %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+{{ m.pie(('e5_relacion', 'Relacion con el conocimiento evidente'), ('e5_modelo', 'Modelo estrella')) }}
+{% else %}{{ m.sin_datos() }}{% endif %}
+{% endblock %}
