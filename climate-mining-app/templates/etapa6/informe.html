@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% import 'etapa6/_macros.html' as m with context %}
+{% block titulo %}Etapa 6 · Informe técnico y video · ClimaTec{% endblock %}
+{% block contenido %}
+{{ m.hero(8, 'Informe técnico y video de sustentación',
+   'Documento completo para reproducir el trabajo, video de máximo 10 minutos y enlaces de entrega.') }}
+
+<section class="pob-bloque">
+    <h2>Informe técnico</h2>
+    {% if e6.informe %}
+    <p><a class="nav-auth-link solido" href="{{ url_for('static', filename=e6.informe) }}" target="_blank" rel="noopener">Abrir / descargar el informe (PDF)</a></p>
+    <iframe src="{{ url_for('static', filename=e6.informe) }}" title="Informe técnico Etapa 6" style="width:100%;height:80vh;border:1px solid var(--glass-border);border-radius:12px;background:#fff;"></iframe>
+    {% else %}
+    <div class="e6-pendiente"><strong>Informe no publicado todavía.</strong> Copiar el PDF a <span class="mono">static/docs/Informe_Etapa6_Conocimiento_Oculto.pdf</span>.</div>
+    {% endif %}
+</section>
+
+<section class="pob-bloque">
+    <h2>Video de sustentación</h2>
+    {% if e6.video_url %}
+        {% set u = e6.video_url %}
+        {% if 'youtube.com/watch?v=' in u or 'youtu.be/' in u %}
+            {% set vid = u.split('v=')[-1].split('&')[0] if 'v=' in u else u.split('/')[-1] %}
+            <div class="e6-video"><iframe src="https://www.youtube.com/embed/{{ vid }}" title="Video de sustentación" allowfullscreen></iframe></div>
+        {% endif %}
+        <p><a href="{{ u }}" target="_blank" rel="noopener">{{ u }}</a></p>
+    {% else %}
+    <div class="e6-pendiente"><strong>Video pendiente.</strong> Pegar el enlace en <span class="mono">VIDEO_ETAPA6_URL</span> (app.py).</div>
+    {% endif %}
+    <div class="tabla-wrap"><table>
+        <thead><tr><th>Bloque</th><th>Responsable</th><th>Tiempo</th></tr></thead>
+        <tbody>
+            <tr><td>Contexto, datos y modelos supervisados (comparación y selección)</td><td>{{ proyecto.integrantes[0] }}</td><td>3:30</td></tr>
+            <tr><td>Clustering: elección de k e interpretación de los grupos</td><td>{{ proyecto.integrantes[1] }}</td><td>3:00</td></tr>
+            <tr><td>Comentarios de YouTube, conclusiones integradas y limitaciones</td><td>{{ proyecto.integrantes[2] }}</td><td>3:30</td></tr>
+        </tbody>
+    </table></div>
+</section>
+
+<section class="pob-bloque">
+    <h2>Enlaces de entrega</h2>
+    <div class="tabla-wrap"><table><tbody>
+        <tr><th>Repositorio</th><td><a href="{{ e6.url_repo }}">{{ e6.url_repo }}</a></td></tr>
+        <tr><th>Aplicación Flask</th><td><a href="{{ e6.url_app }}">{{ e6.url_app }}</a></td></tr>
+        <tr><th>Flujos de Orange</th><td><span class="mono">climate-mining-app/data/etapa6/*.ows</span></td></tr>
+        <tr><th>Código de extracción</th><td><span class="mono">climate-mining-app/scripts/youtube_extraccion.py</span></td></tr>
+    </tbody></table></div>
+</section>
+{{ m.pie(('e6_conclusiones', 'Conclusiones integradas'), None) }}
+{% endblock %}

@@ -158,3 +158,30 @@ Render no hace falta un paso extra: `gunicorn app:app` basta.
   - `dim_tiempo`: Jerarquía temporal (Año → Mes → Día).
   - `dim_pais_region`: Jerarquía geográfica (Región/Continente → País - ISO3).
   - `dim_clima`: Atributos descriptivos de las mediciones.
+
+## Etapa 6 · Conocimiento Oculto
+
+Seccion de la app: **/etapa-6/contexto-y-preguntas** (menu *Conocimiento Oculto*, 8 apartados).
+
+| Producto | Ubicacion |
+|---|---|
+| Flujo Orange de modelos (supervisado + clustering) | `data/etapa6/etapa6_conocimiento_oculto.ows` |
+| Flujo Orange de comentarios de YouTube | `data/etapa6/etapa6_comentarios_youtube.ows` |
+| Preparacion de datos para Orange | `scripts/conocimiento_oculto.py` |
+| Extraccion de comentarios (API YouTube v3) | `scripts/youtube_extraccion.py` |
+| Limpieza de comentarios | `scripts/youtube_limpieza.py` |
+| Resultados que lee la app | `data/etapa6/*.json` |
+| Informe tecnico | `static/docs/Informe_Etapa6_Conocimiento_Oculto.pdf` |
+
+Reproducir:
+
+```bash
+python scripts/conocimiento_oculto.py                 # genera supervisado_paises.csv y clustering_paises.csv
+set YOUTUBE_API_KEY=xxxx                              # Windows (en Colab: Secret YOUTUBE_API_KEY)
+python scripts/youtube_extraccion.py 0rzAluuejUw 500  # comentarios_youtube_raw.csv + video_metadatos.json
+python scripts/youtube_limpieza.py                    # comentarios_youtube_limpio.csv
+```
+
+Abrir los `.ows` desde `data/etapa6/` (rutas relativas). El flujo de texto requiere el complemento
+*Text* de Orange. **La clave de la API nunca se sube al repositorio.** El enlace del video de
+sustentacion se configura en `VIDEO_ETAPA6_URL` (app.py).

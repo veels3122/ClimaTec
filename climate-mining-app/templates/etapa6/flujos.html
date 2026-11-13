@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% import 'etapa6/_macros.html' as m with context %}
+{% block titulo %}Etapa 6 · Flujos en Orange · ClimaTec{% endblock %}
+{% block contenido %}
+{{ m.hero(3, 'Flujos en Orange',
+   'Dos flujos de trabajo reproducibles: uno para los modelos (supervisado y clustering) y otro para los comentarios de YouTube.') }}
+
+<section class="pob-bloque">
+    <h2>Archivos</h2>
+    <div class="tabla-wrap"><table>
+        <thead><tr><th>Archivo (en <span class="mono">data/etapa6/</span>)</th><th>Contenido</th></tr></thead>
+        <tbody>
+            <tr><td class="mono">etapa6_conocimiento_oculto.ows</td><td>Flujo de modelos: supervisado + clustering</td></tr>
+            <tr><td class="mono">etapa6_comentarios_youtube.ows</td><td>Flujo de minería de texto de los comentarios</td></tr>
+            <tr><td class="mono">supervisado_paises.csv · clustering_paises.csv</td><td>Entradas de los modelos (salen de <span class="mono">scripts/conocimiento_oculto.py</span>)</td></tr>
+            <tr><td class="mono">comentarios_youtube_limpio.csv</td><td>Entrada del flujo de texto (sale de <span class="mono">scripts/youtube_limpieza.py</span>)</td></tr>
+        </tbody>
+    </table></div>
+    <p class="pob-mini">Los flujos guardan las rutas relativas a su carpeta: basta abrir el <span class="mono">.ows</span> desde
+    <span class="mono">data/etapa6/</span> para que encuentre los CSV. Requiere Orange 3.36+ y el complemento <em>Text</em> para el segundo flujo.</p>
+</section>
+
+<section class="pob-bloque">
+    <h2>Flujo 1 · Modelos</h2>
+    {{ m.fig('flujo_etapa6_modelos.png', '<strong>Flujo de Orange para el aprendizaje supervisado (arriba) y el clustering (abajo).</strong>') }}
+    <div class="tabla-wrap"><table>
+        <thead><tr><th>Widget</th><th>Parámetros</th><th>Conexión</th></tr></thead>
+        <tbody>
+            <tr><td>File (supervisado)</td><td><span class="mono">supervisado_paises.csv</span>; objetivo <span class="mono">nivel_co2_pc</span>, metas país/ISO/CO2</td><td>Data → Feature Statistics, Rank, Test and Score, Árbol</td></tr>
+            <tr><td>Preprocess</td><td>Continuize (una columna por valor) → Impute (promedio) → Normalize (μ=0, σ²=1)</td><td>Preprocessor → Regresión logística</td></tr>
+            <tr><td>Tree</td><td>Binario; hoja mínima 5; no dividir nodos &lt; 10; profundidad máx. 5; parar con 95 % de mayoría</td><td>Learner → Test and Score</td></tr>
+            <tr><td>Random Forest</td><td>100 árboles; semilla fija; no dividir subconjuntos &lt; 5</td><td>Learner → Test and Score</td></tr>
+            <tr><td>Logistic Regression</td><td>Regularización Ridge (L2), C = 1</td><td>Learner → Test and Score</td></tr>
+            <tr><td>Test and Score</td><td>Validación cruzada 10 pliegues, estratificada</td><td>Evaluation Results → Confusion Matrix, ROC Analysis</td></tr>
+            <tr><td>Tree + Tree Viewer</td><td>Mismo árbol entrenado con todos los datos, solo para interpretar reglas</td><td>Model → Tree Viewer</td></tr>
+            <tr><td>File (clustering)</td><td><span class="mono">clustering_paises.csv</span>; 5 variables, todo lo demás meta</td><td>Data → k-Means</td></tr>
+            <tr><td>k-Means (comparar)</td><td>k de 2 a 8, Normalize columns, k-means++, 10 reinicios, 300 iteraciones</td><td>Tabla de siluetas</td></tr>
+            <tr><td>k-Means (k=4)</td><td>k fijo = 4, mismos parámetros</td><td>Data → Silhouette Plot, Box Plot, Scatter Plot, Data Table</td></tr>
+        </tbody>
+    </table></div>
+    <div class="nota"><strong>Detalle técnico encontrado:</strong> cuando a la Regresión logística se le conecta un preprocesador,
+    Orange deja de aplicar sus pasos por defecto (convertir categóricas e imputar). Con solo <em>Normalize</em> el modelo fallaba por la
+    variable <span class="mono">region</span>; por eso el Preprocess incluye los tres pasos.</div>
+</section>
+
+<section class="pob-bloque">
+    <h2>Flujo 2 · Comentarios de YouTube</h2>
+    {{ m.fig('flujo_etapa6_comentarios.png', '<strong>Flujo de minería de texto.</strong> File → Corpus → Preprocess Text → Bag of Words / Topic Modelling / Word Cloud; Sentiment Analysis; Distances (coseno) → Hierarchical Clustering → Word Enrichment.') }}
+    <div class="tabla-wrap"><table>
+        <thead><tr><th>Widget</th><th>Parámetros</th></tr></thead>
+        <tbody>
+            <tr><td>Corpus</td><td>Campo de texto <span class="mono">texto</span>; idioma español</td></tr>
+            <tr><td>Preprocess Text</td><td>Minúsculas, quitar URL; tokenización por expresión regular; stopwords en español, números, signos y tokens de 1–2 letras; frecuencia documental ≥ 3</td></tr>
+            <tr><td>Bag of Words</td><td>TF (conteo) × IDF, normalización L2</td></tr>
+            <tr><td>Topic Modelling</td><td>LDA, 5 temas</td></tr>
+            <tr><td>Sentiment Analysis</td><td>Multilingual sentiment, español</td></tr>
+            <tr><td>Distances → Hierarchical Clustering</td><td>Coseno entre comentarios; enlace promedio; Top N = 4 grupos</td></tr>
+            <tr><td>Word Enrichment</td><td>Palabras sobrerrepresentadas en el grupo seleccionado (FDR ≤ 0,2)</td></tr>
+        </tbody>
+    </table></div>
+</section>
+{{ m.pie(('e6_datos', 'Datos y transformaciones'), ('e6_supervisado', 'Modelos supervisados')) }}
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% import 'etapa6/_macros.html' as m with context %}
+{% block titulo %}Etapa 6 · Comentarios de YouTube · ClimaTec{% endblock %}
+{% block contenido %}
+{{ m.hero(6, 'Comentarios de YouTube',
+   'Lo que los datos numéricos no dicen: qué temas y opiniones aparecen cuando el público comenta sobre cambio climático.') }}
+{% set v = e6.video_yt %}{% set l = e6.limpieza_yt %}{% set tx = e6.texto %}
+
+<section class="pob-bloque">
+    <h2>Propósito y video seleccionado</h2>
+    <p><strong>Propósito:</strong> contrastar los hallazgos de los modelos (energía, red eléctrica, metano, diferencias entre países)
+    con la percepción del público hispanohablante: ¿se reconoce el problema?, ¿se asocia a la energía o a otros factores?, ¿hay
+    escepticismo?, ¿aparecen Colombia o los eventos externos (El Niño, sequías)?</p>
+    <div class="tabla-wrap"><table>
+        <tbody>
+            <tr><th>Video</th><td>{% if v %}{{ v.titulo }} — {{ v.canal }}{% else %}ID 0rzAluuejUw{% endif %}</td></tr>
+            <tr><th>Enlace</th><td><a href="https://www.youtube.com/watch?v=0rzAluuejUw" target="_blank" rel="noopener">youtube.com/watch?v=0rzAluuejUw</a></td></tr>
+            {% if v %}<tr><th>Publicado</th><td>{{ v.publicado[:10] }} · {{ m.miles(v.vistas) }} vistas · {{ m.miles(v.comentarios_reportados) }} comentarios reportados</td></tr>
+            <tr><th>Extracción</th><td>{{ v.fecha_extraccion[:10] }} · {{ v.comentarios_extraidos }} comentarios en {{ v.paginas_api }} páginas de la API</td></tr>{% endif %}
+            <tr><th>Criterios</th><td>Video en español sobre cambio climático con volumen suficiente de comentarios; se extraen los comentarios principales (no respuestas), ordenados por fecha, hasta 500.</td></tr>
+        </tbody>
+    </table></div>
+</section>
+
+<section class="pob-bloque">
+    <h2>Conexión a la API</h2>
+    <ol class="e6-pasos">
+        <li>En Google Cloud Console se creó un proyecto, se habilitó <em>YouTube Data API v3</em> y se generó una clave de API.</li>
+        <li>La clave se guarda como <em>Secret</em> de Colab o variable de entorno <span class="mono">YOUTUBE_API_KEY</span>; nunca en el código ni en el repositorio.</li>
+        <li><span class="mono">scripts/youtube_extraccion.py</span> llama a <span class="mono">videos</span> (metadatos públicos) y a <span class="mono">commentThreads</span> (100 por página, paginando con <span class="mono">nextPageToken</span>).</li>
+        <li>Solo se guardan texto, fecha, likes y número de respuestas. No se guarda nombre, canal ni foto de los autores.</li>
+    </ol>
+    <p class="pob-mini"><strong>Restricciones:</strong> cuota diaria de 10.000 unidades (cada página cuesta 1); máximo 100 comentarios por
+    página; solo comentarios públicos; los comentarios eliminados o retenidos por moderación no se descargan; las respuestas
+    requieren otra llamada y no se incluyeron.</p>
+</section>
+
+<section class="pob-bloque">
+    <h2>Limpieza</h2>
+    {% if l %}
+    <div class="tabla-wrap"><table class="e6-tabla-num">
+        <thead><tr><th>Paso</th><th>Comentarios</th></tr></thead>
+        <tbody>
+            <tr><td>Extraídos</td><td>{{ l.registros_iniciales }}</td></tr>
+            <tr><td>– vacíos</td><td>{{ l.vacios }}</td></tr>
+            <tr><td>– duplicados exactos</td><td>{{ l.duplicados }}</td></tr>
+            <tr><td>– sin texto (solo emojis, enlaces o menciones)</td><td>{{ l.sin_contenido_textual }}</td></tr>
+            <tr><td>– menos de 3 palabras</td><td>{{ l.muy_cortos_menos_3_palabras }}</td></tr>
+            <tr><td>– spam o promoción</td><td>{{ l.spam_promocion }}</td></tr>
+            <tr><td>– otro idioma o indeterminado</td><td>{{ l.por_idioma.values()|sum - l.registros_finales }}</td></tr>
+            <tr class="e6-mejor"><td>Corpus final ({{ l.porcentaje_conservado }} %)</td><td>{{ l.registros_finales }}</td></tr>
+        </tbody>
+    </table></div>
+    {% endif %}
+    <p>Reglas de <span class="mono">scripts/youtube_limpieza.py</span>: se eliminan vacíos y duplicados exactos (texto normalizado),
+    comentarios sin palabras, con menos de 3 palabras (“primero”, “jajaja”) y spam con enlaces. Se borran URL y menciones del texto
+    conservado, sin corregir ortografía para no alterar la opinión. El idioma se detecta por palabras vacías y se conserva solo el
+    español, porque las stopwords y el sentimiento del flujo están en español.</p>
+</section>
+
+<section class="pob-bloque">
+    <h2>Análisis en Orange</h2>
+    {% if tx %}
+        {% for h in tx.hallazgos %}
+        <article class="panel" style="margin-top:1rem;"><h3>{{ h.titulo }}</h3><p>{{ h.texto }}</p>
+            {% if h.img %}{{ m.fig(h.img, h.pie) }}{% endif %}</article>
+        {% endfor %}
+    {% else %}
+    <div class="e6-pendiente"><strong>Pendiente de la extracción.</strong> El flujo <span class="mono">etapa6_comentarios_youtube.ows</span>
+    ya está construido y probado; esta sección se completa con los temas, términos, sentimiento y grupos en cuanto se cargue
+    <span class="mono">comentarios_youtube_limpio.csv</span>.</div>
+    {% endif %}
+    {{ m.fig('flujo_etapa6_comentarios.png', '<strong>Flujo de texto.</strong> Ver parámetros en <a href="' ~ url_for('e6_flujos') ~ '">Flujos en Orange</a>.') }}
+</section>
+
+<section class="pob-bloque">
+    <h2>Alcance</h2>
+    <p>Las opiniones corresponden a quienes comentaron el video seleccionado: no representan a la población de ningún país ni a
+    toda la audiencia. Sirven para generar hipótesis y contrastar percepciones, no para medir opinión pública.</p>
+</section>
+{{ m.pie(('e6_clustering', 'Clustering'), ('e6_conclusiones', 'Conclusiones integradas')) }}
+{% endblock %}

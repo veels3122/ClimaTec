@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% import 'etapa6/_macros.html' as m with context %}
+{% block titulo %}Etapa 6 · Datos y transformaciones · ClimaTec{% endblock %}
+{% block contenido %}
+{{ m.hero(2, 'Datos y transformaciones',
+   'Del formato largo (una fila por indicador, país y año) a una tabla de países lista para modelar, sin fuga de información.') }}
+{% set r = e6.res %}{% set t = r.preparacion if r else None %}
+
+<section class="pob-bloque">
+    <h2>Unidad de análisis: un país</h2>
+    <p>El conjunto limpio tiene una fila por observación. Para modelar se pivotó a una fila por país con el <strong>promedio
+    {{ '2020-2024' }}</strong> de cada indicador (2025 y 2026 casi no tienen datos por país). Se agrega por país, y no por país-año,
+    porque si el mismo país aparece cinco veces la validación cruzada pondría años del mismo país en entrenamiento y prueba: el modelo
+    “reconocería” al país en lugar de aprender el patrón, y las métricas saldrían infladas.</p>
+    <p>El script <span class="mono">scripts/conocimiento_oculto.py</span> hace toda la preparación y deja dos archivos en
+    <span class="mono">data/etapa6/</span>, con encabezados que Orange entiende directamente (<span class="mono">cD#</span> = objetivo,
+    <span class="mono">C#</span> = numérica, <span class="mono">D#</span> = categórica, <span class="mono">m#</span> = meta).</p>
+</section>
+
+{% if t %}
+<section class="pob-bloque">
+    <h2>Trazabilidad de la depuración</h2>
+    <div class="tabla-wrap"><table class="e6-tabla-num">
+        <thead><tr><th>Paso</th><th>Países</th></tr></thead>
+        <tbody>
+            <tr><td>Entidades nacionales en el dataset limpio</td><td>{{ t.paises_iniciales }}</td></tr>
+            <tr><td>– sin CO2 per cápita (no hay objetivo que aprender)</td><td>{{ t.sin_objetivo }}</td></tr>
+            <tr><td>– con menos de 4 de los 6 predictores numéricos</td><td>{{ t.predictores_insuficientes }}</td></tr>
+            <tr class="e6-mejor"><td>Archivo supervisado</td><td>{{ t.paises_finales }}</td></tr>
+            <tr class="e6-mejor"><td>Archivo de clustering (sin faltantes en las 5 variables)</td><td>{{ t.paises_clustering }}</td></tr>
+        </tbody>
+    </table></div>
+    <p class="pob-mini">Faltantes que quedan en el archivo supervisado y que imputa Orange (promedio dentro de cada pliegue):
+    {% for k, v in t.faltantes_por_predictor.items() if v %}<span class="e6-chip">{{ k }}: {{ v }}</span>{% endfor %}</p>
+</section>
+{% endif %}
+
+<section class="pob-bloque">
+    <h2>Variables derivadas</h2>
+    <div class="tabla-wrap"><table>
+        <thead><tr><th>Variable</th><th>Cálculo</th><th>Uso</th></tr></thead>
+        <tbody>
+            <tr><td class="mono">energia_pc_kwh</td><td>Consumo de energía per cápita (OWID)</td><td>Supervisado · clustering (log10)</td></tr>
+            <tr><td class="mono">electricidad_pc_kwh</td><td>Generación eléctrica (TWh) × 10⁹ / población</td><td>Supervisado · clustering (log10)</td></tr>
+            <tr><td class="mono">intensidad_red_tco2e_mwh</td><td>GEI del sector eléctrico / generación: qué tan sucia es la red</td><td>Supervisado · clustering</td></tr>
+            <tr><td class="mono">metano_pc_tco2e</td><td>Emisiones de metano × 10⁶ / población</td><td>Supervisado · clustering (log10)</td></tr>
+            <tr><td class="mono">oxido_nitroso_pc_tco2e</td><td>Emisiones de N₂O × 10⁶ / población</td><td>Supervisado · clustering (log10)</td></tr>
+            <tr><td class="mono">log_poblacion</td><td>log10(población)</td><td>Supervisado</td></tr>
+            <tr><td class="mono">region</td><td>Continente desde <span class="mono">dim_pais_region.csv</span></td><td>Supervisado · descripción de grupos</td></tr>
+            <tr><td class="mono">nivel_co2_pc</td><td>CO2 per cápita: Bajo &lt; 2 t, Medio 2–6 t, Alto ≥ 6 t</td><td>Objetivo supervisado · solo descripción en clustering</td></tr>
+        </tbody>
+    </table></div>
+</section>
+
+<section class="pob-bloque">
+    <h2>Prevención de fuga de información</h2>
+    <p>Se excluyeron todas las variables que contienen el CO2 o se calculan con él, porque no estarían disponibles sin conocer ya la
+    respuesta: {% for x in r.supervisado.excluidas %}<span class="e6-chip">{{ x }}</span>{% endfor %}. La estandarización y la
+    imputación se hacen dentro de la validación cruzada (son preprocesadores del modelo en Orange), no sobre todo el conjunto antes de partirlo.</p>
+</section>
+
+<section class="pob-bloque">
+    <h2>Por qué log10 en el clustering</h2>
+    <p>Las variables per cápita son muy asimétricas: unos pocos petroestados e islas pequeñas tienen valores diez o cien veces mayores
+    que la mediana. Sin transformarlas, k-Means solo separaba esos casos extremos (k = 2 daba un grupo de 20 países contra 173). Con
+    log10 y luego estandarización (opción <em>Normalize columns</em> de k-Means) todas las variables pesan lo mismo y los grupos reflejan
+    perfiles, no tamaños.</p>
+    {{ m.fig('estadisticas_variables.png', '<strong>Feature Statistics en Orange.</strong> Distribución, media, dispersión y faltantes de las variables del archivo supervisado; se ve la cola larga de energía y electricidad per cápita.') }}
+</section>
+{{ m.pie(('e6_proposito', 'Contexto, objetivo y preguntas'), ('e6_flujos', 'Flujos en Orange')) }}
+{% endblock %}
