@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% import 'etapa6/_macros.html' as m with context %}
+{% block titulo %}Etapa 6 · Clustering · ClimaTec{% endblock %}
+{% block contenido %}
+{{ m.hero(5, 'Clustering de países',
+   'Agrupar países por cómo usan y producen la energía, sin decirle al algoritmo cuánto CO2 emiten.') }}
+{% set c = e6.res.clustering %}
+
+<section class="pob-bloque">
+    <h2>Pregunta y variables</h2>
+    <div class="panel"><p style="margin:0;"><strong>{{ c.pregunta }}</strong></p></div>
+    <p style="margin-top:1rem;">Variables: {% for v in c.variables %}<span class="e6-chip">{{ v }}</span>{% endfor %}. Son las mismas
+    dimensiones del perfil energético, pero <strong>sin el CO2 ni el nivel de emisión</strong> (la variable objetivo del supervisado
+    queda como meta y solo se usa después, para describir los grupos). Tampoco se usa la región: así se ve si los perfiles cruzan
+    continentes. Las cuatro variables per cápita se pasan a log10 y k-Means las estandariza (μ = 0, σ = 1).</p>
+</section>
+
+<section class="pob-bloque">
+    <h2>Algoritmo y elección de k</h2>
+    <p><strong>k-Means</strong> con inicialización k-means++, 10 reinicios y 300 iteraciones máximas. Se compararon k = 2 a 8 con la
+    <strong>silueta</strong> (de −1 a 1; más alto = grupos más compactos y separados).</p>
+    <div class="grid grid-2">
+        <div>{{ m.fig('kmeans_comparacion_k.png', '<strong>Silueta para k = 2…8.</strong>') }}</div>
+        <div class="tabla-wrap"><table class="e6-tabla-num">
+            <thead><tr><th>k</th><th>Silueta</th></tr></thead>
+            <tbody>{% for k, v in c.silhouette_k.items() %}<tr class="{{ 'e6-mejor' if k|int == c.k }}"><td>{{ k }}</td><td>{{ '%.3f'|format(v) }}</td></tr>{% endfor %}</tbody>
+        </table></div>
+    </div>
+    <p>k = 2 y k = 4 tienen prácticamente la misma calidad (0,287 frente a 0,285). Se elige <strong>k = 4</strong> porque, con la misma
+    separación, k = 2 solo divide “mucha energía / poca energía”, mientras k = 4 distingue además la limpieza de la red y el peso del
+    metano, que es lo que interesa al proyecto. Una silueta cercana a 0,3 indica estructura real pero con fronteras difusas.</p>
+    {{ m.fig('silhouette_plot.png', '<strong>Silhouette Plot (k = 4).</strong> ' ~ (c.nota_silueta) ~ ' C3 es el grupo más compacto; C2 el más heterogéneo.') }}
+</section>
+
+<section class="pob-bloque">
+    <h2>Los cuatro grupos</h2>
+    <div class="tabla-wrap"><table class="e6-tabla-num">
+        <thead><tr><th>Grupo</th><th>Países</th><th>Energía (kWh/p)</th><th>Electricidad (kWh/p)</th><th>Red (t/MWh)</th><th>Metano (t/p)</th><th>N₂O (t/p)</th><th>Var. CO2 %/año</th><th>CO2 (t/p)</th></tr></thead>
+        <tbody>{% for g in c.grupos %}{% set q = g.medianas %}
+            <tr><td>{{ g.id }}</td><td>{{ g.n }}</td><td>{{ m.miles(q.energia_pc_kwh) }}</td><td>{{ m.miles(q.electricidad_pc_kwh) }}</td><td>{{ '%.2f'|format(q.intensidad_red_tco2e_mwh) }}</td><td>{{ '%.2f'|format(q.metano_pc_tco2e) }}</td><td>{{ '%.2f'|format(q.oxido_nitroso_pc_tco2e) }}</td><td>{{ '%+.1f'|format(q.variacion_co2_pct) }}</td><td>{{ '%.1f'|format(q.co2_pc_t) }}</td></tr>
+        {% endfor %}</tbody>
+    </table></div>
+    <p class="pob-mini">Medianas por grupo. El CO2 y su variación no se usaron para agrupar: se muestran para describir.</p>
+    {% for g in c.grupos %}
+    <article class="panel e6-grupo g-{{ g.id }}" style="margin-top:1rem;">
+        <h3><span>{{ g.id }} · {{ g.n }} países</span>{{ g.nombre }}</h3>
+        <p>{{ g.resumen }}</p>
+        <p class="pob-mini"><strong>Nivel de CO2:</strong> {% for k, v in g.niveles.items() %}{{ k }} {{ v }}{{ ' · ' if not loop.last }}{% endfor %}
+        &nbsp;|&nbsp; <strong>Regiones:</strong> {% for k, v in g.regiones.items() %}{{ k }} {{ v }}{{ ', ' if not loop.last }}{% endfor %}</p>
+        <p class="pob-mini"><strong>Ejemplos típicos:</strong> {{ g.ejemplos | join(', ') }}{% if g.sudamerica %} &nbsp;|&nbsp; <strong>Sudamérica:</strong> {{ g.sudamerica | join(', ') }}{% endif %}</p>
+        <p style="margin-bottom:0;"><strong>Para decidir:</strong> {{ g.decision }}</p>
+    </article>
+    {% endfor %}
+</section>
+
+<section class="pob-bloque">
+    <h2>Evidencia visual</h2>
+    <div class="e6-figs">
+        {{ m.fig('boxplot_log_energia_pc.png', '<strong>Energía per cápita (log10) por grupo.</strong> ANOVA F = 133, p &lt; 0,001.') }}
+        {{ m.fig('boxplot_intensidad_red_tco2e_mwh.png', '<strong>Intensidad de la red por grupo.</strong> C1 tiene la red más limpia; C2 y C4 las más sucias.') }}
+        {{ m.fig('boxplot_log_metano_pc.png', '<strong>Metano per cápita (log10).</strong> C2 se separa claramente.') }}
+        {{ m.fig('scatter_clusters.png', '<strong>Energía (x) frente a intensidad de la red (y).</strong> C1 y C4 consumen parecido pero se separan por la limpieza de su red.') }}
+        {{ m.fig('boxplot_nivel_por_cluster.png', '<strong>Nivel de CO2 dentro de cada grupo</strong> (variable no usada para agrupar).') }}
+        {{ m.fig('boxplot_region_por_cluster.png', '<strong>Región dentro de cada grupo.</strong> Los perfiles cruzan continentes.') }}
+    </div>
+</section>
+
+<section class="pob-bloque">
+    <h2>Patrones ocultos</h2>
+    <ul class="e5-lista">
+        <li><strong>El mismo nivel de emisión puede venir de perfiles distintos.</strong> C1 y C4 tienen países Medios y Altos, pero C1 llega ahí con una red limpia y emisiones que bajan (−1,6 %/año), y C4 con una red sucia y emisiones que suben (+1,0 %/año).</li>
+        <li><strong>Sudamérica comparte perfil con Europa, no con África o Asia.</strong> 10 de los 12 países sudamericanos (Colombia incluida) caen en C1, por su generación hidroeléctrica.</li>
+        <li><strong>Los que menos emiten son los que más rápido aumentan.</strong> C3 es 100 % Bajo, pero su CO2 crece +2,9 %/año: es donde se definirá la trayectoria futura.</li>
+        <li><strong>El metano separa a los productores de hidrocarburos</strong> mejor que el propio consumo: la región no lo explica (C2 mezcla Asia, África y América).</li>
+    </ul>
+    <p class="pob-mini">Limitaciones: silueta moderada (fronteras difusas), resultados sensibles a la elección de variables y a la transformación log; 11 países con datos faltantes quedaron fuera.</p>
+</section>
+{{ m.pie(('e6_supervisado', 'Modelos supervisados'), ('e6_youtube', 'Comentarios de YouTube')) }}
+{% endblock %}

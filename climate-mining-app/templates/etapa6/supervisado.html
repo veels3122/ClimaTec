@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% import 'etapa6/_macros.html' as m with context %}
+{% block titulo %}Etapa 6 · Modelos supervisados · ClimaTec{% endblock %}
+{% block contenido %}
+{{ m.hero(4, 'Modelos supervisados',
+   'Tres modelos distintos para la misma pregunta, evaluados en las mismas condiciones: validación cruzada estratificada de 10 pliegues.') }}
+{% set s = e6.res.supervisado %}{% set t = e6.res.preparacion %}
+
+<section class="pob-bloque">
+    <h2>Pregunta de predicción</h2>
+    <div class="panel"><p style="margin:0;"><strong>{{ s.pregunta }}</strong></p></div>
+    <div class="grid grid-2" style="margin-top:1rem;">
+        <div class="panel"><h3>Variable objetivo</h3><p>{{ s.objetivo }}.</p>
+            <p class="pob-mini">Umbrales: 2 t es una referencia frecuente de emisión por persona compatible con las metas climáticas de mediados de siglo; 6 t queda claramente por encima del promedio mundial (≈ 4,7 t).</p></div>
+        <div class="panel"><h3>Predictoras</h3><p>{% for p in s.predictores %}<span class="e6-chip">{{ p }}</span>{% endfor %}</p>
+            <p class="pob-mini">Describen cuánta energía usa un país, qué tan limpia es su red eléctrica y cuánto emite de otros gases.</p></div>
+    </div>
+    <p style="margin-top:1rem;"><strong>¿Clasificación o regresión?</strong> Clasificación. El CO2 per cápita es continuo, pero
+    tiene una cola muy larga (de 0,05 a 38 t): unos pocos países dominarían el error de una regresión. Además, para la pregunta del
+    proyecto interesa más ubicar a un país en un nivel de emisión que estimar la décima exacta de tonelada.</p>
+</section>
+
+<section class="pob-bloque">
+    <h2>Clases y desbalance</h2>
+    <div class="grid grid-3">
+        {% for c in ['Bajo','Medio','Alto'] %}{% set n = t.clases[c] %}
+        <div class="panel stat {{ 'cold' if c=='Bajo' else ('warm' if c=='Alto' else '') }}"><div class="valor">{{ n }}</div>
+        <div class="etiqueta">{{ c }} · {{ '%.1f' | format(100*n/t.paises_finales) }} % de {{ t.paises_finales }} países</div></div>
+        {% endfor %}
+    </div>
+    <p style="margin-top:1rem;">El desbalance es moderado. Por eso se usa validación <strong>estratificada</strong> (cada pliegue
+    conserva las proporciones) y se reportan precisión, recall y F1 <strong>ponderados</strong> y también por clase. Un modelo que
+    siempre dijera “Bajo” acertaría el {{ '%.1f' | format(100*t.clases['Bajo']/t.paises_finales) }} %: esa es la línea base a superar.</p>
+</section>
+
+<section class="pob-bloque">
+    <h2>Resultados en Test and Score</h2>
+    <div class="tabla-wrap"><table class="e6-tabla-num">
+        <thead><tr><th>Modelo</th><th>AUC</th><th>Accuracy</th><th>F1</th><th>Precisión</th><th>Recall</th><th>MCC</th></tr></thead>
+        <tbody>{% for x in s.metricas %}
+            <tr class="{{ 'e6-mejor' if x.modelo == s.seleccionado }}"><td>{{ x.modelo }}</td><td>{{ '%.3f'|format(x.auc) }}</td><td>{{ '%.3f'|format(x.ca) }}</td><td>{{ '%.3f'|format(x.f1) }}</td><td>{{ '%.3f'|format(x.prec) }}</td><td>{{ '%.3f'|format(x.rec) }}</td><td>{{ '%.3f'|format(x.mcc) }}</td></tr>
+        {% endfor %}</tbody>
+    </table></div>
+    {{ m.fig('test_and_score.png', '<strong>Test and Score.</strong> Validación cruzada de 10 pliegues estratificada. Abajo, la probabilidad bayesiana de que el modelo de la fila tenga mayor AUC que el de la columna: Random Forest supera al árbol con 0,974 y a la regresión logística con 0,971.') }}
+</section>
+
+<section class="pob-bloque">
+    <h2>Matrices de confusión y métricas por clase</h2>
+    <div class="e6-figs">
+        {{ m.fig('matriz_confusion_tree.png', '<strong>Árbol de decisión.</strong>') }}
+        {{ m.fig('matriz_confusion_rf.png', '<strong>Random Forest.</strong>') }}
+        {{ m.fig('matriz_confusion_lr.png', '<strong>Regresión logística.</strong>') }}
+    </div>
+    <div class="tabla-wrap"><table class="e6-tabla-num">
+        <thead><tr><th>Clase</th>{% for k,nm in [('tree','Árbol'),('rf','Random Forest'),('lr','Reg. logística')] %}<th>{{ nm }} P</th><th>R</th><th>F1</th>{% endfor %}</tr></thead>
+        <tbody>{% for c in ['Bajo','Medio','Alto'] %}<tr><td>{{ c }}</td>
+            {% for k in ['tree','rf','lr'] %}{% set q = s.detalle[k].per_class[c] %}<td>{{ '%.2f'|format(q.precision) }}</td><td>{{ '%.2f'|format(q.recall) }}</td><td>{{ '%.2f'|format(q.f1) }}</td>{% endfor %}
+        </tr>{% endfor %}</tbody>
+    </table></div>
+    <p><strong>Lectura de los errores.</strong> Ningún modelo confunde Bajo con Alto: los errores siempre involucran la clase
+    <strong>Medio</strong>, que es la frontera entre las otras dos. El árbol se equivoca sobre todo llamando “Alto” a países Medios
+    (14 casos); la regresión logística, llamándolos “Bajo” (14); Random Forest reparte mejor sus errores (8 y 8) y es el que más
+    Medios acierta (52 de 68).</p>
+    {{ m.fig('curva_roc.png', '<strong>Curva ROC para la clase Alto.</strong> Las tres curvas quedan muy por encima de la diagonal; Random Forest domina casi todo el rango.') }}
+</section>
+
+<section class="pob-bloque">
+    <h2>¿Qué variables explican el nivel de emisión?</h2>
+    <div class="e6-figs">
+        {{ m.fig('rank_importancia.png', '<strong>Rank.</strong> Ganancia de información, razón de ganancia y Gini de cada predictora frente a la clase.') }}
+    </div>
+    <p>El <strong>consumo de energía per cápita</strong> (ganancia de información {{ s.importancia_infogain.energia_pc_kwh }}) y la
+    <strong>electricidad per cápita</strong> ({{ s.importancia_infogain.electricidad_pc_kwh }}) son, con diferencia, las variables más
+    informativas; en Random Forest suman el {{ ((s.importancia_rf.energia_pc_kwh + s.importancia_rf.electricidad_pc_kwh)*100)|round|int }} % de la importancia.
+    La intensidad de la red casi no informa sola (0,024), pero el árbol la usa <em>después</em> de la energía: dentro de un mismo
+    nivel de consumo, decide si un país es Medio o Alto.</p>
+    {{ m.fig('arbol_detalle.png', '<strong>Árbol de decisión</strong> entrenado con todos los datos (solo para interpretar).') }}
+    <div class="panel"><h3>Reglas principales</h3><ul class="e5-lista">{% for x in s.reglas_arbol %}<li>{{ x }}</li>{% endfor %}</ul></div>
+</section>
+
+<section class="pob-bloque">
+    <h2>Modelo seleccionado: {{ s.seleccionado }}</h2>
+    <div class="grid grid-2">
+        <div class="panel"><h3>Por qué</h3><ul class="e5-lista">
+            <li>Mejor en todas las métricas: AUC 0,963, F1 0,838, MCC 0,752.</li>
+            <li>La diferencia en AUC es creíble: 97 % de probabilidad de superar a los otros dos.</li>
+            <li>Es el que mejor maneja la clase difícil (Medio: F1 0,76).</li>
+            <li>No exige estandarizar ni supuestos de linealidad, y tolera valores extremos.</li>
+        </ul></div>
+        <div class="panel"><h3>Qué aporta y qué no</h3><ul class="e5-lista">
+            <li>Confirma que el nivel de emisión de un país se explica sobre todo por <strong>cuánta energía usa</strong>, y en segundo lugar por <strong>cómo la produce</strong>.</li>
+            <li>Es menos interpretable que el árbol; por eso el árbol se mantiene como apoyo para explicar reglas.</li>
+            <li>Con 204 países, cada pliegue evalúa ~20: las métricas tienen incertidumbre de algunos puntos.</li>
+            <li>Muestra asociación, no causalidad, y usa promedios 2020-2024 (incluye el año atípico de la pandemia).</li>
+        </ul></div>
+    </div>
+    <div class="nota"><strong>Caso Colombia:</strong> emite 1,8 t por persona (Bajo), consume 11.362 kWh por persona y tiene una red
+    de solo 0,25 t CO2e/MWh. El árbol la ubica en “Medio” porque su consumo supera el primer corte: está a 0,2 t del umbral, y su red
+    hidroeléctrica es justamente lo que la mantiene por debajo. Es un ejemplo de por qué el error se concentra en la frontera.</div>
+</section>
+{{ m.pie(('e6_flujos', 'Flujos en Orange'), ('e6_clustering', 'Clustering')) }}
+{% endblock %}

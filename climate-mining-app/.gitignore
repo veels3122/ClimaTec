@@ -8,3 +8,7 @@ env/
 .DS_Store
 data/processed/owid-co2-data.csv
 data/dw/*.sqlite
+# Etapa 6: credenciales y comentarios crudos (pueden contener datos personales)
+.env
+*.key
+data/etapa6/comentarios_youtube_raw.csv

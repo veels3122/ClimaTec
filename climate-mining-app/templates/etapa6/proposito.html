@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% import 'etapa6/_macros.html' as m with context %}
+{% block titulo %}Etapa 6 · Contexto, objetivo y preguntas · ClimaTec{% endblock %}
+{% block contenido %}
+{{ m.hero(1, 'Contexto, objetivo y preguntas',
+   'Ir más allá de describir y cruzar los datos: usar modelos de aprendizaje supervisado y no supervisado en Orange Data Mining, y contrastarlos con lo que opina la gente en YouTube.') }}
+{% set r = e6.res %}
+
+<section class="pob-bloque">
+    <h2>De dónde venimos</h2>
+    <p>Las Etapas 4 y 5 mostraron <em>qué</em> pasa con las emisiones: quién emite más, cómo cambian en el tiempo y cómo se
+    reparten por región (conocimiento evidente y multidimensional). La Etapa 6 busca el conocimiento que no se ve a simple
+    vista: <strong>qué combinación de rasgos explica</strong> que un país sea gran emisor, <strong>qué perfiles</strong> de
+    países existen más allá de los continentes, y <strong>qué piensa</strong> el público sobre el cambio climático.</p>
+    <p>Se trabaja con el mismo conjunto limpio de las etapas anteriores (<span class="mono">clima_limpio.csv</span>), sin datos nuevos
+    salvo los comentarios de YouTube.</p>
+</section>
+
+<section class="pob-bloque">
+    <h2>Objetivo</h2>
+    <div class="panel"><p style="margin:0;">Descubrir patrones, relaciones y comportamientos que profundicen la comprensión del problema de ClimaTec
+    —la relación entre las tendencias del cambio climático y los eventos externos a escala global, regional y nacional— mediante
+    modelos supervisados y de clustering en Orange, y complementar esos hallazgos con el análisis de comentarios extraídos con la API
+    de YouTube.</p></div>
+</section>
+
+<section class="pob-bloque">
+    <h2>Preguntas de análisis</h2>
+    <div class="tabla-wrap"><table>
+        <thead><tr><th>Sección</th><th>Pregunta</th><th>Técnica</th></tr></thead>
+        <tbody>
+            <tr><td><a href="{{ url_for('e6_supervisado') }}">Supervisado</a></td><td>{{ r.supervisado.pregunta if r else '' }}</td><td>Clasificación: árbol de decisión, Random Forest y regresión logística</td></tr>
+            <tr><td><a href="{{ url_for('e6_clustering') }}">Clustering</a></td><td>{{ r.clustering.pregunta if r else '' }}</td><td>k-Means con comparación de k y silueta</td></tr>
+            <tr><td><a href="{{ url_for('e6_youtube') }}">Comentarios</a></td><td>¿Qué temas, opiniones y sentimientos expresa el público sobre el cambio climático, y coinciden con lo que muestran los datos?</td><td>Minería de texto: bolsa de palabras, temas LDA, sentimiento y clustering jerárquico</td></tr>
+        </tbody>
+    </table></div>
+</section>
+
+<section class="pob-bloque">
+    <h2>Relación con la pregunta principal del proyecto</h2>
+    <p>La pregunta principal compara global, Sudamérica y Colombia. Esta etapa aporta dos piezas: un modelo que explica el nivel de
+    emisión de cada país a partir de su perfil energético (¿por qué Colombia emite poco por persona?), y una agrupación que ubica a
+    Colombia junto a países parecidos, no solo junto a sus vecinos. Los comentarios agregan la percepción del público, que los datos
+    numéricos no contienen.</p>
+</section>
+
+<section class="pob-bloque">
+    <h2>Reparto de la sustentación</h2>
+    <div class="grid grid-3">
+        <div class="panel"><p class="kicker">{{ proyecto.integrantes[0] }}</p><h3>Modelos supervisados</h3><p>Pregunta de predicción, preparación, los tres modelos, comparación y modelo elegido.</p></div>
+        <div class="panel"><p class="kicker">{{ proyecto.integrantes[1] }}</p><h3>Clustering</h3><p>Variables, transformación, elección de k, caracterización de los cuatro grupos.</p></div>
+        <div class="panel"><p class="kicker">{{ proyecto.integrantes[2] }}</p><h3>YouTube y conclusiones</h3><p>Extracción, limpieza y análisis de comentarios; conclusiones integradas y limitaciones.</p></div>
+    </div>
+</section>
+{{ m.pie(None, ('e6_datos', 'Datos y transformaciones')) }}
+{% endblock %}

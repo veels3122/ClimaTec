@@ -1,0 +1,429 @@
+{
+ "preparacion": {
+  "paises_iniciales": 231,
+  "sin_objetivo": 18,
+  "sin_poblacion_o_region": 0,
+  "predictores_insuficientes": 9,
+  "faltantes_por_predictor": {
+   "energia_pc_kwh": 0,
+   "electricidad_pc_kwh": 2,
+   "intensidad_red_tco2e_mwh": 3,
+   "metano_pc_tco2e": 8,
+   "oxido_nitroso_pc_tco2e": 8,
+   "log_poblacion": 0
+  },
+  "paises_finales": 204,
+  "clases": {
+   "Bajo": 85,
+   "Medio": 68,
+   "Alto": 51
+  },
+  "paises_clustering": 193
+ },
+ "supervisado": {
+  "pregunta": "¿Se puede predecir si un país es emisor Bajo, Medio o Alto de CO2 per cápita a partir de su perfil energético y de sus emisiones de gases distintos al CO2?",
+  "tipo": "Clasificación multiclase (3 clases)",
+  "objetivo": "nivel_co2_pc: Bajo (< 2 t), Medio (2–6 t) o Alto (≥ 6 t) de CO2 por persona, promedio 2020-2024",
+  "predictores": [
+   "region",
+   "energia_pc_kwh",
+   "electricidad_pc_kwh",
+   "intensidad_red_tco2e_mwh",
+   "metano_pc_tco2e",
+   "oxido_nitroso_pc_tco2e",
+   "log_poblacion"
+  ],
+  "excluidas": [
+   "Emisiones de CO2 total y por combustible",
+   "CO2 acumulado",
+   "Variación anual de CO2",
+   "Contribución del CO2 y los GEI a la temperatura",
+   "GEI total y per cápita (incluyen el CO2)"
+  ],
+  "metricas": [
+   {
+    "modelo": "Arbol de decision",
+    "auc": 0.911,
+    "ca": 0.819,
+    "f1": 0.816,
+    "prec": 0.817,
+    "rec": 0.819,
+    "mcc": 0.725
+   },
+   {
+    "modelo": "Random Forest",
+    "auc": 0.963,
+    "ca": 0.838,
+    "f1": 0.838,
+    "prec": 0.839,
+    "rec": 0.838,
+    "mcc": 0.752
+   },
+   {
+    "modelo": "Regresion logistica",
+    "auc": 0.94,
+    "ca": 0.828,
+    "f1": 0.826,
+    "prec": 0.826,
+    "rec": 0.828,
+    "mcc": 0.737
+   }
+  ],
+  "comparacion_auc": {
+   "rf_vs_tree": 0.974,
+   "rf_vs_lr": 0.971,
+   "lr_vs_tree": 0.77
+  },
+  "detalle": {
+   "tree": {
+    "confusion": [
+     [
+      44,
+      0,
+      7
+     ],
+     [
+      0,
+      78,
+      7
+     ],
+     [
+      14,
+      9,
+      45
+     ]
+    ],
+    "per_class": {
+     "Alto": {
+      "precision": 0.759,
+      "recall": 0.863,
+      "f1": 0.807,
+      "n": 51
+     },
+     "Bajo": {
+      "precision": 0.897,
+      "recall": 0.918,
+      "f1": 0.907,
+      "n": 85
+     },
+     "Medio": {
+      "precision": 0.763,
+      "recall": 0.662,
+      "f1": 0.709,
+      "n": 68
+     }
+    },
+    "accuracy": 0.819
+   },
+   "rf": {
+    "confusion": [
+     [
+      42,
+      0,
+      9
+     ],
+     [
+      0,
+      77,
+      8
+     ],
+     [
+      8,
+      8,
+      52
+     ]
+    ],
+    "per_class": {
+     "Alto": {
+      "precision": 0.84,
+      "recall": 0.824,
+      "f1": 0.832,
+      "n": 51
+     },
+     "Bajo": {
+      "precision": 0.906,
+      "recall": 0.906,
+      "f1": 0.906,
+      "n": 85
+     },
+     "Medio": {
+      "precision": 0.754,
+      "recall": 0.765,
+      "f1": 0.759,
+      "n": 68
+     }
+    },
+    "accuracy": 0.838
+   },
+   "lr": {
+    "confusion": [
+     [
+      44,
+      0,
+      7
+     ],
+     [
+      0,
+      78,
+      7
+     ],
+     [
+      7,
+      14,
+      47
+     ]
+    ],
+    "per_class": {
+     "Alto": {
+      "precision": 0.863,
+      "recall": 0.863,
+      "f1": 0.863,
+      "n": 51
+     },
+     "Bajo": {
+      "precision": 0.848,
+      "recall": 0.918,
+      "f1": 0.881,
+      "n": 85
+     },
+     "Medio": {
+      "precision": 0.77,
+      "recall": 0.691,
+      "f1": 0.729,
+      "n": 68
+     }
+    },
+    "accuracy": 0.828
+   }
+  },
+  "clases_orden": [
+   "Alto",
+   "Bajo",
+   "Medio"
+  ],
+  "importancia_infogain": {
+   "energia_pc_kwh": 0.946,
+   "electricidad_pc_kwh": 0.784,
+   "region": 0.306,
+   "metano_pc_tco2e": 0.098,
+   "oxido_nitroso_pc_tco2e": 0.068,
+   "intensidad_red_tco2e_mwh": 0.024,
+   "log_poblacion": 0.02
+  },
+  "importancia_rf": {
+   "energia_pc_kwh": 0.356,
+   "electricidad_pc_kwh": 0.315,
+   "metano_pc_tco2e": 0.074,
+   "intensidad_red_tco2e_mwh": 0.071,
+   "oxido_nitroso_pc_tco2e": 0.053,
+   "region (6 dummies)": 0.094,
+   "log_poblacion": 0.037
+  },
+  "reglas_arbol": [
+   "Energía ≤ 9.076 kWh por persona → Bajo (79 de 82 países, 96 %)",
+   "Energía entre 9.076 y 29.300 kWh e intensidad de la red ≤ 0,68 t/MWh → Medio (51 de 58)",
+   "Energía > 37.056 kWh y metano > 0,76 t por persona → Alto (27 de 27, 100 %)",
+   "Energía entre 29.300 y 37.056 kWh con red muy limpia (≤ 0,185 t/MWh) → Medio (Suiza, Dinamarca…)"
+  ],
+  "seleccionado": "Random Forest"
+ },
+ "clustering": {
+  "pregunta": "¿Qué perfiles energético-emisores comparten los países, más allá de su nivel de CO2 per cápita?",
+  "variables": [
+   "log_energia_pc",
+   "log_electricidad_pc",
+   "intensidad_red_tco2e_mwh",
+   "log_metano_pc",
+   "log_oxido_nitroso_pc"
+  ],
+  "silhouette_k": {
+   "2": 0.287,
+   "3": 0.266,
+   "4": 0.285,
+   "5": 0.233,
+   "6": 0.232,
+   "7": 0.228,
+   "8": 0.254
+  },
+  "k": 4,
+  "silhouette_plot": 0.224,
+  "grupos": [
+   {
+    "id": "C1",
+    "nombre": "Red eléctrica limpia y emisiones a la baja",
+    "resumen": "Consumo de energía alto o medio con la red eléctrica menos intensiva en carbono (hidroeléctrica o nuclear). Es el único grupo cuyas emisiones de CO2 bajan en el periodo.",
+    "decision": "Referente de desacople: se puede consumir energía sin emitir al ritmo de los fósiles. Colombia está aquí; el reto es proteger la generación hídrica frente a sequías como las de El Niño 2023-2024.",
+    "n": 59,
+    "medianas": {
+     "energia_pc_kwh": 25570.115,
+     "electricidad_pc_kwh": 4504.641,
+     "intensidad_red_tco2e_mwh": 0.192,
+     "metano_pc_tco2e": 1.14,
+     "oxido_nitroso_pc_tco2e": 0.466,
+     "variacion_co2_pct": -1.637,
+     "co2_pc_t": 4.541
+    },
+    "silhouette": 0.248,
+    "niveles": {
+     "Bajo": 10,
+     "Medio": 32,
+     "Alto": 17
+    },
+    "regiones": {
+     "Europa": 32,
+     "Sudamérica": 10,
+     "Asia": 8,
+     "Norteamérica": 6,
+     "Oceanía": 2,
+     "África": 1
+    },
+    "ejemplos": [
+     "Slovakia",
+     "France",
+     "Hungary",
+     "Croatia",
+     "Spain",
+     "Austria",
+     "Belgium",
+     "Romania"
+    ],
+    "sudamerica": [
+     "Argentina",
+     "Brazil",
+     "Chile",
+     "Colombia",
+     "Ecuador",
+     "Paraguay",
+     "Peru",
+     "Suriname",
+     "Uruguay",
+     "Venezuela"
+    ]
+   },
+   {
+    "id": "C2",
+    "nombre": "Productores de hidrocarburos intensivos en carbono",
+    "resumen": "El consumo de energía más alto, la red más sucia y el metano per cápita más alto (extracción de petróleo y gas). Concentra la mayoría de los emisores Altos.",
+    "decision": "Prioridad para políticas de metano (fugas y quema en antorcha) y para descarbonizar la red: pequeños cambios en estos países mueven mucho las emisiones por persona.",
+    "n": 32,
+    "medianas": {
+     "energia_pc_kwh": 31006.725,
+     "electricidad_pc_kwh": 4939.632,
+     "intensidad_red_tco2e_mwh": 0.657,
+     "metano_pc_tco2e": 3.223,
+     "oxido_nitroso_pc_tco2e": 0.335,
+     "variacion_co2_pct": 1.077,
+     "co2_pc_t": 8.018
+    },
+    "silhouette": 0.02,
+    "niveles": {
+     "Bajo": 2,
+     "Medio": 8,
+     "Alto": 22
+    },
+    "regiones": {
+     "Asia": 19,
+     "África": 5,
+     "Europa": 4,
+     "Sudamérica": 2,
+     "Oceanía": 1,
+     "Norteamérica": 1
+    },
+    "ejemplos": [
+     "Kazakhstan",
+     "Libya",
+     "Brunei",
+     "Saudi Arabia",
+     "Turkmenistan",
+     "Kuwait",
+     "Bahrain",
+     "Trinidad and Tobago"
+    ],
+    "sudamerica": [
+     "Bolivia",
+     "Guyana"
+    ]
+   },
+   {
+    "id": "C3",
+    "nombre": "Baja energía y baja electrificación",
+    "resumen": "Consumo de energía y electricidad muy bajos; todos son emisores Bajos. Sin embargo, es el grupo cuyas emisiones crecen más rápido.",
+    "decision": "Oportunidad para crecer con renovables desde el inicio: su emisión es baja hoy, pero la tendencia es al alza.",
+    "n": 48,
+    "medianas": {
+     "energia_pc_kwh": 1359.123,
+     "electricidad_pc_kwh": 154.958,
+     "intensidad_red_tco2e_mwh": 0.36,
+     "metano_pc_tco2e": 0.93,
+     "oxido_nitroso_pc_tco2e": 0.279,
+     "variacion_co2_pct": 2.889,
+     "co2_pc_t": 0.295
+    },
+    "silhouette": 0.372,
+    "niveles": {
+     "Bajo": 48,
+     "Medio": 0,
+     "Alto": 0
+    },
+    "regiones": {
+     "África": 36,
+     "Asia": 7,
+     "Norteamérica": 4,
+     "Oceanía": 1
+    },
+    "ejemplos": [
+     "Tanzania",
+     "Uganda",
+     "Madagascar",
+     "Ethiopia",
+     "Burkina Faso",
+     "Somalia",
+     "Mali",
+     "Sierra Leone"
+    ],
+    "sudamerica": []
+   },
+   {
+    "id": "C4",
+    "nombre": "Transición intermedia dependiente de fósiles",
+    "resumen": "Consumo de energía intermedio con red eléctrica intensiva en carbono (diésel, carbón o gas) y poco metano y óxido nitroso. Incluye muchas islas pequeñas e India.",
+    "decision": "La palanca es la red eléctrica: reemplazar generación fósil por renovable reduce emisiones sin frenar el consumo.",
+    "n": 54,
+    "medianas": {
+     "energia_pc_kwh": 10664.06,
+     "electricidad_pc_kwh": 1713.422,
+     "intensidad_red_tco2e_mwh": 0.602,
+     "metano_pc_tco2e": 0.563,
+     "oxido_nitroso_pc_tco2e": 0.159,
+     "variacion_co2_pct": 0.994,
+     "co2_pc_t": 2.508
+    },
+    "silhouette": 0.188,
+    "niveles": {
+     "Bajo": 22,
+     "Medio": 25,
+     "Alto": 7
+    },
+    "regiones": {
+     "Asia": 16,
+     "Norteamérica": 15,
+     "África": 13,
+     "Oceanía": 7,
+     "Europa": 3
+    },
+    "ejemplos": [
+     "Saint Lucia",
+     "Grenada",
+     "Maldives",
+     "Saint Vincent and the Grenadines",
+     "Mauritius",
+     "Jordan",
+     "Jamaica",
+     "British Virgin Islands"
+    ],
+    "sudamerica": []
+   }
+  ],
+  "nota_silueta": "La silueta por grupo sale del widget Silhouette Plot (distancia euclidiana sobre las variables transformadas, sin estandarizar); la comparación de k usa la silueta de k-Means sobre variables estandarizadas."
+ }
+}

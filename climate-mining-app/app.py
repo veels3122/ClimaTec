@@ -1346,6 +1346,65 @@ def e5_conclusiones():
     return render_template("etapa5/conclusiones.html", proyecto=PROYECTO, info=_info_e5(), vistas=VISTAS_E5)
 
 
+# ===========================================================================
+# ETAPA 6 - Conocimiento oculto (aprendizaje supervisado, clustering y
+# comentarios de YouTube). Los resultados salen de los flujos de Orange
+# (data/etapa6/*.ows) y se guardan en data/etapa6/*.json; la app solo los lee,
+# por eso no necesita Orange instalado en el servidor.
+# ===========================================================================
+DIR_E6 = os.path.join(BASE_DIR, "data", "etapa6")
+VIDEO_ETAPA6_URL = ""          # <- pegar aqui el enlace del video de sustentacion (YouTube/Drive)
+INFORME_ETAPA6 = "docs/Informe_Etapa6_Conocimiento_Oculto.pdf"   # dentro de /static
+
+
+def _leer_json_e6(nombre):
+    import json
+    ruta = os.path.join(DIR_E6, nombre)
+    if not os.path.exists(ruta):
+        return None
+    with open(ruta, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _info_e6():
+    return {
+        "res": _leer_json_e6("resultados_etapa6.json"),
+        "video_yt": _leer_json_e6("video_metadatos.json"),
+        "limpieza_yt": _leer_json_e6("traza_limpieza_comentarios.json"),
+        "texto": _leer_json_e6("resultados_texto.json"),
+        "video_url": VIDEO_ETAPA6_URL,
+        "informe": INFORME_ETAPA6 if os.path.exists(os.path.join(BASE_DIR, "static", INFORME_ETAPA6)) else None,
+        "url_app": URL_APP, "url_repo": URL_REPO,
+    }
+
+
+SECCIONES_E6 = [
+    ("e6_proposito", "/etapa-6/contexto-y-preguntas", "etapa6/proposito.html"),
+    ("e6_datos", "/etapa-6/datos-y-transformaciones", "etapa6/datos.html"),
+    ("e6_flujos", "/etapa-6/flujos-orange", "etapa6/flujos.html"),
+    ("e6_supervisado", "/etapa-6/modelos-supervisados", "etapa6/supervisado.html"),
+    ("e6_clustering", "/etapa-6/clustering", "etapa6/clustering.html"),
+    ("e6_youtube", "/etapa-6/comentarios-youtube", "etapa6/youtube.html"),
+    ("e6_conclusiones", "/etapa-6/conclusiones-integradas", "etapa6/conclusiones.html"),
+    ("e6_informe", "/etapa-6/informe-y-video", "etapa6/informe.html"),
+]
+
+
+def _vista_e6(plantilla):
+    def vista():
+        return render_template(plantilla, proyecto=PROYECTO, e6=_info_e6())
+    return vista
+
+
+for _ep, _ruta, _tpl in SECCIONES_E6:
+    app.add_url_rule(_ruta, endpoint=_ep, view_func=_vista_e6(_tpl))
+
+
+@app.route("/conocimiento-oculto")
+def conocimiento_oculto():
+    return redirect(url_for("e6_proposito"))
+
+
 # Compatibilidad con rutas antiguas (evita 404 en enlaces previos).
 @app.route("/problema")
 def problema():

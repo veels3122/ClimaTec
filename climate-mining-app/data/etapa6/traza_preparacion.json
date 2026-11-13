@@ -1,0 +1,21 @@
+{
+  "paises_iniciales": 231,
+  "sin_objetivo": 18,
+  "sin_poblacion_o_region": 0,
+  "predictores_insuficientes": 9,
+  "faltantes_por_predictor": {
+    "energia_pc_kwh": 0,
+    "electricidad_pc_kwh": 2,
+    "intensidad_red_tco2e_mwh": 3,
+    "metano_pc_tco2e": 8,
+    "oxido_nitroso_pc_tco2e": 8,
+    "log_poblacion": 0
+  },
+  "paises_finales": 204,
+  "clases": {
+    "Bajo": 85,
+    "Medio": 68,
+    "Alto": 51
+  },
+  "paises_clustering": 193
+}

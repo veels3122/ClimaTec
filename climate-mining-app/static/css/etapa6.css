@@ -1,0 +1,40 @@
+/* ==========================================================================
+   ClimaTec - Etapa 6 / Conocimiento oculto (prefijo e6-).
+   Reutiliza los tokens de style.css y las clases pob-* / e5-* existentes.
+   ========================================================================== */
+.e6-fig { margin: 1.2rem 0; }
+.e6-fig img {
+    display: block; max-width: 100%; height: auto; border-radius: 10px;
+    border: 1px solid var(--glass-border); background: #fff; cursor: zoom-in;
+}
+.e6-fig figcaption { font-size: .84rem; color: var(--ink-mute); margin-top: .45rem; line-height: 1.45; }
+.e6-fig figcaption strong { color: var(--ink-soft); }
+.e6-figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.1rem; }
+.e6-tabla-num td, .e6-tabla-num th { text-align: right; }
+.e6-tabla-num td:first-child, .e6-tabla-num th:first-child { text-align: left; }
+.e6-mejor td { color: #fff; font-weight: 600; background: rgba(73,199,224,.10); }
+.e6-chip {
+    display: inline-block; padding: .15rem .6rem; border-radius: 999px; font-size: .78rem;
+    border: 1px solid var(--glass-border); background: var(--glass); color: var(--ink-soft); margin: .1rem .15rem .1rem 0;
+}
+.e6-grupo { border-left: 4px solid var(--cold); }
+.e6-grupo.g-C1 { border-left-color: #5ab4ff; } .e6-grupo.g-C2 { border-left-color: #ff6a6a; }
+.e6-grupo.g-C3 { border-left-color: #b9f04a; } .e6-grupo.g-C4 { border-left-color: #ffb23e; }
+.e6-grupo h3 span { font-family: "IBM Plex Mono", monospace; font-size: .85rem; color: var(--ink-mute); margin-right: .4rem; }
+.e6-pendiente {
+    border: 1px dashed rgba(255,178,62,.6); background: rgba(255,178,62,.07); border-radius: 12px;
+    padding: 1rem 1.2rem; margin: 1.2rem 0;
+}
+.e6-pendiente strong { color: #ffcf85; }
+.e6-pasos { counter-reset: paso; list-style: none; padding: 0; }
+.e6-pasos li { counter-increment: paso; position: relative; padding: .55rem 0 .55rem 2.4rem; color: var(--ink-soft); }
+.e6-pasos li::before {
+    content: counter(paso); position: absolute; left: 0; top: .5rem; width: 1.7rem; height: 1.7rem;
+    display: grid; place-items: center; border-radius: 50%; background: var(--cold); color: #04202a;
+    font-weight: 600; font-size: .85rem;
+}
+.e6-video { position: relative; padding-top: 56.25%; border-radius: 12px; overflow: hidden; border: 1px solid var(--glass-border); }
+.e6-video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.e6-lightbox { position: fixed; inset: 0; background: rgba(0,0,0,.86); display: none; place-items: center; z-index: 999; padding: 2rem; }
+.e6-lightbox.abierto { display: grid; }
+.e6-lightbox img { max-width: 96vw; max-height: 92vh; background: #fff; border-radius: 8px; }

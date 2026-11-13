@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% import 'etapa6/_macros.html' as m with context %}
+{% block titulo %}Etapa 6 · Conclusiones integradas · ClimaTec{% endblock %}
+{% block contenido %}
+{{ m.hero(7, 'Conclusiones integradas',
+   'Qué se sabe ahora que no se sabía con el análisis descriptivo y multidimensional, qué está respaldado por evidencia y qué queda como hipótesis.') }}
+{% set tx = e6.texto %}
+
+<section class="pob-bloque">
+    <h2>Nuevo conocimiento</h2>
+    <div class="grid grid-2">
+        <div class="panel"><h3>1 · La energía explica el nivel; la red explica la diferencia</h3><p>El consumo de energía per cápita
+        separa casi por sí solo a los emisores Bajos (96 % de acierto en la primera regla del árbol). Entre países con consumo parecido,
+        la limpieza de la red eléctrica decide si son Medios o Altos. Supervisado y clustering coinciden en esto por caminos distintos.</p></div>
+        <div class="panel"><h3>2 · Colombia emite poco por su red, no por consumir poco</h3><p>Colombia consume más energía que el umbral
+        de los países Bajos, pero su red hidroeléctrica (0,25 t/MWh) la mantiene en 1,8 t por persona. El clustering la ubica con
+        Europa y el resto de Sudamérica en el grupo de red limpia.</p></div>
+        <div class="panel"><h3>3 · Igual nivel, trayectorias opuestas</h3><p>Los países Medios de C1 reducen emisiones y los de C4 las
+        aumentan. El nivel actual (lo que miran las etapas descriptivas) no dice hacia dónde va un país; el perfil sí.</p></div>
+        <div class="panel"><h3>4 · El crecimiento está en los que menos emiten</h3><p>El grupo de baja energía (C3) es 100 % Bajo pero
+        su CO2 crece +2,9 % al año, el ritmo más alto. La trayectoria futura se juega en cómo se electrifiquen esos países.</p></div>
+    </div>
+</section>
+
+<section class="pob-bloque">
+    <h2>Coincidencias y diferencias</h2>
+    <div class="tabla-wrap"><table>
+        <thead><tr><th>Tema</th><th>Supervisado</th><th>Clustering</th><th>Comentarios de YouTube</th></tr></thead>
+        <tbody>
+            <tr><td>Factor principal</td><td>Energía per cápita</td><td>Energía separa C3; red y metano separan C1, C2, C4</td><td>{{ tx.coincidencias.factor if tx else 'Pendiente' }}</td></tr>
+            <tr><td>Colombia</td><td>Frontera Bajo/Medio</td><td>Grupo de red limpia (C1)</td><td>{{ tx.coincidencias.colombia if tx else 'Pendiente' }}</td></tr>
+            <tr><td>Responsables</td><td>Alto consumo y metano</td><td>Productores de hidrocarburos (C2)</td><td>{{ tx.coincidencias.responsables if tx else 'Pendiente' }}</td></tr>
+        </tbody>
+    </table></div>
+</section>
+
+<section class="pob-bloque">
+    <h2>Decisiones que se pueden apoyar</h2>
+    <ul class="e5-lista">
+        <li>Comparar a Colombia con países de su mismo perfil (C1), no solo con sus vecinos, al fijar metas de reducción.</li>
+        <li>Priorizar la protección y diversificación de la generación renovable: es lo que mantiene a Colombia en el nivel Bajo, y El Niño 2023-2024 mostró su vulnerabilidad.</li>
+        <li>Enfocar el seguimiento del metano en los países productores de hidrocarburos (C2).</li>
+        <li>Vigilar la tendencia, no solo el nivel: un indicador de “perfil” anticipa mejor que el CO2 actual.</li>
+    </ul>
+</section>
+
+<section class="pob-bloque">
+    <h2>Evidencia frente a hipótesis</h2>
+    <div class="grid grid-2">
+        <div class="panel"><h3>Respaldado por evidencia</h3><ul class="e5-lista">
+            <li>Energía y electricidad per cápita son las variables más asociadas al nivel de CO2 (ganancia de información, importancia en Random Forest y árbol).</li>
+            <li>El modelo clasifica correctamente el 84 % de los países en validación cruzada.</li>
+            <li>Los cuatro perfiles difieren de forma significativa (ANOVA p &lt; 0,001 en las variables).</li>
+            <li>10 de 12 países sudamericanos comparten el perfil de red limpia.</li>
+        </ul></div>
+        <div class="panel"><h3>Hipótesis que requieren validación</h3><ul class="e5-lista">
+            <li>Que mejorar la red reduzca el CO2 (el modelo muestra asociación, no causa).</li>
+            <li>Que el crecimiento de C3 continúe (solo 5 años, uno de ellos de pandemia).</li>
+            <li>Que la percepción del público coincida con los datos: los comentarios no son representativos.</li>
+            <li>La relación con eventos externos (El Niño, COP) no se modeló directamente en esta etapa.</li>
+        </ul></div>
+    </div>
+</section>
+
+<section class="pob-bloque">
+    <h2>Limitaciones</h2>
+    <p>Pocos casos (204 y 193 países) frente a la variedad entre ellos; promedios de 2020-2024 que mezclan el año atípico de la
+    pandemia; umbrales de clase definidos por el equipo; silueta moderada en el clustering; datos de un solo proveedor terciario
+    (OWID); y comentarios de un único video, en español, de quienes decidieron comentar.</p>
+</section>
+{{ m.pie(('e6_youtube', 'Comentarios de YouTube'), ('e6_informe', 'Informe técnico y video')) }}
+{% endblock %}
