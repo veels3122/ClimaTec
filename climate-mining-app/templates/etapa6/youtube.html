@@ -15,7 +15,8 @@
         <tbody>
             <tr><th>Video</th><td>{% if v %}{{ v.titulo }} — {{ v.canal }}{% else %}ID 0rzAluuejUw{% endif %}</td></tr>
             <tr><th>Enlace</th><td><a href="https://www.youtube.com/watch?v=0rzAluuejUw" target="_blank" rel="noopener">youtube.com/watch?v=0rzAluuejUw</a></td></tr>
-            {% if v %}<tr><th>Publicado</th><td>{{ v.publicado[:10] }} · {{ m.miles(v.vistas) }} vistas · {{ m.miles(v.comentarios_reportados) }} comentarios reportados</td></tr>
+            {% if v and v.publicado %}<tr><th>Publicado</th><td>{{ v.publicado[:10] }} · {{ m.miles(v.vistas) }} vistas · {{ m.miles(v.comentarios_reportados) }} comentarios reportados</td></tr>{% endif %}
+            {% if v %}
             <tr><th>Extracción</th><td>{{ v.fecha_extraccion[:10] }} · {{ v.comentarios_extraidos }} comentarios en {{ v.paginas_api }} páginas de la API</td></tr>{% endif %}
             <tr><th>Criterios</th><td>Video en español sobre cambio climático con volumen suficiente de comentarios; se extraen los comentarios principales (no respuestas), ordenados por fecha, hasta 500.</td></tr>
         </tbody>
