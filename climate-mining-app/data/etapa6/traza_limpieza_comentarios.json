@@ -1,0 +1,15 @@
+{
+  "registros_iniciales": 500,
+  "vacios": 0,
+  "duplicados": 3,
+  "sin_contenido_textual": 4,
+  "muy_cortos_menos_3_palabras": 19,
+  "spam_promocion": 0,
+  "por_idioma": {
+    "es": 463,
+    "indeterminado": 8,
+    "en": 3
+  },
+  "registros_finales": 463,
+  "porcentaje_conservado": 92.6
+}
