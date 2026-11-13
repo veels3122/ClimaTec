@@ -1,0 +1,441 @@
+{
+  "n_comentarios": 463,
+  "sin_tokens_tras_preproceso": 9,
+  "vocabulario": 581,
+  "top_tfidf": [
+    [
+      "dios",
+      0.029942123844986405
+    ],
+    [
+      "planeta",
+      0.026716163758268734
+    ],
+    [
+      "agua",
+      0.024293654844465492
+    ],
+    [
+      "clima",
+      0.02298375938097078
+    ],
+    [
+      "tierra",
+      0.022655604844011273
+    ],
+    [
+      "cambio",
+      0.022266270105554844
+    ],
+    [
+      "espera",
+      0.019954018013578274
+    ],
+    [
+      "mundo",
+      0.01933326215362923
+    ],
+    [
+      "climático",
+      0.018320540179469866
+    ],
+    [
+      "hacer",
+      0.0162652950233814
+    ],
+    [
+      "solo",
+      0.01596700312542742
+    ],
+    [
+      "años",
+      0.015145916239803343
+    ],
+    [
+      "mas",
+      0.015085394534901935
+    ],
+    [
+      "ser",
+      0.014296752674137025
+    ],
+    [
+      "gente",
+      0.014187885010889365
+    ],
+    [
+      "ahora",
+      0.013633378240927503
+    ],
+    [
+      "inundaciones",
+      0.012815404590864846
+    ],
+    [
+      "siempre",
+      0.012312344049274433
+    ],
+    [
+      "países",
+      0.01222081516890557
+    ],
+    [
+      "documentales",
+      0.012027281031045159
+    ]
+  ],
+  "top_frecuencia": [
+    [
+      "planeta",
+      81
+    ],
+    [
+      "tierra",
+      75
+    ],
+    [
+      "dios",
+      68
+    ],
+    [
+      "cambio",
+      67
+    ],
+    [
+      "agua",
+      55
+    ],
+    [
+      "mundo",
+      52
+    ],
+    [
+      "clima",
+      49
+    ],
+    [
+      "climático",
+      47
+    ],
+    [
+      "espera",
+      41
+    ],
+    [
+      "solo",
+      40
+    ],
+    [
+      "mas",
+      39
+    ],
+    [
+      "ser",
+      38
+    ],
+    [
+      "años",
+      36
+    ],
+    [
+      "gente",
+      33
+    ],
+    [
+      "hacer",
+      31
+    ],
+    [
+      "siempre",
+      29
+    ],
+    [
+      "naturaleza",
+      27
+    ],
+    [
+      "hace",
+      27
+    ],
+    [
+      "cada",
+      27
+    ],
+    [
+      "inundaciones",
+      26
+    ]
+  ],
+  "temas_lda": [
+    {
+      "tema": 1,
+      "terminos": [
+        "dios",
+        "tierra",
+        "mas",
+        "planeta",
+        "biblia",
+        "gente",
+        "personas",
+        "cada"
+      ],
+      "comentarios": 86,
+      "porcentaje": 18.6
+    },
+    {
+      "tema": 2,
+      "terminos": [
+        "planeta",
+        "cambio",
+        "dios",
+        "tierra",
+        "mundo",
+        "solo",
+        "climático",
+        "ser"
+      ],
+      "comentarios": 126,
+      "porcentaje": 27.2
+    },
+    {
+      "tema": 3,
+      "terminos": [
+        "espera",
+        "naturaleza",
+        "clima",
+        "ser",
+        "hace",
+        "tan",
+        "mundo",
+        "tierra"
+      ],
+      "comentarios": 76,
+      "porcentaje": 16.4
+    },
+    {
+      "tema": 4,
+      "terminos": [
+        "inundaciones",
+        "documental",
+        "etc",
+        "siempre",
+        "clima",
+        "documentales",
+        "solo",
+        "espera"
+      ],
+      "comentarios": 74,
+      "porcentaje": 16.0
+    },
+    {
+      "tema": 5,
+      "terminos": [
+        "agua",
+        "cambio",
+        "climático",
+        "tierra",
+        "países",
+        "grandes",
+        "clima",
+        "lluvia"
+      ],
+      "comentarios": 101,
+      "porcentaje": 21.8
+    }
+  ],
+  "sentimiento": {
+    "positivos": 99,
+    "neutros": 209,
+    "negativos": 155,
+    "media": -0.58,
+    "mediana": 0.0
+  },
+  "grupos": [
+    {
+      "grupo": "G1",
+      "comentarios": 436,
+      "palabras": [
+        "planeta",
+        "agua",
+        "tierra",
+        "cambio",
+        "dios",
+        "espera",
+        "mundo",
+        "climático"
+      ],
+      "sentimiento_medio": -1.11,
+      "ejemplos": [
+        "Nunca me voy a cansar de agradecer por la capacidad audio descriptiva que tienen. Muchísimas gracias por la inclusión. Por favor nunca dejen de hacer documental",
+        "La DW es magistral en sus documentales, además de buscar consciencia y hacernos responsables con cada tema que explican. Desde Medellin Colombia, gracias DW por"
+      ]
+    },
+    {
+      "grupo": "G2",
+      "comentarios": 11,
+      "palabras": [
+        "jajaja",
+        "mejor",
+        "saben",
+        "agricultura",
+        "poder",
+        "nuevo",
+        "tiempos",
+        "serio"
+      ],
+      "sentimiento_medio": 16.14,
+      "ejemplos": [
+        "la culpa es de ustedes los que tienen poder y manipulan el clima en su beneficio o autodesruccion x que no les importa lo venidero y lo saben y no hacen nada en",
+        "En serio los varones,hombres los que tienen poder No saben las causas? Patriarcado, capitalismo, crecimiento sin fin,No saben???"
+      ]
+    },
+    {
+      "grupo": "G4",
+      "comentarios": 4,
+      "palabras": [
+        "llama",
+        "señores",
+        "siglo",
+        "incas",
+        "evitar",
+        "venir",
+        "casi",
+        "todavía"
+      ],
+      "sentimiento_medio": -11.81,
+      "ejemplos": [
+        "Esto se llama geoingeñeria",
+        "37:09 se llama terrazas de cultivo y fue un metodo dominado por los incas para evitar la erosion en el siglo xv"
+      ]
+    },
+    {
+      "grupo": "G3",
+      "comentarios": 3,
+      "palabras": [
+        "valencia",
+        "buscar",
+        "obra",
+        "acabará",
+        "pronto",
+        "partes",
+        "dana",
+        "video"
+      ],
+      "sentimiento_medio": 27.78,
+      "ejemplos": [
+        "Esa obra tendrían que hacerla en Valencia",
+        "Video que me sale sin buscar.. precisamente que hace dos semanas una Dana hizo desastres en Valencia.. y otras precipitaciones fuertes en otras partes..."
+      ]
+    }
+  ],
+  "categorias": [
+    {
+      "categoria": "Religión o fatalismo",
+      "comentarios": 86,
+      "porcentaje": 18.6,
+      "sentimiento_medio": -1.13,
+      "likes_medianos": 0.0
+    },
+    {
+      "categoria": "Responsables (países ricos, empresas, gobiernos)",
+      "comentarios": 74,
+      "porcentaje": 16.0,
+      "sentimiento_medio": -3.69,
+      "likes_medianos": 0.0
+    },
+    {
+      "categoria": "Eventos extremos (inundaciones, sequías, calor)",
+      "comentarios": 72,
+      "porcentaje": 15.6,
+      "sentimiento_medio": -2.34,
+      "likes_medianos": 0.0
+    },
+    {
+      "categoria": "Manipulación del clima o negación",
+      "comentarios": 47,
+      "porcentaje": 10.2,
+      "sentimiento_medio": -9.05,
+      "likes_medianos": 0.0
+    },
+    {
+      "categoria": "Ganadería, agricultura y bosques",
+      "comentarios": 46,
+      "porcentaje": 9.9,
+      "sentimiento_medio": -3.47,
+      "likes_medianos": 0.0
+    },
+    {
+      "categoria": "Valoración del documental",
+      "comentarios": 42,
+      "porcentaje": 9.1,
+      "sentimiento_medio": 14.47,
+      "likes_medianos": 0.0
+    },
+    {
+      "categoria": "Colombia o Latinoamérica",
+      "comentarios": 42,
+      "porcentaje": 9.1,
+      "sentimiento_medio": 1.92,
+      "likes_medianos": 0.0
+    },
+    {
+      "categoria": "Acción individual y consumo",
+      "comentarios": 39,
+      "porcentaje": 8.4,
+      "sentimiento_medio": -4.62,
+      "likes_medianos": 0.0
+    },
+    {
+      "categoria": "Energía y combustibles",
+      "comentarios": 18,
+      "porcentaje": 3.9,
+      "sentimiento_medio": -3.83,
+      "likes_medianos": 0.0
+    },
+    {
+      "categoria": "El Niño o La Niña",
+      "comentarios": 4,
+      "porcentaje": 0.9,
+      "sentimiento_medio": 7.14,
+      "likes_medianos": 0.0
+    }
+  ],
+  "video": {},
+  "coincidencias": {
+    "factor": "3,9 % de los comentarios mencionan energía o combustibles",
+    "colombia": "9,1 % mencionan Colombia o Latinoamérica",
+    "responsables": "16,0 % señalan a países, empresas o gobiernos"
+  },
+  "hallazgos": [
+    {
+      "titulo": "Términos más relevantes",
+      "img": "yt_terminos_tfidf.png",
+      "pie": "Bag of Words con TF-IDF y normalización L2; promedio por término.",
+      "texto": "Términos con mayor peso: dios, planeta, agua, clima, tierra, cambio, espera, mundo, climático, hacer."
+    },
+    {
+      "titulo": "Temas (LDA, 5 temas)",
+      "img": "yt_temas_lda.png",
+      "pie": "Topic Modelling con LDA; cada comentario se asigna a su tema dominante.",
+      "texto": "Tema 1 (18,6 %): dios, tierra, mas, planeta, biblia · Tema 2 (27,2 %): planeta, cambio, dios, tierra, mundo · Tema 3 (16,4 %): espera, naturaleza, clima, ser, hace · Tema 4 (16,0 %): inundaciones, documental, etc, siempre, clima · Tema 5 (21,8 %): agua, cambio, climático, tierra, países"
+    },
+    {
+      "titulo": "Sentimiento",
+      "img": "yt_sentimiento.png",
+      "pie": "Sentiment Analysis, método Multilingual en español.",
+      "texto": "99 comentarios positivos, 209 neutros y 155 negativos (media -0,58)."
+    },
+    {
+      "titulo": "Temas del proyecto en los comentarios",
+      "img": "yt_temas_proyecto.png",
+      "pie": "Porcentaje de comentarios que mencionan cada tema (búsqueda por raíz de palabra).",
+      "texto": "Religión o fatalismo: 18,6 % · Responsables (países ricos, empresas, gobiernos): 16,0 % · Eventos extremos (inundaciones, sequías, calor): 15,6 % · Manipulación del clima o negación: 10,2 % · Ganadería, agricultura y bosques: 9,9 % · Valoración del documental: 9,1 % · Colombia o Latinoamérica: 9,1 % · Acción individual y consumo: 8,4 % · Energía y combustibles: 3,9 % · El Niño o La Niña: 0,9 %"
+    },
+    {
+      "titulo": "Grupos de comentarios",
+      "img": null,
+      "pie": null,
+      "texto": "G1 (436): planeta, agua, tierra, cambio, dios · G2 (11): jajaja, mejor, saben, agricultura, poder · G4 (4): llama, señores, siglo, incas, evitar · G3 (3): valencia, buscar, obra, acabará, pronto"
+    }
+  ]
+}
