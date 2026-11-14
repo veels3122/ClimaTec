@@ -185,3 +185,6 @@ python scripts/youtube_limpieza.py                    # comentarios_youtube_limp
 Abrir los `.ows` desde `data/etapa6/` (rutas relativas). El flujo de texto requiere el complemento
 *Text* de Orange. **La clave de la API nunca se sube al repositorio.** El enlace del video de
 sustentacion se configura en `VIDEO_ETAPA6_URL` (app.py).
+
+## Etapa 6 - Conocimiento Oculto
+- Implementacion de modelos supervisados, clustering k-Means y mineria de texto sobre comentarios de YouTube.
